@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useState, useEffect } from "react"
@@ -22,6 +23,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Switch } from "@/components/ui/switch"
 import { Separator } from "@/components/ui/separator"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Badge } from "@/components/ui/badge"
 import { useUser, useFirestore, useDoc, useMemoFirebase, updateDocumentNonBlocking } from "@/firebase"
 import { doc, serverTimestamp } from "firebase/firestore"
 import { useToast } from "@/hooks/use-toast"
@@ -76,7 +78,9 @@ export default function SettingsPage() {
   }
 
   const handleLogout = () => {
-    signOut(user!.auth).then(() => router.push("/login"))
+    if (user?.auth) {
+      signOut(user.auth).then(() => router.push("/login"))
+    }
   }
 
   if (isLoading) {
@@ -94,7 +98,7 @@ export default function SettingsPage() {
       <div className="max-w-4xl mx-auto space-y-8 animate-in fade-in duration-700">
         <div>
           <h1 className="text-4xl font-headline font-black text-foreground">Settings</h1>
-          <p className="text-muted-foreground text-lg italic">"Customize your FoodSaver experience."</p>
+          <p className="text-muted-foreground text-lg italic">"Customize your SafeByte experience."</p>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -113,7 +117,7 @@ export default function SettingsPage() {
                 <div className="space-y-4">
                   <div className="flex items-center justify-between text-sm">
                     <span className="text-muted-foreground">Joined</span>
-                    <span className="font-bold">{new Date(userProfile?.createdAt).toLocaleDateString()}</span>
+                    <span className="font-bold">{userProfile?.createdAt ? new Date(userProfile.createdAt).toLocaleDateString() : 'N/A'}</span>
                   </div>
                   <div className="flex items-center justify-between text-sm">
                     <span className="text-muted-foreground">Status</span>
@@ -191,7 +195,7 @@ export default function SettingsPage() {
                         value={formData.phoneNumber} 
                         onChange={e => setFormData({...formData, phoneNumber: e.target.value})}
                         className="pl-10 h-11 rounded-xl"
-                        placeholder="+1 (555) 000-0000"
+                        placeholder="+91 00000 00000"
                       />
                     </div>
                   </div>
