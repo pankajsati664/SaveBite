@@ -1,11 +1,12 @@
+
 import type {Metadata} from 'next';
 import './globals.css';
 import { Toaster } from "@/components/ui/toaster"
 import { FirebaseClientProvider } from '@/firebase/client-provider';
 
 export const metadata: Metadata = {
-  title: 'FoodSaver AI | Reduce Food Waste',
-  description: 'Track expiry dates, buy discounted surplus food, and donate to local NGOs with FoodSaver AI.',
+  title: 'SafeByte | Reduce Food Waste',
+  description: 'Track expiry dates, buy discounted surplus food, and donate to local NGOs with SafeByte.',
 };
 
 export default function RootLayout({
