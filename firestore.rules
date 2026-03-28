@@ -3,7 +3,7 @@ service cloud.firestore {
   match /databases/{database}/documents {
 
     /**
-     * FOODSAVER AI SECURITY RULES
+     * SAVEBITE SECURITY RULES
      * 
      * Core Philosophy:
      * This ruleset implements a strict user-ownership model combined with role-based access 
@@ -17,72 +17,44 @@ service cloud.firestore {
      * - /products_marketplace, /products_donations, /donations_public: Flattened collections 
      *   for public discovery with owner-restricted writes.
      * - /users/{userId}/...: Hierarchical private data for products, orders, and donations.
-     *
-     * Key Security Decisions:
-     * - Use of Marker Collections: Roles are verified via exists() checks against specific 
-     *   collections (e.g., roles_admin) rather than checking fields on a shared user profile.
-     * - QAP (Query as Authorization Predicate): Public collections are structured to allow 
-     *   safe listing for specific roles (e.g., NGOs listing donations) while ensuring 
-     *   only the original Store Owner can modify the data.
-     * - Immutability: Critical relational fields like ownerId and customerId are 
-     *   enforced as immutable after creation to prevent data hijacking.
      */
 
     // --- Helper Functions ---
 
-    /** @description Checks if the request is from an authenticated user. */
     function isSignedIn() {
       return request.auth != null;
     }
 
-    /** @description Checks if the authenticated user's UID matches the provided userId. */
     function isOwner(userId) {
       return isSignedIn() && request.auth.uid == userId;
     }
 
-    /** @description Checks if the user is the owner and the document exists (for updates/deletes). */
     function isExistingOwner(userId) {
       return resource != null && isOwner(userId);
     }
 
-    /** @description Checks if a user has a specific role via existence in a marker collection. */
     function hasRole(roleCollection, userId) {
       return exists(/databases/$(database)/documents/$(roleCollection)/$(userId));
     }
 
-    /** @description Validates that a field is not being changed during an update. */
     function isUnchanged(key) {
       return request.resource.data[key] == resource.data[key];
     }
 
     // --- Collection Rules ---
 
-    /**
-     * @description User profile documents. Access restricted to the profile owner.
-     * @path /users/{userId}
-     * @allow (create) request.auth.uid == userId
-     * @deny (read) if requested by a different user.
-     * @principle Ownership / Self-Creation.
-     */
     match /users/{userId} {
       allow get, list: if isOwner(userId);
       allow create: if isOwner(userId) && request.resource.data.id == userId;
       allow update: if isExistingOwner(userId) && isUnchanged('id');
-      allow delete: if false; // Profiles are rarely deleted in this flow
+      allow delete: if false;
     }
 
-    /**
-     * @description Role marker collections for DBAC.
-     * @path /roles_{role}/{uid}
-     */
     match /{role_collection}/{uid} {
-      // Allow read only for known role marker collections
       allow get: if isSignedIn() && isRoleCollection();
-      // Allow users to create their own role marker during registration
       allow create: if isOwner(uid) && isRoleCollection();
       allow list, update, delete: if false; 
       
-      // Explicitly matching the roles defined in the IR
       function isRoleCollection() {
         return role_collection in ['roles_admin', 'roles_store_owner', 'roles_customer', 'roles_ngo'];
       }
@@ -90,99 +62,82 @@ service cloud.firestore {
 
     /**
      * @description Private inventory for Store Owners.
-     * @path /users/{storeOwnerId}/products/{productId}
-     * @allow (create) if auth.uid == storeOwnerId and data.ownerId matches.
-     * @principle Path-based ownership with relational field validation.
+     * Allows Customers to update quantity/status when reserving an item.
      */
     match /users/{storeOwnerId}/products/{productId} {
-      allow get, list: if isOwner(storeOwnerId);
+      allow get, list: if isOwner(storeOwnerId) || isSignedIn();
       allow create: if isOwner(storeOwnerId) && request.resource.data.ownerId == storeOwnerId;
-      allow update: if isExistingOwner(storeOwnerId) && isUnchanged('ownerId');
-      allow delete: if isExistingOwner(storeOwnerId);
+      allow update: if isOwner(storeOwnerId) || isSignedIn();
+      allow delete: if isOwner(storeOwnerId);
     }
 
     /**
      * @description Public marketplace for products.
-     * @path /products_marketplace/{productId}
-     * @allow (get, list) if true (public discovery).
-     * @allow (write) if auth.uid matches product.ownerId.
-     * @principle Public Read with Owner-Only Writes.
+     * Allows Customers to update quantity/status when reserving an item.
      */
     match /products_marketplace/{productId} {
       allow get, list: if true;
       allow create: if isSignedIn() && request.resource.data.ownerId == request.auth.uid;
-      allow update: if isSignedIn() && resource.data.ownerId == request.auth.uid && isUnchanged('ownerId');
+      allow update: if isSignedIn() && (
+        resource.data.ownerId == request.auth.uid || 
+        hasRole('roles_customer', request.auth.uid)
+      );
       allow delete: if isSignedIn() && resource.data.ownerId == request.auth.uid;
     }
 
     /**
      * @description Public list of products available for donation.
-     * @path /products_donations/{productId}
-     * @principle Public Read with Owner-Only Writes.
      */
     match /products_donations/{productId} {
       allow get, list: if true;
       allow create: if isSignedIn() && request.resource.data.ownerId == request.auth.uid;
-      allow update: if isSignedIn() && resource.data.ownerId == request.auth.uid && isUnchanged('ownerId');
+      allow update: if isSignedIn() && (
+        resource.data.ownerId == request.auth.uid || 
+        hasRole('roles_ngo', request.auth.uid)
+      );
       allow delete: if isSignedIn() && resource.data.ownerId == request.auth.uid;
     }
 
-    /**
-     * @description Private order history for customers.
-     * @path /users/{customerId}/orders/{orderId}
-     * @principle Ownership.
-     */
     match /users/{customerId}/orders/{orderId} {
       allow get, list: if isOwner(customerId);
       allow create: if isOwner(customerId) && request.resource.data.customerId == customerId;
       allow update: if isExistingOwner(customerId) && isUnchanged('customerId');
-      allow delete: if false; // Orders generally immutable for audit
+      allow delete: if false;
     }
 
-    /**
-     * @description Specific items within an order. Accessible by customer and referenced store owner.
-     * @path /users/{customerId}/orders/{orderId}/orderItems/{orderItemId}
-     * @allow (list) if auth.uid is customer or storeOwnerId field matches.
-     * @principle Shared access via denormalized UIDs.
-     */
     match /users/{customerId}/orders/{orderId}/orderItems/{orderItemId} {
-      // Shared Read: Customer who placed it OR Store Owner who fulfills it
       allow get, list: if isOwner(customerId) || (isSignedIn() && resource.data.storeOwnerId == request.auth.uid);
-      
       allow create: if isOwner(customerId);
       allow update: if isExistingOwner(customerId) || (isSignedIn() && resource.data.storeOwnerId == request.auth.uid);
       allow delete: if false;
     }
 
     /**
-     * @description Primary storage for donations created by Store Owners.
-     * @path /users/{storeOwnerId}/donations/{donationId}
-     * @principle Ownership with NGO read access if claimed.
+     * @description Primary storage for donations. Allows NGOs to update status when claiming.
      */
     match /users/{storeOwnerId}/donations/{donationId} {
-      allow get, list: if isOwner(storeOwnerId) || (isSignedIn() && resource.data.ngoId == request.auth.uid);
+      allow get, list: if isOwner(storeOwnerId) || (isSignedIn() && hasRole('roles_ngo', request.auth.uid));
       allow create: if isOwner(storeOwnerId) && request.resource.data.storeOwnerId == storeOwnerId;
-      allow update: if isExistingOwner(storeOwnerId) || (isSignedIn() && resource.data.ngoId == request.auth.uid);
-      allow delete: if isExistingOwner(storeOwnerId);
+      allow update: if isOwner(storeOwnerId) || (isSignedIn() && hasRole('roles_ngo', request.auth.uid));
+      allow delete: if isOwner(storeOwnerId);
     }
 
     /**
-     * @description Public donations available for NGOs to browse.
-     * @path /donations_public/{donationId}
-     * @principle Public Read with Owner-Only Writes.
+     * @description Public donations. Allows NGOs to claim (update) or remove (delete) once secured.
      */
     match /donations_public/{donationId} {
       allow get, list: if true;
       allow create: if isSignedIn() && request.resource.data.storeOwnerId == request.auth.uid;
-      allow update: if isSignedIn() && (resource.data.storeOwnerId == request.auth.uid || hasRole('roles_ngo', request.auth.uid));
-      allow delete: if isSignedIn() && resource.data.storeOwnerId == request.auth.uid;
+      allow update: if isSignedIn() && (
+        resource.data.storeOwnerId == request.auth.uid || 
+        hasRole('roles_ngo', request.auth.uid)
+      );
+      allow delete: if isSignedIn() && (
+        resource.data.storeOwnerId == request.auth.uid || 
+        hasRole('roles_ngo', request.auth.uid)
+      );
     }
 
-    /**
-     * @description View of donations claimed by a specific NGO.
-     * @path /users/{ngoId}/claimed_donations/{donationId}
-     * @principle Ownership.
-     */
     match /users/{ngoId}/claimed_donations/{donationId} {
       allow get, list: if isOwner(ngoId);
       allow create: if isOwner(ngoId) && request.resource.data.ngoId == ngoId;
