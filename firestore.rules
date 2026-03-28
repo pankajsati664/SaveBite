@@ -76,9 +76,11 @@ service cloud.firestore {
      * @path /roles_{role}/{uid}
      */
     match /{role_collection}/{uid} {
-      // Allow read only for known role marker collections, preventing arbitrary collection matches.
+      // Allow read only for known role marker collections
       allow get: if isSignedIn() && isRoleCollection();
-      allow list, write: if false; // Managed by Admin or Cloud Functions
+      // Allow users to create their own role marker during registration
+      allow create: if isOwner(uid) && isRoleCollection();
+      allow list, update, delete: if false; 
       
       // Explicitly matching the roles defined in the IR
       function isRoleCollection() {
