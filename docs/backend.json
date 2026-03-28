@@ -1,0 +1,545 @@
+{
+  "entities": {
+    "User": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "User",
+      "type": "object",
+      "description": "Represents a user of the FoodSaver AI application, including their role and basic profile information. Authentication details are handled externally by Firebase.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the User entity."
+        },
+        "email": {
+          "type": "string",
+          "description": "The user's email address.",
+          "format": "email"
+        },
+        "name": {
+          "type": "string",
+          "description": "The full name of the user or organization."
+        },
+        "role": {
+          "type": "string",
+          "description": "The role assigned to the user within the application (Store Owner, Customer, NGO, Admin)."
+        },
+        "address": {
+          "type": "string",
+          "description": "The physical address of the user or organization, optional for customers.",
+          "format": "uri"
+        },
+        "phoneNumber": {
+          "type": "string",
+          "description": "The contact phone number for the user or organization."
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp when the user account was created.",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Timestamp when the user account was last updated.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "email",
+        "name",
+        "role",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "Product": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Product",
+      "type": "object",
+      "description": "Represents a food product managed by a Store Owner, including inventory details, expiry information, and status for sales or donations.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Product entity."
+        },
+        "name": {
+          "type": "string",
+          "description": "The name of the product."
+        },
+        "description": {
+          "type": "string",
+          "description": "A detailed description of the product."
+        },
+        "quantity": {
+          "type": "number",
+          "description": "The current quantity of the product available in stock."
+        },
+        "initialPrice": {
+          "type": "number",
+          "description": "The original selling price of the product before any discounts."
+        },
+        "currentPrice": {
+          "type": "number",
+          "description": "The current selling price of the product, reflecting any applied discounts."
+        },
+        "expiryDate": {
+          "type": "string",
+          "description": "The expiration date of the product.",
+          "format": "date-time"
+        },
+        "imageUrl": {
+          "type": "string",
+          "description": "URL to an image of the product.",
+          "format": "uri"
+        },
+        "ownerId": {
+          "type": "string",
+          "description": "Reference to the User who owns this product (StoreOwner). (Relationship: User 1:N Product)"
+        },
+        "status": {
+          "type": "string",
+          "description": "The current status of the product, influencing its visibility in the marketplace or donation panel."
+        },
+        "barcode": {
+          "type": "string",
+          "description": "The barcode string for the product, if available."
+        },
+        "lastAIRecommendation": {
+          "type": "string",
+          "description": "The last action recommended by the AI (e.g., 'Discount', 'Donate')."
+        },
+        "recommendedActionDate": {
+          "type": "string",
+          "description": "Timestamp when the AI last made a recommendation for this product.",
+          "format": "date-time"
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp when the product was added to the inventory.",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Timestamp when the product details were last updated.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "quantity",
+        "initialPrice",
+        "currentPrice",
+        "expiryDate",
+        "ownerId",
+        "status",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "Order": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Order",
+      "type": "object",
+      "description": "Represents a customer's purchase request for one or more products from the marketplace.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Order entity."
+        },
+        "customerId": {
+          "type": "string",
+          "description": "Reference to the User who placed the order (Customer). (Relationship: User 1:N Order)"
+        },
+        "orderDate": {
+          "type": "string",
+          "description": "Timestamp when the order was placed.",
+          "format": "date-time"
+        },
+        "totalAmount": {
+          "type": "number",
+          "description": "The total monetary amount of the order."
+        },
+        "status": {
+          "type": "string",
+          "description": "The current status of the order (e.g., Pending, Confirmed, Completed, Cancelled)."
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp when the order record was created.",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Timestamp when the order record was last updated.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "customerId",
+        "orderDate",
+        "totalAmount",
+        "status",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "OrderItem": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "OrderItem",
+      "type": "object",
+      "description": "Represents a single product item included within a specific customer order.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the OrderItem entity."
+        },
+        "orderId": {
+          "type": "string",
+          "description": "Reference to the Order this item belongs to. (Relationship: Order 1:N OrderItem)"
+        },
+        "productId": {
+          "type": "string",
+          "description": "Reference to the Product being purchased. (Relationship: Product 1:N OrderItem)"
+        },
+        "quantity": {
+          "type": "number",
+          "description": "The quantity of the product ordered."
+        },
+        "priceAtPurchase": {
+          "type": "number",
+          "description": "The price of the product at the time of purchase for this specific item."
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp when the order item record was created.",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Timestamp when the order item record was last updated.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "orderId",
+        "productId",
+        "quantity",
+        "priceAtPurchase",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "Donation": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Donation",
+      "type": "object",
+      "description": "Represents a record of a food product being donated, tracking its claim and pickup status.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Donation entity."
+        },
+        "productId": {
+          "type": "string",
+          "description": "Reference to the Product being donated. (Relationship: Product 1:N Donation)"
+        },
+        "storeOwnerId": {
+          "type": "string",
+          "description": "Reference to the User (StoreOwner) who is donating the product. (Relationship: User 1:N Donation)"
+        },
+        "ngoId": {
+          "type": "string",
+          "description": "Reference to the User (NGO) who claimed or received the donation. (Relationship: User 1:N Donation)"
+        },
+        "quantity": {
+          "type": "number",
+          "description": "The quantity of the product donated."
+        },
+        "status": {
+          "type": "string",
+          "description": "The current status of the donation (e.g., PendingClaim, Claimed, ScheduledForPickup, PickedUp, Cancelled)."
+        },
+        "claimDate": {
+          "type": "string",
+          "description": "Timestamp when the donation was claimed by an NGO.",
+          "format": "date-time"
+        },
+        "pickupScheduledDate": {
+          "type": "string",
+          "description": "Timestamp when the pickup for the donation was scheduled.",
+          "format": "date-time"
+        },
+        "pickupCompletedDate": {
+          "type": "string",
+          "description": "Timestamp when the donation pickup was successfully completed.",
+          "format": "date-time"
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp when the donation record was created.",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Timestamp when the donation record was last updated.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "productId",
+        "storeOwnerId",
+        "quantity",
+        "status",
+        "createdAt",
+        "updatedAt"
+      ]
+    }
+  },
+  "auth": {
+    "providers": [
+      "password",
+      "anonymous"
+    ]
+  },
+  "firestore": {
+    "structure": [
+      {
+        "path": "/users/{userId}",
+        "definition": {
+          "entityName": "User",
+          "schema": {
+            "$ref": "#/backend/entities/User"
+          },
+          "description": "Stores individual user profiles. The document ID `{userId}` matches `request.auth.uid`. Includes denormalized 'id' field for authorization independence and 'role' for application logic (role checks for rules use dedicated collections).",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier of the user, matching Firebase Authentication UID."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/roles_admin/{adminId}",
+        "definition": {
+          "entityName": "User",
+          "schema": {
+            "$ref": "#/backend/entities/User"
+          },
+          "description": "Marker documents for users with the 'Admin' role, used for existence-based security rule checks (DBAC). The document ID `{adminId}` matches `request.auth.uid`.",
+          "params": [
+            {
+              "name": "adminId",
+              "description": "The unique identifier of the admin user, matching Firebase Authentication UID."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/roles_store_owner/{storeOwnerId}",
+        "definition": {
+          "entityName": "User",
+          "schema": {
+            "$ref": "#/backend/entities/User"
+          },
+          "description": "Marker documents for users with the 'Store Owner' role, used for existence-based security rule checks (DBAC). The document ID `{storeOwnerId}` matches `request.auth.uid`.",
+          "params": [
+            {
+              "name": "storeOwnerId",
+              "description": "The unique identifier of the store owner user, matching Firebase Authentication UID."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/roles_customer/{customerId}",
+        "definition": {
+          "entityName": "User",
+          "schema": {
+            "$ref": "#/backend/entities/User"
+          },
+          "description": "Marker documents for users with the 'Customer' role, used for existence-based security rule checks (DBAC). The document ID `{customerId}` matches `request.auth.uid`.",
+          "params": [
+            {
+              "name": "customerId",
+              "description": "The unique identifier of the customer user, matching Firebase Authentication UID."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/roles_ngo/{ngoId}",
+        "definition": {
+          "entityName": "User",
+          "schema": {
+            "$ref": "#/backend/entities/User"
+          },
+          "description": "Marker documents for users with the 'NGO' role, used for existence-based security rule checks (DBAC). The document ID `{ngoId}` matches `request.auth.uid`.",
+          "params": [
+            {
+              "name": "ngoId",
+              "description": "The unique identifier of the NGO user, matching Firebase Authentication UID."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{storeOwnerId}/products/{productId}",
+        "definition": {
+          "entityName": "Product",
+          "schema": {
+            "$ref": "#/backend/entities/Product"
+          },
+          "description": "Primary storage for a Store Owner's private product inventory. All CRUD operations are restricted to the `{storeOwnerId}` matching `request.auth.uid`. The document includes denormalized 'ownerId' (matching `{storeOwnerId}` in the path) for robust authorization independence.",
+          "params": [
+            {
+              "name": "storeOwnerId",
+              "description": "The unique identifier of the Store Owner who owns this product."
+            },
+            {
+              "name": "productId",
+              "description": "The unique identifier of the product."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/products_marketplace/{productId}",
+        "definition": {
+          "entityName": "Product",
+          "schema": {
+            "$ref": "#/backend/entities/Product"
+          },
+          "description": "Denormalized subset of product data for items available in the public marketplace (e.g., status is 'AVAILABLE_FOR_SALE' or 'ON_DISCOUNT'). This collection enables QAPs for customers to list and read products efficiently. Includes denormalized 'ownerId' for authorization independence, allowing the originating store owner to manage their products here without hierarchical `get()` calls.",
+          "params": [
+            {
+              "name": "productId",
+              "description": "The unique identifier of the product, corresponding to the primary product record."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/products_donations/{productId}",
+        "definition": {
+          "entityName": "Product",
+          "schema": {
+            "$ref": "#/backend/entities/Product"
+          },
+          "description": "Denormalized subset of product data for items available for donation to NGOs (e.g., status is 'AVAILABLE_FOR_DONATION'). This collection enables QAPs for NGOs to list and read donation items efficiently. Includes denormalized 'ownerId' for authorization independence, allowing the originating store owner to manage their products here without hierarchical `get()` calls.",
+          "params": [
+            {
+              "name": "productId",
+              "description": "The unique identifier of the product, corresponding to the primary product record."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{customerId}/orders/{orderId}",
+        "definition": {
+          "entityName": "Order",
+          "schema": {
+            "$ref": "#/backend/entities/Order"
+          },
+          "description": "Stores a customer's specific orders. Access is restricted to the `{customerId}` matching `request.auth.uid`. The document includes denormalized 'customerId' (matching the path) for authorization independence.",
+          "params": [
+            {
+              "name": "customerId",
+              "description": "The unique identifier of the customer who placed the order."
+            },
+            {
+              "name": "orderId",
+              "description": "The unique identifier of the order."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{customerId}/orders/{orderId}/orderItems/{orderItemId}",
+        "definition": {
+          "entityName": "OrderItem",
+          "schema": {
+            "$ref": "#/backend/entities/OrderItem"
+          },
+          "description": "Details of individual products within a customer's order. Access is restricted to the `{customerId}` of the parent order. This document includes denormalized 'customerId' (from parent order) and 'storeOwnerId' (from the product) for authorization independence, enabling QAPs for store owners to query their related order items without `get()` calls.",
+          "params": [
+            {
+              "name": "customerId",
+              "description": "The unique identifier of the customer who placed the order."
+            },
+            {
+              "name": "orderId",
+              "description": "The unique identifier of the parent order."
+            },
+            {
+              "name": "orderItemId",
+              "description": "The unique identifier of the specific item within the order."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{storeOwnerId}/donations/{donationId}",
+        "definition": {
+          "entityName": "Donation",
+          "schema": {
+            "$ref": "#/backend/entities/Donation"
+          },
+          "description": "Primary storage for donations created by a Store Owner. Access is restricted to the `{storeOwnerId}` matching `request.auth.uid`. Includes denormalized 'storeOwnerId' (matching the path) and 'ngoId' (if claimed) for authorization independence and collaborative access.",
+          "params": [
+            {
+              "name": "storeOwnerId",
+              "description": "The unique identifier of the Store Owner who initiated the donation."
+            },
+            {
+              "name": "donationId",
+              "description": "The unique identifier of the donation record."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/donations_public/{donationId}",
+        "definition": {
+          "entityName": "Donation",
+          "schema": {
+            "$ref": "#/backend/entities/Donation"
+          },
+          "description": "Denormalized list of donations publicly available for NGOs to claim (e.g., status is 'PendingClaim'). This collection enables QAPs for NGOs to list and read available donations efficiently. Includes denormalized 'storeOwnerId' for authorization independence, allowing the originating store owner to manage their donations here without hierarchical `get()` calls.",
+          "params": [
+            {
+              "name": "donationId",
+              "description": "The unique identifier of the donation record, corresponding to the primary donation."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{ngoId}/claimed_donations/{donationId}",
+        "definition": {
+          "entityName": "Donation",
+          "schema": {
+            "$ref": "#/backend/entities/Donation"
+          },
+          "description": "Denormalized view of donations that have been claimed by a specific NGO. Access is restricted to the `{ngoId}` matching `request.auth.uid`. Includes denormalized 'ngoId' (matching the path) and 'storeOwnerId' for authorization independence, enabling QAPs for NGOs to manage their claimed items without `get()` calls.",
+          "params": [
+            {
+              "name": "ngoId",
+              "description": "The unique identifier of the NGO who claimed the donation."
+            },
+            {
+              "name": "donationId",
+              "description": "The unique identifier of the donation record."
+            }
+          ]
+        }
+      }
+    ],
+    "reasoning": "The recommended Firestore structure for the FoodSaver AI application is designed with a strong emphasis on Authorization Independence, Query as Authorization Predicates (QAPs), and Structural Segregation to ensure security, scalability, and debuggability. \n\n**Authorization Independence via Denormalization:**\nEach document that requires access control based on ownership or role (e.g., Product, Order, OrderItem, Donation) explicitly includes the relevant user ID (e.g., `ownerId`, `customerId`, `storeOwnerId`, `ngoId`) within its own fields. This critical denormalization strategy eliminates the need for `get()` calls in Firestore security rules to retrieve parent or related documents to check permissions. For instance, a rule can directly evaluate `resource.data.ownerId == request.auth.uid` without traversing up the hierarchy or fetching an associated User document. This ensures that operations are atomic, simpler to reason about, and less prone to performance issues or security vulnerabilities arising from complex rule dependencies. User roles are also segregated into dedicated 'roles_X' collections, allowing for efficient `exists()` checks rather than `get()` calls to user profiles.\n\n**Query as Authorization Predicates (QAPs) through Structural Segregation:**\nTo support efficient and secure `list` operations (QAPs), collections are segregated based on their security posture and intended audience. Rather than mixing public, private, and collaborative data in a single collection with complex filtering rules, specific collections are created for each access pattern:\n\n1.  **Private User Data:** User-specific entities (like a Store Owner's raw product inventory, a Customer's orders, or an NGO's claimed donations) are typically nested under `/users/{userId}/...`. This path-based ownership makes authorization extremely straightforward and performant for individual users managing their own data.\n2.  **Public Marketplace/Donations:** Products intended for public viewing by customers (`products_marketplace`) or NGOs (`products_donations`, `donations_public`) are denormalized into top-level collections. These collections share a homogeneous security posture (e.g., read-only for customers, read-only for NGOs who haven't claimed it). By including the `ownerId` (for products) or `storeOwnerId` (for donations) in these denormalized documents, Store Owners can still manage their specific items within these public lists, and rules can verify ownership without additional `get()` operations. This design ensures that client-side queries can fetch exactly what they are authorized to see, without requiring the server to filter unauthorized documents from a broader result set.\n3.  **Collaborative Data:** `OrderItem` documents denormalize both `customerId` (from the parent order) and `storeOwnerId` (from the associated product). This enables efficient collection group queries for Store Owners to list all `OrderItems` related to their products, and similarly for NGOs to list their `claimed_donations`.\n\nThis architecture prioritizes clear, explicit authorization intent, minimizes rule complexity, and optimizes for both individual document access and large-scale data querying, aligning perfectly with the core design principles."
+  }
+}
