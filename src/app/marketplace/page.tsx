@@ -28,6 +28,7 @@ import { useToast } from "@/hooks/use-toast"
 import { getDaysRemaining } from "@/lib/utils/expiry"
 import { useFirestore, useCollection, useMemoFirebase, useUser, addDocumentNonBlocking, updateDocumentNonBlocking } from "@/firebase"
 import { collection, doc, serverTimestamp } from "firebase/firestore"
+import { cn } from "@/lib/utils"
 
 export default function MarketplacePage() {
   const [search, setSearch] = useState("")
@@ -128,7 +129,7 @@ export default function MarketplacePage() {
               {categories.map(cat => (
                 <Button 
                   key={cat}
-                  variant={activeCategory === cat ? "primary" : "outline"}
+                  variant={activeCategory === cat ? "default" : "outline"}
                   className={cn(
                     "h-12 px-6 rounded-xl border-primary/20 whitespace-nowrap",
                     activeCategory === cat && "shadow-lg shadow-primary/20"
