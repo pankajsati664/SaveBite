@@ -13,7 +13,9 @@ import {
   ArrowUpRight,
   ArrowDownRight,
   Loader2,
-  CalendarDays
+  CalendarDays,
+  ShoppingBag,
+  ClipboardList
 } from "lucide-react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -36,24 +38,64 @@ export default function DashboardPage() {
   }, [firestore, user])
 
   const { data: userProfile } = useDoc(userDocRef)
+  const userRole = userProfile?.role || 'customer'
 
+  // Queries based on role
   const productsQuery = useMemoFirebase(() => {
-    if (!firestore || !user) return null
+    if (!firestore || !user || userRole !== 'store_owner') return null
     return query(
       collection(firestore, "users", user.uid, "products"),
       orderBy("updatedAt", "desc")
     )
-  }, [firestore, user])
+  }, [firestore, user, userRole])
 
-  const { data: allProducts, isLoading } = useCollection(productsQuery)
-  const recentProducts = allProducts?.slice(0, 5) || []
+  const ordersQuery = useMemoFirebase(() => {
+    if (!firestore || !user || userRole !== 'customer') return null
+    return query(
+      collection(firestore, "users", user.uid, "orders"),
+      orderBy("createdAt", "desc")
+    )
+  }, [firestore, user, userRole])
 
-  const stats = [
-    { label: "Inventory Items", value: allProducts?.length.toString() || "0", icon: Package, color: "bg-blue-500", trend: "+2%" },
-    { label: "Near Expiry", value: allProducts?.filter(p => getExpiryStatus(p.expiryDate) === 'near-expiry').length.toString() || "0", icon: AlertTriangle, color: "bg-warning", trend: "Alert" },
-    { label: "Expired", value: allProducts?.filter(p => getExpiryStatus(p.expiryDate) === 'expired').length.toString() || "0", icon: History, color: "bg-danger", trend: "-5%" },
-    { label: "Donations Made", value: "12", icon: Heart, color: "bg-primary", trend: "+15%" },
-  ]
+  const claimedDonationsQuery = useMemoFirebase(() => {
+    if (!firestore || !user || userRole !== 'ngo') return null
+    return query(
+      collection(firestore, "users", user.uid, "claimed_donations"),
+      orderBy("updatedAt", "desc")
+    )
+  }, [firestore, user, userRole])
+
+  const { data: allProducts, isLoading: isProductsLoading } = useCollection(productsQuery)
+  const { data: allOrders, isLoading: isOrdersLoading } = useCollection(ordersQuery)
+  const { data: allClaimed, isLoading: isClaimedLoading } = useCollection(claimedDonationsQuery)
+
+  const isLoading = isProductsLoading || isOrdersLoading || isClaimedLoading
+
+  // Dynamic stats based on role
+  const getStats = () => {
+    if (userRole === 'store_owner') {
+      return [
+        { label: "Inventory Items", value: allProducts?.length.toString() || "0", icon: Package, color: "bg-blue-500", trend: "+2%" },
+        { label: "Near Expiry", value: allProducts?.filter(p => getExpiryStatus(p.expiryDate) === 'near-expiry').length.toString() || "0", icon: AlertTriangle, color: "bg-warning", trend: "Alert" },
+        { label: "Expired", value: allProducts?.filter(p => getExpiryStatus(p.expiryDate) === 'expired').length.toString() || "0", icon: History, color: "bg-danger", trend: "-5%" },
+        { label: "Impact Score", value: "94", icon: Heart, color: "bg-primary", trend: "+15%" },
+      ]
+    } else if (userRole === 'customer') {
+      return [
+        { label: "Items Rescued", value: allOrders?.length.toString() || "0", icon: ShoppingBag, color: "bg-primary", trend: "+8%" },
+        { label: "Total Savings", value: `$${allOrders?.reduce((acc, curr) => acc + (curr.totalAmount || 0), 0).toFixed(2) || "0.00"}`, icon: TrendingUp, color: "bg-success", trend: "Great" },
+        { label: "Active Orders", value: allOrders?.filter(o => o.status === 'Pending').length.toString() || "0", icon: Clock, color: "bg-blue-500", trend: "Active" },
+        { label: "Food Points", value: "120", icon: Heart, color: "bg-accent", trend: "+10" },
+      ]
+    } else { // NGO
+      return [
+        { label: "Total Rescues", value: allClaimed?.length.toString() || "0", icon: Heart, color: "bg-primary", trend: "+12%" },
+        { label: "Pending Pickups", value: allClaimed?.filter(d => d.status === 'Claimed').length.toString() || "0", icon: Clock, color: "bg-warning", trend: "Urgent" },
+        { label: "Meals Provided", value: (allClaimed?.length || 0 * 5).toString(), icon: Users, color: "bg-blue-500", trend: "+20%" },
+        { label: "Partner Stores", value: "8", icon: Package, color: "bg-accent", trend: "Stable" },
+      ]
+    }
+  }
 
   const nearExpiryCount = allProducts?.filter(p => getExpiryStatus(p.expiryDate) === 'near-expiry').length || 0
   const progressValue = allProducts?.length ? Math.min(100, (nearExpiryCount / allProducts.length) * 100) : 0
@@ -78,7 +120,7 @@ export default function DashboardPage() {
 
         {/* Stats Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {stats.map((stat) => (
+          {getStats().map((stat) => (
             <Card key={stat.label} className="border-none shadow-md overflow-hidden group hover:shadow-xl transition-all duration-300 rounded-2xl">
               <CardContent className="p-6">
                 <div className="flex items-center justify-between mb-4">
@@ -88,10 +130,10 @@ export default function DashboardPage() {
                   <div className={cn(
                     "flex items-center text-xs font-bold px-2 py-1 rounded-full",
                     stat.trend.startsWith('+') ? "text-success bg-success/10" : 
-                    stat.trend === "Alert" ? "text-warning bg-warning/10" : "text-danger bg-danger/10"
+                    stat.trend === "Alert" || stat.trend === "Urgent" ? "text-warning bg-warning/10" : "text-danger bg-danger/10"
                   )}>
                     {stat.trend.startsWith('+') ? <ArrowUpRight className="h-3 w-3 mr-1" /> : 
-                     stat.trend === "Alert" ? <AlertTriangle className="h-3 w-3 mr-1" /> : <ArrowDownRight className="h-3 w-3 mr-1" />}
+                     (stat.trend === "Alert" || stat.trend === "Urgent") ? <AlertTriangle className="h-3 w-3 mr-1" /> : <ArrowDownRight className="h-3 w-3 mr-1" />}
                     {stat.trend}
                   </div>
                 </div>
@@ -110,9 +152,12 @@ export default function DashboardPage() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-xl">
                 <TrendingUp className="h-5 w-5 text-primary" />
-                Waste Savings Performance
+                Impact Performance
               </CardTitle>
-              <CardDescription>Estimated food weight saved from landfill (kg) this week</CardDescription>
+              <CardDescription>
+                {userRole === 'store_owner' ? 'Estimated food weight saved from landfill (kg)' : 
+                 userRole === 'customer' ? 'Money saved through surplus deals ($)' : 'Donations rescued (units)'} this week
+              </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="h-[300px] w-full bg-secondary/10 rounded-2xl flex items-end justify-between p-8 gap-3 border border-primary/5">
@@ -123,7 +168,7 @@ export default function DashboardPage() {
                       style={{ height: `${val}%` }} 
                     >
                       <div className="absolute -top-8 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity bg-foreground text-background px-2 py-1 rounded text-[10px] font-bold">
-                        {val}kg
+                        {val}{userRole === 'customer' ? '$' : 'kg'}
                       </div>
                     </div>
                     <span className="text-xs text-muted-foreground mt-3 font-bold uppercase tracking-tighter">
@@ -135,44 +180,78 @@ export default function DashboardPage() {
             </CardContent>
           </Card>
 
-          {/* Urgent Alerts */}
+          {/* Urgent Alerts or Quick Actions */}
           <Card className="border-none shadow-md rounded-3xl overflow-hidden">
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-xl">
-                <Clock className="h-5 w-5 text-warning" />
-                Urgent Actions
+                {userRole === 'store_owner' ? <Clock className="h-5 w-5 text-warning" /> : <ShoppingBag className="h-5 w-5 text-primary" />}
+                {userRole === 'store_owner' ? 'Urgent Actions' : 'Quick Access'}
               </CardTitle>
-              <CardDescription>Critical inventory items status</CardDescription>
+              <CardDescription>
+                {userRole === 'store_owner' ? 'Critical inventory items status' : 'Ready to save more?'}
+              </CardDescription>
             </CardHeader>
             <CardContent className="space-y-8">
-              <div className="space-y-3">
-                <div className="flex justify-between text-sm font-bold">
-                  <span className="text-muted-foreground">Expiry Risk Level</span>
-                  <span className="text-warning">{Math.round(progressValue)}% of stock</span>
+              {userRole === 'store_owner' && (
+                <div className="space-y-3">
+                  <div className="flex justify-between text-sm font-bold">
+                    <span className="text-muted-foreground">Expiry Risk Level</span>
+                    <span className="text-warning">{Math.round(progressValue)}% of stock</span>
+                  </div>
+                  <Progress value={progressValue} className="h-3 bg-secondary rounded-full" />
+                  <p className="text-xs text-muted-foreground italic">
+                    {nearExpiryCount} units are expiring within 3 days. Action recommended.
+                  </p>
                 </div>
-                <Progress value={progressValue} className="h-3 bg-secondary rounded-full" />
-                <p className="text-xs text-muted-foreground italic">
-                  {nearExpiryCount} units are expiring within 3 days. Action recommended.
-                </p>
-              </div>
+              )}
+
+              {userRole !== 'store_owner' && (
+                <div className="space-y-4">
+                  <div className="bg-primary/5 p-4 rounded-2xl border border-primary/10">
+                    <p className="text-sm font-bold text-primary mb-1">Impact Spotlight</p>
+                    <p className="text-xs text-muted-foreground">You've saved roughly 15kg of CO2 this month by rescuing surplus food!</p>
+                  </div>
+                </div>
+              )}
 
               <Separator className="bg-primary/10" />
 
               <div className="space-y-4">
-                <h4 className="text-sm font-black uppercase tracking-widest text-primary">Quick Rescue Actions</h4>
+                <h4 className="text-sm font-black uppercase tracking-widest text-primary">
+                  {userRole === 'store_owner' ? 'Quick Rescue Actions' : 'Recommended'}
+                </h4>
                 <div className="grid grid-cols-1 gap-3">
-                  <Link href="/inventory" className="w-full">
-                    <Button variant="outline" className="w-full justify-start h-12 rounded-xl border-primary/20 hover:bg-primary/5">
-                      <AlertTriangle className="mr-3 h-5 w-5 text-warning" />
-                      Apply AI Discounts
-                    </Button>
-                  </Link>
-                  <Link href="/donations" className="w-full">
-                    <Button variant="outline" className="w-full justify-start h-12 rounded-xl border-primary/20 hover:bg-primary/5 text-primary font-bold">
-                      <Heart className="mr-3 h-5 w-5" />
-                      Batch Donate Surplus
-                    </Button>
-                  </Link>
+                  {userRole === 'store_owner' ? (
+                    <>
+                      <Link href="/inventory" className="w-full">
+                        <Button variant="outline" className="w-full justify-start h-12 rounded-xl border-primary/20 hover:bg-primary/5">
+                          <AlertTriangle className="mr-3 h-5 w-5 text-warning" />
+                          Apply AI Discounts
+                        </Button>
+                      </Link>
+                      <Link href="/donations" className="w-full">
+                        <Button variant="outline" className="w-full justify-start h-12 rounded-xl border-primary/20 hover:bg-primary/5 text-primary font-bold">
+                          <Heart className="mr-3 h-5 w-5" />
+                          Batch Donate Surplus
+                        </Button>
+                      </Link>
+                    </>
+                  ) : (
+                    <>
+                      <Link href="/marketplace" className="w-full">
+                        <Button variant="outline" className="w-full justify-start h-12 rounded-xl border-primary/20 hover:bg-primary/5">
+                          <ShoppingBag className="mr-3 h-5 w-5 text-primary" />
+                          Browse Marketplace
+                        </Button>
+                      </Link>
+                      <Link href="/orders" className="w-full">
+                        <Button variant="outline" className="w-full justify-start h-12 rounded-xl border-primary/20 hover:bg-primary/5">
+                          <ClipboardList className="mr-3 h-5 w-5 text-muted-foreground" />
+                          Track My Rescues
+                        </Button>
+                      </Link>
+                    </>
+                  )}
                 </div>
               </div>
             </CardContent>
@@ -183,10 +262,10 @@ export default function DashboardPage() {
         <Card className="border-none shadow-md rounded-3xl overflow-hidden">
           <CardHeader className="flex flex-row items-center justify-between pb-4">
             <div>
-              <CardTitle className="text-2xl font-headline">Recent Inventory Activity</CardTitle>
-              <CardDescription>Real-time updates from your shelves</CardDescription>
+              <CardTitle className="text-2xl font-headline">Recent Activity</CardTitle>
+              <CardDescription>Real-time updates from your journey</CardDescription>
             </div>
-            <Link href="/inventory">
+            <Link href={userRole === 'store_owner' ? "/inventory" : (userRole === 'customer' ? "/orders" : "/donations")}>
               <Button variant="ghost" className="text-primary hover:text-primary/80 font-bold">
                 View All <ChevronRight className="ml-1 h-4 w-4" />
               </Button>
@@ -198,34 +277,38 @@ export default function DashboardPage() {
                 <div className="flex items-center justify-center py-10">
                   <Loader2 className="h-8 w-8 animate-spin text-primary" />
                 </div>
-              ) : recentProducts?.length === 0 ? (
+              ) : (userRole === 'store_owner' ? allProducts : (userRole === 'customer' ? allOrders : allClaimed))?.length === 0 ? (
                 <div className="py-10 text-center text-muted-foreground italic">
-                  No inventory activity recorded yet.
+                  No recent activity recorded yet.
                 </div>
               ) : (
-                recentProducts?.map((item) => {
-                  const status = getExpiryStatus(item.expiryDate)
+                (userRole === 'store_owner' ? allProducts?.slice(0, 5) : (userRole === 'customer' ? allOrders?.slice(0, 5) : allClaimed?.slice(0, 5)))?.map((item) => {
                   return (
                     <div key={item.id} className="flex items-center justify-between group p-4 hover:bg-secondary/10 rounded-2xl transition-all cursor-pointer">
                       <div className="flex items-center gap-4">
                         <div className={cn(
-                          "h-12 w-12 rounded-2xl flex items-center justify-center shadow-sm",
-                          status === 'near-expiry' ? "bg-warning/20 text-warning" : 
-                          status === 'fresh' ? "bg-primary/20 text-primary" : "bg-danger/20 text-danger"
+                          "h-12 w-12 rounded-2xl flex items-center justify-center shadow-sm bg-primary/20 text-primary"
                         )}>
-                          {status === 'near-expiry' ? <AlertTriangle className="h-6 w-6" /> : 
-                           status === 'fresh' ? <Package className="h-6 w-6" /> : <History className="h-6 w-6" />}
+                          {userRole === 'store_owner' ? <Package className="h-6 w-6" /> : 
+                           userRole === 'customer' ? <ShoppingBag className="h-6 w-6" /> : <Heart className="h-6 w-6" />}
                         </div>
                         <div>
-                          <p className="font-bold text-lg group-hover:text-primary transition-colors leading-tight">{item.name}</p>
-                          <p className="text-xs text-muted-foreground font-medium uppercase tracking-tighter">Expires {new Date(item.expiryDate).toLocaleDateString()}</p>
+                          <p className="font-bold text-lg group-hover:text-primary transition-colors leading-tight">
+                            {userRole === 'store_owner' ? item.name : (userRole === 'customer' ? item.productName : item.name)}
+                          </p>
+                          <p className="text-xs text-muted-foreground font-medium uppercase tracking-tighter">
+                            {userRole === 'store_owner' ? `Expires ${new Date(item.expiryDate).toLocaleDateString()}` : 
+                             `Updated ${new Date(item.updatedAt?.seconds * 1000 || item.createdAt?.seconds * 1000 || Date.now()).toLocaleDateString()}`}
+                          </p>
                         </div>
                       </div>
                       <div className="text-right">
                         <Badge variant="outline" className="font-black text-sm px-3 py-1 rounded-full border-primary/20">
-                          {item.quantity} units
+                          {userRole === 'store_owner' ? `${item.quantity} units` : (userRole === 'customer' ? `$${item.totalAmount?.toFixed(2)}` : 'Claimed')}
                         </Badge>
-                        <p className="text-[10px] font-bold text-muted-foreground mt-1 uppercase">Stock Level</p>
+                        <p className="text-[10px] font-bold text-muted-foreground mt-1 uppercase">
+                          {userRole === 'store_owner' ? 'Stock Level' : 'Status'}
+                        </p>
                       </div>
                     </div>
                   )
