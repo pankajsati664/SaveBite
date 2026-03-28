@@ -105,7 +105,7 @@ export default function SettingsPage() {
       <div className="max-w-4xl mx-auto space-y-8 animate-in fade-in duration-700">
         <div>
           <h1 className="text-4xl font-headline font-black text-foreground">Settings</h1>
-          <p className="text-muted-foreground text-lg italic">"Customize your SaveByte experience."</p>
+          <p className="text-muted-foreground text-lg italic">"Customize your SaveBite experience."</p>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">

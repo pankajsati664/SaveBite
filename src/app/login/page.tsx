@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useState, useEffect } from "react"
@@ -93,7 +94,7 @@ export default function LoginPage() {
           }))
         })
 
-        toast({ title: "Account created", description: "Your SaveByte account is ready." })
+        toast({ title: "Account created", description: "Your SaveBite account is ready." })
       })
       .catch((error: any) => {
         setLoading(false)
@@ -126,7 +127,7 @@ export default function LoginPage() {
         <div className="bg-primary p-2 rounded-xl">
           <Leaf className="h-8 w-8 text-primary-foreground" />
         </div>
-        <h1 className="text-3xl font-headline font-bold text-foreground">SaveByte</h1>
+        <h1 className="text-3xl font-headline font-bold text-foreground">SaveBite</h1>
       </div>
 
       <Card className="w-full max-w-md shadow-xl border-primary/10">
@@ -138,7 +139,7 @@ export default function LoginPage() {
             </TabsList>
             <CardTitle className="text-2xl">Manage Food Waste</CardTitle>
             <CardDescription>
-              Join SaveByte to track expiry dates and save food.
+              Join SaveBite to track expiry dates and save food.
             </CardDescription>
           </CardHeader>
 
@@ -246,7 +247,7 @@ export default function LoginPage() {
               Continue with Google
             </Button>
             <p className="text-xs text-center text-muted-foreground">
-              By continuing, you agree to SaveByte's Terms of Service and Privacy Policy.
+              By continuing, you agree to SaveBite's Terms of Service and Privacy Policy.
             </p>
           </CardFooter>
         </Tabs>

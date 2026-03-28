@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useState } from "react"
@@ -227,7 +228,7 @@ export default function InventoryPage() {
                 <DialogHeader className="space-y-4">
                   <DialogTitle className="text-3xl font-black tracking-tighter">Add to Inventory</DialogTitle>
                   <DialogDescription className="text-base font-medium italic leading-relaxed">
-                    Set your initial price and expiry date. SaveByte AI will automatically suggest markdowns as the date approaches.
+                    Set your initial price and expiry date. SaveBite AI will automatically suggest markdowns as the date approaches.
                   </DialogDescription>
                 </DialogHeader>
                 <form onSubmit={handleAddProduct} className="grid gap-8 py-6">
