@@ -18,22 +18,29 @@ import {
   ShoppingBag,
   ClipboardList,
   Users,
-  Sprout
+  Sprout,
+  Percent
 } from "lucide-react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
+import { Slider } from "@/components/ui/slider"
 import { cn } from "@/lib/utils"
-import { useUser, useFirestore, useCollection, useMemoFirebase, useDoc } from "@/firebase"
-import { collection, query, limit, orderBy, doc } from "firebase/firestore"
+import { useUser, useFirestore, useCollection, useMemoFirebase, useDoc, updateDocumentNonBlocking } from "@/firebase"
+import { collection, query, limit, orderBy, doc, serverTimestamp } from "firebase/firestore"
 import { getExpiryStatus } from "@/lib/utils/expiry"
+import { useToast } from "@/hooks/use-toast"
 import Link from "next/link"
 
 export default function DashboardPage() {
   const { user } = useUser()
   const firestore = useFirestore()
+  const { toast } = useToast()
+
+  const [quickDiscount, setQuickDiscount] = useState(30)
+  const [isApplying, setIsApplying] = useState(false)
 
   const userDocRef = useMemoFirebase(() => {
     if (!firestore || !user) return null
@@ -73,11 +80,50 @@ export default function DashboardPage() {
 
   const isLoading = isProductsLoading || isOrdersLoading || isClaimedLoading
 
+  const nearExpiryCount = allProducts?.filter(p => getExpiryStatus(p.expiryDate) === 'near-expiry').length || 0
+  const progressValue = allProducts?.length ? Math.min(100, (nearExpiryCount / allProducts.length) * 100) : 0
+
+  const handleQuickDiscount = () => {
+    if (!user || !firestore || !allProducts) return
+    setIsApplying(true)
+    
+    const nearExpiryItems = allProducts.filter(p => getExpiryStatus(p.expiryDate) === 'near-expiry')
+    
+    if (nearExpiryItems.length === 0) {
+      toast({ title: "No items at risk", description: "You have no near-expiry items to discount right now." })
+      setIsApplying(false)
+      return
+    }
+
+    nearExpiryItems.forEach(product => {
+      const newPrice = (product.initialPrice * (100 - quickDiscount)) / 100
+      const productRef = doc(firestore, "users", user.uid, "products", product.id)
+      const marketplaceRef = doc(firestore, "products_marketplace", product.id)
+      
+      const updateData = {
+        currentPrice: newPrice,
+        lastAIRecommendation: `Quick Discount ${quickDiscount}%`,
+        recommendedActionDate: new Date().toISOString(),
+        updatedAt: serverTimestamp(),
+        status: quickDiscount >= 100 ? 'AVAILABLE_FOR_DONATION' : 'AVAILABLE_FOR_SALE'
+      }
+
+      updateDocumentNonBlocking(productRef, updateData)
+      updateDocumentNonBlocking(marketplaceRef, updateData)
+    })
+
+    toast({
+      title: "Impact Applied!",
+      description: `Successfully applied a ${quickDiscount}% discount to ${nearExpiryItems.length} items.`,
+    })
+    setIsApplying(false)
+  }
+
   const getStats = () => {
     if (userRole === 'store_owner') {
       return [
         { label: "Inventory Items", value: allProducts?.length.toString() || "0", icon: Package, color: "bg-blue-500", trend: "+2%" },
-        { label: "Near Expiry", value: allProducts?.filter(p => getExpiryStatus(p.expiryDate) === 'near-expiry').length.toString() || "0", icon: AlertTriangle, color: "bg-warning", trend: "Alert" },
+        { label: "Near Expiry", value: nearExpiryCount.toString() || "0", icon: AlertTriangle, color: "bg-warning", trend: "Alert" },
         { label: "Expired", value: allProducts?.filter(p => getExpiryStatus(p.expiryDate) === 'expired').length.toString() || "0", icon: History, color: "bg-danger", trend: "-5%" },
         { label: "Impact Score", value: "94", icon: Heart, color: "bg-primary", trend: "+15%" },
       ]
@@ -98,9 +144,6 @@ export default function DashboardPage() {
       ]
     }
   }
-
-  const nearExpiryCount = allProducts?.filter(p => getExpiryStatus(p.expiryDate) === 'near-expiry').length || 0
-  const progressValue = allProducts?.length ? Math.min(100, (nearExpiryCount / allProducts.length) * 100) : 0
 
   return (
     <DashboardLayout>
@@ -216,7 +259,7 @@ export default function DashboardPage() {
                   </div>
                   <Progress value={progressValue} className="h-4 bg-secondary rounded-full shadow-inner" />
                   <p className="text-xs text-muted-foreground italic font-medium leading-relaxed">
-                    <span className="text-warning font-black not-italic">{nearExpiryCount} items</span> are expiring within 72 hours. AI recommends a <span className="text-primary font-black">50% markdown</span> for immediate rescue.
+                    <span className="text-warning font-black not-italic">{nearExpiryCount} items</span> are expiring within 72 hours.
                   </p>
                 </div>
               )}
@@ -254,6 +297,34 @@ export default function DashboardPage() {
                           Quick Donate Surplus
                         </Button>
                       </Link>
+
+                      {/* Quick Discount Tool */}
+                      {nearExpiryCount > 0 && (
+                        <div className="mt-4 pt-4 border-t border-primary/10 space-y-4">
+                          <div className="flex items-center justify-between">
+                            <h4 className="text-[10px] font-black uppercase tracking-widest text-primary/70">Quick Discount Tool</h4>
+                            <Badge variant="secondary" className="bg-primary/10 text-primary font-black">{quickDiscount}%</Badge>
+                          </div>
+                          <div className="px-2">
+                            <Slider 
+                              value={[quickDiscount]} 
+                              onValueChange={(vals) => setQuickDiscount(vals[0])} 
+                              max={95} 
+                              min={5}
+                              step={5} 
+                              className="py-2"
+                            />
+                          </div>
+                          <Button 
+                            onClick={handleQuickDiscount}
+                            disabled={isApplying}
+                            className="w-full h-12 rounded-xl bg-primary text-white font-black uppercase tracking-widest text-[10px] shadow-lg shadow-primary/20 transition-all hover:scale-[1.02]"
+                          >
+                            {isApplying ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Percent className="mr-3 h-4 w-4" />}
+                            Apply to {nearExpiryCount} Items
+                          </Button>
+                        </div>
+                      )}
                     </>
                   ) : (
                     <>
