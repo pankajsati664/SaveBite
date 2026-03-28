@@ -15,7 +15,8 @@ import {
   Loader2,
   CalendarDays,
   ShoppingBag,
-  ClipboardList
+  ClipboardList,
+  Users
 } from "lucide-react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -83,7 +84,7 @@ export default function DashboardPage() {
     } else if (userRole === 'customer') {
       return [
         { label: "Items Rescued", value: allOrders?.length.toString() || "0", icon: ShoppingBag, color: "bg-primary", trend: "+8%" },
-        { label: "Total Savings", value: `$${allOrders?.reduce((acc, curr) => acc + (curr.totalAmount || 0), 0).toFixed(2) || "0.00"}`, icon: TrendingUp, color: "bg-success", trend: "Great" },
+        { label: "Total Savings", value: `₹${allOrders?.reduce((acc, curr) => acc + (curr.totalAmount || 0), 0).toLocaleString('en-IN') || "0"}`, icon: TrendingUp, color: "bg-success", trend: "Great" },
         { label: "Active Orders", value: allOrders?.filter(o => o.status === 'Pending').length.toString() || "0", icon: Clock, color: "bg-blue-500", trend: "Active" },
         { label: "Food Points", value: "120", icon: Heart, color: "bg-accent", trend: "+10" },
       ]
@@ -156,7 +157,7 @@ export default function DashboardPage() {
               </CardTitle>
               <CardDescription>
                 {userRole === 'store_owner' ? 'Estimated food weight saved from landfill (kg)' : 
-                 userRole === 'customer' ? 'Money saved through surplus deals ($)' : 'Donations rescued (units)'} this week
+                 userRole === 'customer' ? 'Money saved through surplus deals (₹)' : 'Donations rescued (units)'} this week
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -168,7 +169,7 @@ export default function DashboardPage() {
                       style={{ height: `${val}%` }} 
                     >
                       <div className="absolute -top-8 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity bg-foreground text-background px-2 py-1 rounded text-[10px] font-bold">
-                        {val}{userRole === 'customer' ? '$' : 'kg'}
+                        {val}{userRole === 'customer' ? '₹' : 'kg'}
                       </div>
                     </div>
                     <span className="text-xs text-muted-foreground mt-3 font-bold uppercase tracking-tighter">
@@ -304,7 +305,7 @@ export default function DashboardPage() {
                       </div>
                       <div className="text-right">
                         <Badge variant="outline" className="font-black text-sm px-3 py-1 rounded-full border-primary/20">
-                          {userRole === 'store_owner' ? `${item.quantity} units` : (userRole === 'customer' ? `$${item.totalAmount?.toFixed(2)}` : 'Claimed')}
+                          {userRole === 'store_owner' ? `${item.quantity} units` : (userRole === 'customer' ? `₹${item.totalAmount?.toLocaleString('en-IN')}` : 'Claimed')}
                         </Badge>
                         <p className="text-[10px] font-bold text-muted-foreground mt-1 uppercase">
                           {userRole === 'store_owner' ? 'Stock Level' : 'Status'}

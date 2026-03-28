@@ -158,7 +158,7 @@ export default function InventoryPage() {
       setDocumentNonBlocking(marketplaceRef, { ...product, ...updateData }, { merge: true })
     }
 
-    toast({ title: "Discount Applied", description: `Updated price to $${newPrice.toFixed(2)}` })
+    toast({ title: "Discount Applied", description: `Updated price to ₹${newPrice.toFixed(2)}` })
   }
 
   const handleAddProduct = (e: React.FormEvent) => {
@@ -235,8 +235,8 @@ export default function InventoryPage() {
                     <Input id="name" required value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} placeholder="e.g. Organic Whole Milk" className="col-span-3" />
                   </div>
                   <div className="grid grid-cols-4 items-center gap-4">
-                    <Label htmlFor="price" className="text-right">Price ($)</Label>
-                    <Input id="price" required type="number" step="0.01" value={formData.price} onChange={e => setFormData({...formData, price: e.target.value})} placeholder="4.99" className="col-span-3" />
+                    <Label htmlFor="price" className="text-right">Price (₹)</Label>
+                    <Input id="price" required type="number" step="0.01" value={formData.price} onChange={e => setFormData({...formData, price: e.target.value})} placeholder="99.00" className="col-span-3" />
                   </div>
                   <div className="grid grid-cols-4 items-center gap-4">
                     <Label htmlFor="qty" className="text-right">Quantity</Label>
@@ -331,9 +331,9 @@ export default function InventoryPage() {
                         </TableCell>
                         <TableCell>
                           <div className="flex flex-col">
-                            <span className="font-bold text-primary">${(product.currentPrice || product.initialPrice).toFixed(2)}</span>
+                            <span className="font-bold text-primary">₹{(product.currentPrice || product.initialPrice).toFixed(2)}</span>
                             {product.currentPrice < product.initialPrice && (
-                              <span className="text-xs text-muted-foreground line-through">${product.initialPrice.toFixed(2)}</span>
+                              <span className="text-xs text-muted-foreground line-through">₹{product.initialPrice.toFixed(2)}</span>
                             )}
                           </div>
                         </TableCell>
@@ -401,7 +401,7 @@ export default function InventoryPage() {
                 
                 <div className="flex justify-between items-end">
                   <div>
-                    <p className="text-2xl font-black text-primary">${(product.currentPrice || product.initialPrice).toFixed(2)}</p>
+                    <p className="text-2xl font-black text-primary">₹{(product.currentPrice || product.initialPrice).toFixed(2)}</p>
                     <p className="text-sm text-muted-foreground">{product.quantity} in stock</p>
                   </div>
                   <div className="flex gap-1">

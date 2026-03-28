@@ -1,4 +1,3 @@
-
 'use server';
 /**
  * @fileOverview This file implements a Genkit flow to generate a marketing blurb for near-expiry products.
@@ -29,17 +28,17 @@ const generateMarketplaceBlurbPrompt = ai.definePrompt({
   name: 'generateMarketplaceBlurbPrompt',
   input: { schema: GenerateMarketplaceBlurbInputSchema },
   output: { schema: GenerateMarketplaceBlurbOutputSchema },
-  prompt: `You are a marketing specialist for SafeByte, a platform dedicated to reducing food waste. Your task is to write a concise and appealing marketing blurb for a product that is near its expiry date. The blurb should highlight its value, freshness, and the discount to encourage immediate customer purchase.
+  prompt: `You are a marketing specialist for SafeByte, a platform dedicated to reducing food waste in India. Your task is to write a concise and appealing marketing blurb for a product that is near its expiry date. The blurb should highlight its value, freshness, and the discount to encourage immediate customer purchase.
 
 Product Name: {{{productName}}}
-Original Price: $<!--originalPrice-->
+Original Price: ₹{{{originalPrice}}}
 Discount: {{{discountPercentage}}}% off
 Expiry Date: {{{expiryDate}}}
 {{#if productDescription}}
 Product Description: {{{productDescription}}}
 {{/if}}
 
-Craft a short, enticing blurb (max 2 sentences) that makes customers want to buy this fresh, discounted item. Emphasize saving money and enjoying quality food before it's too late.`,
+Craft a short, enticing blurb (max 2 sentences) that makes customers want to buy this fresh, discounted item. Emphasize saving money and enjoying quality food before it's too late. Use Indian cultural context if appropriate (e.g., mentioning "paisa vasool" or similar terms for great value).`,
 });
 
 const generateMarketplaceBlurbFlow = ai.defineFlow(

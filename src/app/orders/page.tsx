@@ -85,7 +85,7 @@ export default function OrdersPage() {
                   <div className="flex items-center justify-between p-4 bg-primary/5 rounded-2xl border border-primary/10">
                     <div>
                       <p className="text-[10px] text-muted-foreground font-black uppercase tracking-widest">Total Price</p>
-                      <p className="text-2xl font-black text-primary">${order.totalAmount?.toFixed(2)}</p>
+                      <p className="text-2xl font-black text-primary">₹{order.totalAmount?.toLocaleString('en-IN')}</p>
                     </div>
                     <PackageCheck className="h-10 w-10 text-primary/30" />
                   </div>

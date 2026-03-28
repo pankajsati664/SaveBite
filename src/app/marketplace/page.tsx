@@ -194,9 +194,9 @@ export default function MarketplacePage() {
 
                 <CardContent className="px-5 py-0">
                   <div className="flex items-baseline gap-2 mb-4">
-                    <span className="text-3xl font-black text-primary">${(product.currentPrice || product.initialPrice).toFixed(2)}</span>
+                    <span className="text-3xl font-black text-primary">₹{(product.currentPrice || product.initialPrice).toFixed(2)}</span>
                     {discount > 0 && (
-                      <span className="text-sm text-muted-foreground line-through">${product.initialPrice.toFixed(2)}</span>
+                      <span className="text-sm text-muted-foreground line-through">₹{product.initialPrice.toFixed(2)}</span>
                     )}
                   </div>
                   <div className="flex items-center gap-2 text-[11px] font-bold text-muted-foreground uppercase tracking-widest">
