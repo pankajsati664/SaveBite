@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useState } from "react"
@@ -29,6 +28,7 @@ import { getDaysRemaining } from "@/lib/utils/expiry"
 import { useFirestore, useCollection, useMemoFirebase, useUser, addDocumentNonBlocking, updateDocumentNonBlocking } from "@/firebase"
 import { collection, doc, serverTimestamp } from "firebase/firestore"
 import { cn } from "@/lib/utils"
+import { getPlaceholderByCategory } from "@/lib/placeholder-images"
 
 export default function MarketplacePage() {
   const [search, setSearch] = useState("")
@@ -68,7 +68,7 @@ export default function MarketplacePage() {
     const ordersRef = collection(firestore, "users", user.uid, "orders")
     addDocumentNonBlocking(ordersRef, orderData)
 
-    const newQty = product.quantity - 1
+    const newQty = (product.quantity || 1) - 1
     const marketplaceRef = doc(firestore, "products_marketplace", product.id)
     const ownerProductRef = doc(firestore, "users", product.ownerId, "products", product.id)
 
@@ -150,6 +150,7 @@ export default function MarketplacePage() {
           ) : filteredProducts.map((product, idx) => {
             const daysLeft = getDaysRemaining(product.expiryDate)
             const discount = product.initialPrice ? Math.round(((product.initialPrice - product.currentPrice) / product.initialPrice) * 100) : 0
+            const placeholder = getPlaceholderByCategory(product.category);
             
             return (
               <Card key={product.id} className={cn(
@@ -158,10 +159,10 @@ export default function MarketplacePage() {
               )}>
                 <div className="relative aspect-[5/4] overflow-hidden bg-secondary/30">
                   <img 
-                    src={product.imageUrl || `https://picsum.photos/seed/${product.id}/500/400`} 
+                    src={product.imageUrl || placeholder.imageUrl} 
                     alt={product.name} 
                     className="object-cover w-full h-full transition-transform duration-1000 group-hover:scale-110"
-                    data-ai-hint="fresh groceries"
+                    data-ai-hint={placeholder.imageHint}
                   />
                   
                   {discount > 0 && (
@@ -184,7 +185,7 @@ export default function MarketplacePage() {
                     <CardTitle className="text-2xl font-headline font-black line-clamp-1 group-hover:text-primary transition-colors leading-tight">{product.name}</CardTitle>
                     <div className="flex items-center gap-2 text-[10px] font-black text-primary uppercase tracking-[0.2em]">
                       <Store className="h-4 w-4" />
-                      Local Partner • {product.category}
+                      Local Partner • {product.category || 'General'}
                     </div>
                   </div>
                   {product.description ? (
@@ -205,7 +206,7 @@ export default function MarketplacePage() {
                   </div>
                   <div className="flex items-center gap-2 text-[10px] font-black text-muted-foreground uppercase tracking-[0.1em] opacity-70">
                     <CheckCircle2 className="h-4 w-4 text-success" />
-                    Verified SaveBite Deal • {product.quantity} In Stock
+                    Verified SaveBite Deal • {product.quantity || 0} In Stock
                   </div>
                 </CardContent>
 

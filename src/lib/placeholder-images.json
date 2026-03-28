@@ -2,33 +2,63 @@
   "placeholderImages": [
     {
       "id": "hero-bg",
-      "description": "Fresh grocery and organic food",
-      "imageUrl": "https://picsum.photos/seed/food1/1200/600",
+      "description": "Fresh grocery and organic food banner",
+      "imageUrl": "https://picsum.photos/seed/savebite-hero/1200/600",
       "imageHint": "organic groceries"
     },
     {
-      "id": "product-milk",
-      "description": "Fresh dairy milk",
-      "imageUrl": "https://picsum.photos/seed/milk/400/300",
-      "imageHint": "milk bottle"
+      "id": "dairy",
+      "description": "Fresh dairy products",
+      "imageUrl": "https://picsum.photos/seed/savebite-dairy/500/400",
+      "imageHint": "dairy milk"
     },
     {
-      "id": "product-bread",
-      "description": "Whole wheat bread",
-      "imageUrl": "https://picsum.photos/seed/bread/400/300",
+      "id": "produce",
+      "description": "Fresh vegetables and fruits",
+      "imageUrl": "https://picsum.photos/seed/savebite-produce/500/400",
+      "imageHint": "fresh vegetables"
+    },
+    {
+      "id": "bakery",
+      "description": "Artisan bread and pastries",
+      "imageUrl": "https://picsum.photos/seed/savebite-bakery/500/400",
       "imageHint": "fresh bread"
     },
     {
-      "id": "product-apples",
-      "description": "Organic red apples",
-      "imageUrl": "https://picsum.photos/seed/apples/400/300",
-      "imageHint": "red apples"
+      "id": "meat",
+      "description": "Fresh poultry and meat",
+      "imageUrl": "https://picsum.photos/seed/savebite-meat/500/400",
+      "imageHint": "raw meat"
     },
     {
-      "id": "product-chicken",
-      "description": "Raw chicken breast",
-      "imageUrl": "https://picsum.photos/seed/chicken/400/300",
-      "imageHint": "raw chicken"
+      "id": "pantry",
+      "description": "Grains and pantry staples",
+      "imageUrl": "https://picsum.photos/seed/savebite-pantry/500/400",
+      "imageHint": "pantry staples"
+    },
+    {
+      "id": "default-product",
+      "description": "Generic food package",
+      "imageUrl": "https://picsum.photos/seed/savebite-food/500/400",
+      "imageHint": "food package"
+    },
+    {
+      "id": "landing-store",
+      "description": "Store owner managing inventory",
+      "imageUrl": "https://picsum.photos/seed/savebite-store/600/400",
+      "imageHint": "grocery store"
+    },
+    {
+      "id": "landing-customer",
+      "description": "Happy customer with groceries",
+      "imageUrl": "https://picsum.photos/seed/savebite-customer/600/400",
+      "imageHint": "happy shopper"
+    },
+    {
+      "id": "landing-ngo",
+      "description": "NGO team distributing food",
+      "imageUrl": "https://picsum.photos/seed/savebite-ngo/600/400",
+      "imageHint": "charity food"
     }
   ]
 }

@@ -1,12 +1,17 @@
-
 "use client"
 
 import { useRouter } from "next/navigation"
 import { Leaf, ArrowRight, ShieldCheck, Heart, Zap, ShoppingCart, Users, Recycle } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { getPlaceholderById } from "@/lib/placeholder-images"
 
 export default function LandingPage() {
   const router = useRouter()
+
+  const heroImage = getPlaceholderById('hero-bg')
+  const storeImage = getPlaceholderById('landing-store')
+  const customerImage = getPlaceholderById('landing-customer')
+  const ngoImage = getPlaceholderById('landing-ngo')
 
   const features = [
     {
@@ -14,21 +19,24 @@ export default function LandingPage() {
       description: "Manage inventory, set smart AI-driven discounts, and easily list surplus for donation.",
       icon: Zap,
       color: "bg-blue-500",
-      image: "https://picsum.photos/seed/store1/400/300"
+      image: storeImage.imageUrl,
+      hint: storeImage.imageHint
     },
     {
       title: "Consumers",
       description: "Find amazing deals on high-quality food nearing its expiry date. Save up to 80% on groceries.",
       icon: ShoppingCart,
       color: "bg-primary",
-      image: "https://picsum.photos/seed/customer1/400/300"
+      image: customerImage.imageUrl,
+      hint: customerImage.imageHint
     },
     {
       title: "NGOs",
       description: "Access a verified stream of surplus food donations. Claim and manage pickups in real-time.",
       icon: Heart,
       color: "bg-danger",
-      image: "https://picsum.photos/seed/ngo1/400/300"
+      image: ngoImage.imageUrl,
+      hint: ngoImage.imageHint
     }
   ]
 
@@ -90,10 +98,10 @@ export default function LandingPage() {
           <div className="absolute -inset-8 bg-primary/20 rounded-[3rem] blur-[100px] opacity-50" />
           <div className="relative rounded-[3rem] p-4 bg-white/50 backdrop-blur-sm border-2 border-primary/5 shadow-2xl shadow-primary/10 overflow-hidden group">
             <img 
-              src="https://picsum.photos/seed/foodhero/1200/900" 
-              alt="Fresh Groceries" 
+              src={heroImage.imageUrl} 
+              alt={heroImage.description} 
               className="rounded-[2.5rem] shadow-inner object-cover aspect-[4/3] w-full transition-transform duration-1000 group-hover:scale-105"
-              data-ai-hint="fresh groceries"
+              data-ai-hint={heroImage.imageHint}
             />
             <div className="absolute inset-0 bg-gradient-to-t from-primary/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
           </div>
@@ -146,7 +154,7 @@ export default function LandingPage() {
                 <h3 className="text-3xl font-black mb-4 tracking-tight">{f.title}</h3>
                 <p className="text-muted-foreground text-lg leading-relaxed mb-8 font-medium">{f.description}</p>
                 <div className="aspect-video rounded-2xl overflow-hidden mb-6">
-                  <img src={f.image} alt={f.title} className="object-cover h-full w-full" />
+                  <img src={f.image} alt={f.title} className="object-cover h-full w-full" data-ai-hint={f.hint} />
                 </div>
                 <Button variant="ghost" className="p-0 font-black text-primary hover:bg-transparent group-hover:translate-x-2 transition-transform">
                   Explore {f.title} Tools <ArrowRight className="ml-2 h-5 w-5" />
