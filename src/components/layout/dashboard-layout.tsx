@@ -16,14 +16,15 @@ import {
   Bell,
   User,
   Search,
-  Loader2
+  Loader2,
+  ClipboardList
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Separator } from "@/components/ui/separator"
 import { cn } from "@/lib/utils"
 import { useUser, useFirestore, useAuth, useDoc, useMemoFirebase } from "@/firebase"
-import { doc, getDoc } from "firebase/firestore"
+import { doc } from "firebase/firestore"
 import { signOut } from "firebase/auth"
 
 interface NavItem {
@@ -37,8 +38,9 @@ const navItems: NavItem[] = [
   { title: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   { title: "Inventory", href: "/inventory", icon: Package, roles: ['store_owner', 'admin'] },
   { title: "Marketplace", href: "/marketplace", icon: ShoppingBag },
+  { title: "My Orders", href: "/orders", icon: ClipboardList, roles: ['customer', 'admin'] },
   { title: "Donations", href: "/donations", icon: HandHelping, roles: ['ngo', 'store_owner', 'admin'] },
-  { title: "Admin Panel", href: "/admin", icon: Settings, roles: ['admin'] },
+  { title: "Settings", href: "/settings", icon: Settings },
 ]
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -165,8 +167,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <input 
                 type="text" 
-                placeholder="Search products..." 
-                className="pl-9 pr-4 py-2 bg-secondary/50 rounded-full border-transparent focus:border-primary text-sm w-64 transition-all"
+                placeholder="Search deals..." 
+                className="pl-9 pr-4 py-2 bg-secondary/50 rounded-full border-transparent focus:border-primary text-sm w-64 transition-all outline-none"
               />
             </div>
           </div>
