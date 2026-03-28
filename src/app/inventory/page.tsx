@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useState } from "react"
@@ -209,7 +210,7 @@ export default function InventoryPage() {
       <div className="space-y-10 animate-in fade-in slide-in-from-bottom-6 duration-700">
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
           <div className="space-y-2">
-            <h1 className="text-4xl font-black font-headline tracking-tighter">Product Inventory</h1>
+            <h1 className="text-4xl font-black font-headline tracking-tighter text-foreground">Product Inventory</h1>
             <p className="text-muted-foreground text-lg font-medium italic">"Intelligent tracking for a waste-free store."</p>
           </div>
           <div className="flex items-center gap-3">
@@ -307,7 +308,7 @@ export default function InventoryPage() {
           <div className="bg-card rounded-[2.5rem] border border-secondary shadow-2xl overflow-hidden animate-in fade-in duration-1000">
             <Table>
               <TableHeader className="bg-secondary/20 h-20">
-                <TableRow className="hover:bg-transparent">
+                <TableRow className="hover:bg-transparent border-none">
                   <TableHead className="w-[300px] pl-10 font-black uppercase tracking-widest text-[10px] text-muted-foreground">Product Identity</TableHead>
                   <TableHead className="font-black uppercase tracking-widest text-[10px] text-muted-foreground">Pricing Strategy</TableHead>
                   <TableHead className="font-black uppercase tracking-widest text-[10px] text-muted-foreground">Stock Volume</TableHead>
@@ -374,7 +375,7 @@ export default function InventoryPage() {
                           </div>
                         </TableCell>
                         <TableCell>
-                          <Badge className={cn("flex w-fit items-center gap-2 px-4 py-2 rounded-xl font-black text-[10px] uppercase tracking-widest shadow-sm", getExpiryColorClass(status))}>
+                          <Badge className={cn("flex w-fit items-center gap-2 px-4 py-2 rounded-xl font-black text-[10px] uppercase tracking-widest shadow-sm border-none", getExpiryColorClass(status))}>
                             <div className="h-2 w-2 rounded-full bg-current animate-pulse" />
                             {status === 'expired' ? 'Expired' : 
                              status === 'near-expiry' ? `Expiring in ${daysLeft}d` : `Fresh • ${daysLeft}d`}
@@ -431,7 +432,8 @@ export default function InventoryPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
             {products?.map((product, idx) => {
               const status = getExpiryStatus(product.expiryDate)
-              const colorClass = getExpiryColorClass(status).split(' ')[0].replace('text-', 'bg-')
+              const statusColors = getExpiryColorClass(status).split(' ');
+              const colorClass = statusColors[0].replace('text-', 'bg-');
               
               return (
                 <div key={product.id} className={cn(
@@ -442,7 +444,7 @@ export default function InventoryPage() {
                   <div className="space-y-6">
                     <div>
                       <h3 className="font-black text-2xl tracking-tighter mb-2 group-hover:text-primary transition-colors">{product.name}</h3>
-                      <Badge className={cn("px-4 py-1.5 rounded-xl font-black text-[9px] uppercase tracking-widest shadow-sm", getExpiryColorClass(status))}>
+                      <Badge className={cn("px-4 py-1.5 rounded-xl font-black text-[9px] uppercase tracking-widest shadow-sm border-none", getExpiryColorClass(status))}>
                         {status === 'expired' ? 'Expired' : `Fresh • ${getDaysRemaining(product.expiryDate)} Days`}
                       </Badge>
                     </div>
@@ -474,7 +476,8 @@ export default function InventoryPage() {
                     </div>
                   </div>
                 </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>

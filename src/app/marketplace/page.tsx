@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useState } from "react"
@@ -5,13 +6,11 @@ import DashboardLayout from "@/components/layout/dashboard-layout"
 import { 
   ShoppingBag, 
   Search, 
-  Filter, 
   Clock, 
   CheckCircle2,
   AlertCircle,
   Loader2,
   Store,
-  Tag,
   Sparkles,
   ChevronRight
 } from "lucide-react"
@@ -20,7 +19,6 @@ import { Input } from "@/components/ui/input"
 import { 
   Card, 
   CardContent, 
-  CardDescription, 
   CardFooter, 
   CardHeader, 
   CardTitle 
@@ -111,11 +109,6 @@ export default function MarketplacePage() {
             <p className="text-xl text-primary-foreground/90 max-w-xl font-medium leading-relaxed italic opacity-90">
               Discover premium surplus food from your favorite local stores at up to 90% off. Fresh items, incredible impact.
             </p>
-            <div className="flex gap-4 pt-4">
-              <Button size="lg" className="bg-white text-primary hover:bg-white/90 rounded-2xl h-14 px-8 font-black text-lg shadow-xl hover:-translate-y-1 transition-all">
-                Learn About Impact
-              </Button>
-            </div>
           </div>
           <ShoppingBag className="absolute -bottom-16 -right-16 h-80 w-80 text-white/10 rotate-12 group-hover:rotate-0 transition-transform duration-1000" />
         </div>
@@ -170,7 +163,6 @@ export default function MarketplacePage() {
                     className="object-cover w-full h-full transition-transform duration-1000 group-hover:scale-110"
                     data-ai-hint="fresh groceries"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
                   
                   {discount > 0 && (
                     <div className="absolute top-4 left-4">
@@ -232,17 +224,11 @@ export default function MarketplacePage() {
 
         {!isLoading && filteredProducts.length === 0 && (
           <div className="flex flex-col items-center justify-center py-32 text-center bg-secondary/10 rounded-[3rem] border-2 border-dashed border-primary/20 animate-in zoom-in duration-500">
-            <div className="bg-card p-10 rounded-full shadow-2xl mb-8 relative">
-              <ShoppingBag className="h-16 w-16 text-muted-foreground opacity-50" />
-              <AlertCircle className="absolute -top-2 -right-2 h-8 w-8 text-primary animate-bounce" />
-            </div>
-            <h3 className="text-3xl font-black mb-3">No matching deals found</h3>
+             <AlertCircle className="h-16 w-16 text-muted-foreground opacity-50 mb-8" />
+            <h3 className="text-3xl font-black mb-3 text-foreground">No matching deals found</h3>
             <p className="text-muted-foreground max-w-md mx-auto font-medium text-lg leading-relaxed">
               New surplus items are added throughout the day. Try broadening your search or check back in a few hours!
             </p>
-            <Button variant="outline" className="mt-10 rounded-2xl h-14 px-10 font-black uppercase tracking-widest text-xs border-primary/20 hover:bg-primary/5 transition-all" onClick={() => { setSearch(""); setActiveCategory("All"); }}>
-              Reset Filters
-            </Button>
           </div>
         )}
       </div>
