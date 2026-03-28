@@ -6,7 +6,6 @@ import {
   ShoppingBag, 
   Search, 
   Filter, 
-  Tag, 
   Clock, 
   CheckCircle2,
   AlertCircle
@@ -24,19 +23,20 @@ import {
 import { Badge } from "@/components/ui/badge"
 import { useToast } from "@/hooks/use-toast"
 import { getDaysRemaining } from "@/lib/utils/expiry"
-
-const mockMarketplace = [
-  { id: "1", name: "Artisan Baguette", originalPrice: 3.50, discountPrice: 1.50, discount: 57, expiryDate: "2024-05-18", store: "Downtown Bakery", image: "https://picsum.photos/seed/bread1/400/300" },
-  { id: "2", name: "Free-range Eggs (Dozen)", originalPrice: 6.00, discountPrice: 4.00, discount: 33, expiryDate: "2024-05-19", store: "Fresh Markets", image: "https://picsum.photos/seed/eggs/400/300" },
-  { id: "3", name: "Oat Milk (1L)", originalPrice: 5.20, discountPrice: 2.50, discount: 52, expiryDate: "2024-05-18", store: "Green Grocery", image: "https://picsum.photos/seed/milk2/400/300" },
-  { id: "4", name: "Mixed Berries (250g)", originalPrice: 8.50, discountPrice: 3.00, discount: 65, expiryDate: "2024-05-19", store: "Berry Farms", image: "https://picsum.photos/seed/berries/400/300" },
-  { id: "5", name: "Roast Chicken", originalPrice: 15.00, discountPrice: 7.50, discount: 50, expiryDate: "2024-05-18", store: "QuickMart", image: "https://picsum.photos/seed/roast/400/300" },
-  { id: "6", name: "Avocados (3pk)", originalPrice: 4.50, discountPrice: 2.00, discount: 55, expiryDate: "2024-05-20", store: "Market Hall", image: "https://picsum.photos/seed/avocado/400/300" },
-]
+import { useFirestore, useCollection, useMemoFirebase } from "@/firebase"
+import { collection, query, where } from "firebase/firestore"
 
 export default function MarketplacePage() {
   const [search, setSearch] = useState("")
   const { toast } = useToast()
+  const firestore = useFirestore()
+
+  const marketplaceQuery = useMemoFirebase(() => {
+    if (!firestore) return null
+    return collection(firestore, "products_marketplace")
+  }, [firestore])
+
+  const { data: products, isLoading } = useCollection(marketplaceQuery)
 
   const handleBuy = (productName: string) => {
     toast({
@@ -44,6 +44,10 @@ export default function MarketplacePage() {
       description: `You've successfully reserved ${productName}. Visit store for pickup.`,
     })
   }
+
+  const filteredProducts = products?.filter(p => 
+    p.name.toLowerCase().includes(search.toLowerCase())
+  ) || []
 
   return (
     <DashboardLayout>
@@ -57,7 +61,7 @@ export default function MarketplacePage() {
           </div>
           <div className="flex gap-2">
             <Badge variant="outline" className="px-4 py-2 border-primary/20 text-primary bg-primary/5 rounded-full font-bold">
-              342 kg Food Saved
+              Real-time Marketplace
             </Badge>
           </div>
         </div>
@@ -79,25 +83,33 @@ export default function MarketplacePage() {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {mockMarketplace.map((product) => {
+          {isLoading ? (
+             Array.from({ length: 4 }).map((_, i) => (
+                <div key={i} className="h-[400px] rounded-xl bg-secondary/20 animate-pulse" />
+             ))
+          ) : filteredProducts.map((product) => {
             const daysLeft = getDaysRemaining(product.expiryDate)
+            const discount = product.initialPrice ? Math.round(((product.initialPrice - product.currentPrice) / product.initialPrice) * 100) : 0
+            
             return (
               <Card key={product.id} className="overflow-hidden border-none shadow-md hover:shadow-xl transition-all duration-300 group flex flex-col">
-                <div className="relative aspect-[4/3] overflow-hidden">
+                <div className="relative aspect-[4/3] overflow-hidden bg-secondary/30">
                   <img 
-                    src={product.image} 
+                    src={product.imageUrl || `https://picsum.photos/seed/${product.id}/400/300`} 
                     alt={product.name} 
                     className="object-cover w-full h-full transition-transform duration-500 group-hover:scale-110"
                   />
-                  <div className="absolute top-3 left-3">
-                    <Badge className="bg-danger text-white border-none font-bold text-sm px-3 py-1 shadow-lg">
-                      {product.discount}% OFF
-                    </Badge>
-                  </div>
+                  {discount > 0 && (
+                    <div className="absolute top-3 left-3">
+                      <Badge className="bg-danger text-white border-none font-bold text-sm px-3 py-1 shadow-lg">
+                        {discount}% OFF
+                      </Badge>
+                    </div>
+                  )}
                   <div className="absolute bottom-3 right-3">
                     <Badge variant="secondary" className="bg-white/90 backdrop-blur-sm text-foreground flex items-center gap-1 shadow-sm">
                       <Clock className="h-3 w-3" />
-                      {daysLeft === 0 ? "Ends Today" : `Expires in ${daysLeft}d`}
+                      {daysLeft <= 0 ? "Ends Today" : `Expires in ${daysLeft}d`}
                     </Badge>
                   </div>
                 </div>
@@ -108,7 +120,7 @@ export default function MarketplacePage() {
                       <CardTitle className="text-lg line-clamp-1 group-hover:text-primary transition-colors">{product.name}</CardTitle>
                       <CardDescription className="text-xs font-medium flex items-center mt-1">
                         <ShoppingBag className="h-3 w-3 mr-1" />
-                        {product.store}
+                        Available for Sale
                       </CardDescription>
                     </div>
                   </div>
@@ -116,12 +128,14 @@ export default function MarketplacePage() {
 
                 <CardContent className="px-4 py-0">
                   <div className="flex items-baseline gap-2 mb-4">
-                    <span className="text-2xl font-bold text-primary">${product.discountPrice.toFixed(2)}</span>
-                    <span className="text-sm text-muted-foreground line-through">${product.originalPrice.toFixed(2)}</span>
+                    <span className="text-2xl font-bold text-primary">${product.currentPrice?.toFixed(2) || product.initialPrice?.toFixed(2)}</span>
+                    {discount > 0 && (
+                      <span className="text-sm text-muted-foreground line-through">${product.initialPrice.toFixed(2)}</span>
+                    )}
                   </div>
                   <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
                     <CheckCircle2 className="h-3 w-3 text-success" />
-                    Verified Fresh
+                    Verified Listing
                   </div>
                 </CardContent>
 
@@ -130,7 +144,7 @@ export default function MarketplacePage() {
                     className="w-full bg-primary hover:bg-primary/90 text-white rounded-xl shadow-lg shadow-primary/20"
                     onClick={() => handleBuy(product.name)}
                   >
-                    Reserver Deal
+                    Reserve Deal
                   </Button>
                 </CardFooter>
               </Card>
@@ -138,7 +152,7 @@ export default function MarketplacePage() {
           })}
         </div>
 
-        {mockMarketplace.length === 0 && (
+        {!isLoading && filteredProducts.length === 0 && (
           <div className="flex flex-col items-center justify-center py-20 text-center bg-secondary/20 rounded-3xl border-2 border-dashed border-primary/20">
             <AlertCircle className="h-16 w-16 text-muted-foreground mb-4" />
             <h3 className="text-xl font-bold">No deals found</h3>

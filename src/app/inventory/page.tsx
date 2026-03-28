@@ -6,12 +6,9 @@ import {
   Plus, 
   Search, 
   Filter, 
-  MoreVertical, 
   Edit2, 
   Trash2, 
   Sparkles, 
-  HeartHandshake, 
-  Tag,
   Barcode
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -36,29 +33,48 @@ import {
 import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
 import { useToast } from "@/hooks/use-toast"
+import { cn } from "@/lib/utils"
 import { getExpiryStatus, getExpiryColorClass, getDaysRemaining } from "@/lib/utils/expiry"
 import { generateDiscountSuggestion } from "@/ai/flows/generate-discount-suggestion-flow"
-
-const mockInventory = [
-  { id: "1", name: "Organic Whole Milk", price: 4.50, quantity: 12, expiryDate: "2025-05-20", category: "Dairy" },
-  { id: "2", name: "French Baguette", price: 2.99, quantity: 25, expiryDate: "2024-05-18", category: "Bakery" },
-  { id: "3", name: "Red Grapes (500g)", price: 3.50, quantity: 10, expiryDate: "2025-05-25", category: "Fruit" },
-  { id: "4", name: "Chicken Breast", price: 12.00, quantity: 6, expiryDate: "2024-05-19", category: "Meat" },
-  { id: "5", name: "Greek Yogurt", price: 5.50, quantity: 15, expiryDate: "2025-05-22", category: "Dairy" },
-]
+import { 
+  useUser, 
+  useFirestore, 
+  useCollection, 
+  useMemoFirebase, 
+  addDocumentNonBlocking, 
+  deleteDocumentNonBlocking, 
+  setDocumentNonBlocking 
+} from "@/firebase"
+import { collection, doc, serverTimestamp } from "firebase/firestore"
 
 export default function InventoryPage() {
-  const [products, setProducts] = useState(mockInventory)
+  const { user } = useUser()
+  const firestore = useFirestore()
+  const { toast } = useToast()
+  
   const [isAddOpen, setIsAddOpen] = useState(false)
   const [isAiLoading, setIsAiLoading] = useState<string | null>(null)
-  const { toast } = useToast()
+  const [formData, setFormData] = useState({
+    name: "",
+    price: "",
+    quantity: "",
+    expiryDate: "",
+    category: "General"
+  })
 
-  const handleAiSuggestion = async (product: typeof mockInventory[0]) => {
+  const productsQuery = useMemoFirebase(() => {
+    if (!firestore || !user) return null
+    return collection(firestore, "users", user.uid, "products")
+  }, [firestore, user])
+
+  const { data: products, isLoading } = useCollection(productsQuery)
+
+  const handleAiSuggestion = async (product: any) => {
     setIsAiLoading(product.id)
     try {
       const suggestion = await generateDiscountSuggestion({
         productName: product.name,
-        originalPrice: product.price,
+        originalPrice: product.currentPrice || product.initialPrice,
         expiryDate: product.expiryDate
       })
       
@@ -66,7 +82,12 @@ export default function InventoryPage() {
         title: `AI Suggestion for ${product.name}`,
         description: `Suggested ${suggestion.suggestedDiscountPercentage}% discount. Reasoning: ${suggestion.reasoning}`,
         action: (
-          <Button variant="outline" size="sm" className="bg-primary text-white hover:bg-primary/90">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="bg-primary text-white hover:bg-primary/90"
+            onClick={() => handleApplyDiscount(product, suggestion.suggestedDiscountPercentage)}
+          >
             Apply
           </Button>
         )
@@ -76,6 +97,53 @@ export default function InventoryPage() {
     } finally {
       setIsAiLoading(null)
     }
+  }
+
+  const handleApplyDiscount = (product: any, discount: number) => {
+    if (!firestore || !user) return
+    const newPrice = (product.initialPrice * (100 - discount)) / 100
+    const productRef = doc(firestore, "users", user.uid, "products", product.id)
+    
+    setDocumentNonBlocking(productRef, {
+      currentPrice: newPrice,
+      lastAIRecommendation: `Discount ${discount}%`,
+      recommendedActionDate: new Date().toISOString(),
+      updatedAt: serverTimestamp()
+    }, { merge: true })
+
+    toast({ title: "Discount Applied", description: `Updated price to $${newPrice.toFixed(2)}` })
+  }
+
+  const handleAddProduct = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!firestore || !user) return
+
+    const productData = {
+      name: formData.name,
+      initialPrice: parseFloat(formData.price),
+      currentPrice: parseFloat(formData.price),
+      quantity: parseInt(formData.quantity),
+      expiryDate: formData.expiryDate,
+      category: formData.category,
+      ownerId: user.uid,
+      status: 'AVAILABLE_FOR_SALE',
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp()
+    }
+
+    const colRef = collection(firestore, "users", user.uid, "products")
+    addDocumentNonBlocking(colRef, productData)
+
+    toast({ title: "Product added", description: "Successfully added to your inventory." })
+    setIsAddOpen(false)
+    setFormData({ name: "", price: "", quantity: "", expiryDate: "", category: "General" })
+  }
+
+  const handleDelete = (productId: string) => {
+    if (!firestore || !user) return
+    const productRef = doc(firestore, "users", user.uid, "products", productId)
+    deleteDocumentNonBlocking(productRef)
+    toast({ title: "Product deleted" })
   }
 
   return (
@@ -105,30 +173,27 @@ export default function InventoryPage() {
                     Enter product details. Expiry tracking will start immediately.
                   </DialogDescription>
                 </DialogHeader>
-                <div className="grid gap-4 py-4">
+                <form onSubmit={handleAddProduct} className="grid gap-4 py-4">
                   <div className="grid grid-cols-4 items-center gap-4">
                     <Label htmlFor="name" className="text-right">Name</Label>
-                    <Input id="name" placeholder="Milk" className="col-span-3" />
+                    <Input id="name" required value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} placeholder="Milk" className="col-span-3" />
                   </div>
                   <div className="grid grid-cols-4 items-center gap-4">
                     <Label htmlFor="price" className="text-right">Price</Label>
-                    <Input id="price" type="number" placeholder="4.99" className="col-span-3" />
+                    <Input id="price" required type="number" step="0.01" value={formData.price} onChange={e => setFormData({...formData, price: e.target.value})} placeholder="4.99" className="col-span-3" />
                   </div>
                   <div className="grid grid-cols-4 items-center gap-4">
                     <Label htmlFor="qty" className="text-right">Quantity</Label>
-                    <Input id="qty" type="number" placeholder="10" className="col-span-3" />
+                    <Input id="qty" required type="number" value={formData.quantity} onChange={e => setFormData({...formData, quantity: e.target.value})} placeholder="10" className="col-span-3" />
                   </div>
                   <div className="grid grid-cols-4 items-center gap-4">
                     <Label htmlFor="expiry" className="text-right">Expiry</Label>
-                    <Input id="expiry" type="date" className="col-span-3" />
+                    <Input id="expiry" required type="date" value={formData.expiryDate} onChange={e => setFormData({...formData, expiryDate: e.target.value})} className="col-span-3" />
                   </div>
-                </div>
+                </form>
                 <DialogFooter>
                   <Button variant="outline" onClick={() => setIsAddOpen(false)}>Cancel</Button>
-                  <Button type="submit" className="bg-primary hover:bg-primary/90" onClick={() => {
-                    toast({ title: "Product added", description: "Successfully added to your inventory." })
-                    setIsAddOpen(false)
-                  }}>Save Product</Button>
+                  <Button type="submit" className="bg-primary hover:bg-primary/90" onClick={handleAddProduct}>Save Product</Button>
                 </DialogFooter>
               </DialogContent>
             </Dialog>
@@ -146,7 +211,7 @@ export default function InventoryPage() {
               Filter
             </Button>
             <Badge variant="secondary" className="px-3 py-1 font-medium">
-              {products.length} Products Total
+              {products?.length || 0} Products Total
             </Badge>
           </div>
         </div>
@@ -164,62 +229,73 @@ export default function InventoryPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {products.map((product) => {
-                const status = getExpiryStatus(product.expiryDate)
-                const daysLeft = getDaysRemaining(product.expiryDate)
-                
-                return (
-                  <TableRow key={product.id} className="group hover:bg-secondary/10 transition-colors">
-                    <TableCell className="font-medium">
-                      <div className="flex flex-col">
-                        <span>{product.name}</span>
-                        <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-bold">ID: {product.id}</span>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="outline" className="font-normal border-primary/20 bg-primary/5 text-primary">
-                        {product.category}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>${product.price.toFixed(2)}</TableCell>
-                    <TableCell>{product.quantity}</TableCell>
-                    <TableCell>
-                      <Badge className={cn("flex w-fit items-center gap-1.5", getExpiryColorClass(status))}>
-                        <div className="h-1.5 w-1.5 rounded-full bg-current" />
-                        {status === 'expired' ? 'Expired' : 
-                         status === 'near-expiry' ? `Expiring soon (${daysLeft}d)` : `Fresh (${daysLeft}d)`}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex items-center justify-end gap-1">
-                        <Button 
-                          variant="ghost" 
-                          size="icon" 
-                          className="h-8 w-8 text-primary hover:text-primary hover:bg-primary/10"
-                          onClick={() => handleAiSuggestion(product)}
-                          disabled={isAiLoading === product.id}
-                        >
-                          <Sparkles className={cn("h-4 w-4", isAiLoading === product.id && "animate-spin")} />
-                        </Button>
-                        <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground">
-                          <Edit2 className="h-4 w-4" />
-                        </Button>
-                        <Button variant="ghost" size="icon" className="h-8 w-8 text-danger hover:text-danger hover:bg-danger/10">
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                )
-              })}
+              {isLoading ? (
+                <TableRow>
+                  <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">Loading products...</TableCell>
+                </TableRow>
+              ) : products?.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">No products in inventory.</TableCell>
+                </TableRow>
+              ) : (
+                products?.map((product) => {
+                  const status = getExpiryStatus(product.expiryDate)
+                  const daysLeft = getDaysRemaining(product.expiryDate)
+                  
+                  return (
+                    <TableRow key={product.id} className="group hover:bg-secondary/10 transition-colors">
+                      <TableCell className="font-medium">
+                        <div className="flex flex-col">
+                          <span>{product.name}</span>
+                          <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-bold">ID: {product.id.slice(0, 8)}</span>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="outline" className="font-normal border-primary/20 bg-primary/5 text-primary">
+                          {product.category}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>${(product.currentPrice || product.initialPrice).toFixed(2)}</TableCell>
+                      <TableCell>{product.quantity}</TableCell>
+                      <TableCell>
+                        <Badge className={cn("flex w-fit items-center gap-1.5", getExpiryColorClass(status))}>
+                          <div className="h-1.5 w-1.5 rounded-full bg-current" />
+                          {status === 'expired' ? 'Expired' : 
+                           status === 'near-expiry' ? `Expiring soon (${daysLeft}d)` : `Fresh (${daysLeft}d)`}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex items-center justify-end gap-1">
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            className="h-8 w-8 text-primary hover:text-primary hover:bg-primary/10"
+                            onClick={() => handleAiSuggestion(product)}
+                            disabled={isAiLoading === product.id}
+                          >
+                            <Sparkles className={cn("h-4 w-4", isAiLoading === product.id && "animate-spin")} />
+                          </Button>
+                          <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground">
+                            <Edit2 className="h-4 w-4" />
+                          </Button>
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            className="h-8 w-8 text-danger hover:text-danger hover:bg-danger/10"
+                            onClick={() => handleDelete(product.id)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  )
+                })
+              )}
             </TableBody>
           </Table>
         </div>
       </div>
     </DashboardLayout>
   )
-}
-
-function cn(...inputs: any[]) {
-  return inputs.filter(Boolean).join(' ');
 }

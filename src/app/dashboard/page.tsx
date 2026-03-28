@@ -18,34 +18,40 @@ import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
-
-const stats = [
-  { label: "Total Products", value: "154", icon: Package, color: "bg-blue-500", trend: "+12%" },
-  { label: "Near Expiry", value: "24", icon: AlertTriangle, color: "bg-warning", trend: "+2" },
-  { label: "Expired", value: "5", icon: History, color: "bg-danger", trend: "-3" },
-  { label: "Donations Made", value: "89", icon: Heart, color: "bg-primary", trend: "+15%" },
-]
-
-const recentActivity = [
-  { id: 1, title: "Whole Wheat Bread", status: "near-expiry", date: "Expiring in 2 days", amount: "12 units" },
-  { id: 2, title: "Organic Milk", status: "donated", date: "Donated 3 hours ago", amount: "5 units" },
-  { id: 3, title: "Red Apples", status: "expired", date: "Expired yesterday", amount: "8 units" },
-]
+import { cn } from "@/lib/utils"
+import { useUser, useFirestore, useCollection, useMemoFirebase } from "@/firebase"
+import { collection, query, limit, orderBy } from "firebase/firestore"
+import { getExpiryStatus } from "@/lib/utils/expiry"
 
 export default function DashboardPage() {
-  const [mounted, setMounted] = useState(false)
+  const { user } = useUser()
+  const firestore = useFirestore()
 
-  useEffect(() => {
-    setMounted(true)
-  }, [])
+  const productsQuery = useMemoFirebase(() => {
+    if (!firestore || !user) return null
+    return query(
+      collection(firestore, "users", user.uid, "products"),
+      orderBy("updatedAt", "desc"),
+      limit(5)
+    )
+  }, [firestore, user])
 
-  if (!mounted) return null
+  const { data: recentProducts, isLoading } = useCollection(productsQuery)
+
+  const stats = [
+    { label: "Inventory Items", value: recentProducts?.length.toString() || "0", icon: Package, color: "bg-blue-500", trend: "+0%" },
+    { label: "Near Expiry", value: recentProducts?.filter(p => getExpiryStatus(p.expiryDate) === 'near-expiry').length.toString() || "0", icon: AlertTriangle, color: "bg-warning", trend: "0" },
+    { label: "Expired", value: recentProducts?.filter(p => getExpiryStatus(p.expiryDate) === 'expired').length.toString() || "0", icon: History, color: "bg-danger", trend: "0" },
+    { label: "Donations Made", value: "0", icon: Heart, color: "bg-primary", trend: "+0%" },
+  ]
 
   return (
     <DashboardLayout>
       <div className="space-y-8 animate-in fade-in duration-500">
         <div>
-          <h1 className="text-3xl font-headline font-bold text-foreground">Good Morning, Fresh Markets!</h1>
+          <h1 className="text-3xl font-headline font-bold text-foreground">
+            Welcome back, {user?.displayName || 'User'}!
+          </h1>
           <p className="text-muted-foreground">Here's what's happening with your inventory today.</p>
         </div>
 
@@ -76,7 +82,7 @@ export default function DashboardPage() {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Main Chart / Waste Savings */}
+          {/* Main Chart Placeholder */}
           <Card className="lg:col-span-2">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -102,7 +108,7 @@ export default function DashboardPage() {
             </CardContent>
           </Card>
 
-          {/* Urgent Alerts / Expiry Progress */}
+          {/* Urgent Alerts */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -115,16 +121,9 @@ export default function DashboardPage() {
               <div className="space-y-2">
                 <div className="flex justify-between text-sm">
                   <span>Expiring Today</span>
-                  <span className="font-bold">12 units</span>
+                  <span className="font-bold">{recentProducts?.filter(p => getExpiryStatus(p.expiryDate) === 'near-expiry').length || 0} units</span>
                 </div>
                 <Progress value={85} className="h-2 bg-secondary" />
-              </div>
-              <div className="space-y-2">
-                <div className="flex justify-between text-sm">
-                  <span>Expiring in 3 Days</span>
-                  <span className="font-bold">45 units</span>
-                </div>
-                <Progress value={45} className="h-2 bg-secondary" />
               </div>
 
               <Separator />
@@ -157,35 +156,40 @@ export default function DashboardPage() {
           </CardHeader>
           <CardContent>
             <div className="space-y-6">
-              {recentActivity.map((item) => (
-                <div key={item.id} className="flex items-center justify-between group">
-                  <div className="flex items-center gap-4">
-                    <div className={cn(
-                      "h-10 w-10 rounded-full flex items-center justify-center",
-                      item.status === 'near-expiry' ? "bg-warning/20 text-warning" : 
-                      item.status === 'donated' ? "bg-primary/20 text-primary" : "bg-danger/20 text-danger"
-                    )}>
-                      {item.status === 'near-expiry' ? <AlertTriangle className="h-5 w-5" /> : 
-                       item.status === 'donated' ? <Heart className="h-5 w-5" /> : <History className="h-5 w-5" />}
+              {isLoading ? (
+                <p className="text-sm text-muted-foreground">Loading activity...</p>
+              ) : recentProducts?.length === 0 ? (
+                <p className="text-sm text-muted-foreground">No recent activity.</p>
+              ) : (
+                recentProducts?.map((item) => {
+                  const status = getExpiryStatus(item.expiryDate)
+                  return (
+                    <div key={item.id} className="flex items-center justify-between group">
+                      <div className="flex items-center gap-4">
+                        <div className={cn(
+                          "h-10 w-10 rounded-full flex items-center justify-center",
+                          status === 'near-expiry' ? "bg-warning/20 text-warning" : 
+                          status === 'fresh' ? "bg-primary/20 text-primary" : "bg-danger/20 text-danger"
+                        )}>
+                          {status === 'near-expiry' ? <AlertTriangle className="h-5 w-5" /> : 
+                           status === 'fresh' ? <Package className="h-5 w-5" /> : <History className="h-5 w-5" />}
+                        </div>
+                        <div>
+                          <p className="font-medium text-sm group-hover:text-primary transition-colors">{item.name}</p>
+                          <p className="text-xs text-muted-foreground">Expires {item.expiryDate}</p>
+                        </div>
+                      </div>
+                      <Badge variant="outline" className="font-medium">
+                        {item.quantity} units
+                      </Badge>
                     </div>
-                    <div>
-                      <p className="font-medium text-sm group-hover:text-primary transition-colors">{item.title}</p>
-                      <p className="text-xs text-muted-foreground">{item.date}</p>
-                    </div>
-                  </div>
-                  <Badge variant="outline" className="font-medium">
-                    {item.amount}
-                  </Badge>
-                </div>
-              ))}
+                  )
+                })
+              )}
             </div>
           </CardContent>
         </Card>
       </div>
     </DashboardLayout>
   )
-}
-
-function cn(...inputs: any[]) {
-  return inputs.filter(Boolean).join(' ');
 }
