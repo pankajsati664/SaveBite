@@ -31,7 +31,7 @@ import { signOut } from "firebase/auth"
 import { useRouter } from "next/navigation"
 
 export default function SettingsPage() {
-  const { user } = useUser()
+  const { user, isUserLoading: isAuthLoading } = useUser()
   const firestore = useFirestore()
   const { toast } = useToast()
   const router = useRouter()
@@ -42,7 +42,7 @@ export default function SettingsPage() {
     return doc(firestore, "users", user.uid)
   }, [firestore, user])
 
-  const { data: userProfile, isLoading } = useDoc(userDocRef)
+  const { data: userProfile, isLoading: isProfileLoading } = useDoc(userDocRef)
 
   const [formData, setFormData] = useState({
     name: "",
@@ -71,6 +71,7 @@ export default function SettingsPage() {
       updatedAt: serverTimestamp()
     })
     
+    // Simulate a brief delay for UI feedback
     setTimeout(() => {
       setIsSaving(false)
       toast({ title: "Profile updated", description: "Your changes have been saved successfully." })
@@ -83,7 +84,7 @@ export default function SettingsPage() {
     }
   }
 
-  if (isLoading) {
+  if (isAuthLoading || isProfileLoading) {
     return (
       <DashboardLayout>
         <div className="flex items-center justify-center h-full">
@@ -110,8 +111,8 @@ export default function SettingsPage() {
                   <AvatarImage src={user?.photoURL || `https://picsum.photos/seed/${user?.uid}/100/100`} />
                   <AvatarFallback className="text-2xl"><User /></AvatarFallback>
                 </Avatar>
-                <CardTitle className="text-xl">{userProfile?.name || user?.email}</CardTitle>
-                <Badge className="mt-2 capitalize">{userProfile?.role?.replace('_', ' ') || 'User'}</Badge>
+                <CardTitle className="text-xl truncate px-4">{userProfile?.name || user?.email}</CardTitle>
+                <Badge className="mt-2 capitalize" variant="secondary">{userProfile?.role?.replace('_', ' ') || 'User'}</Badge>
               </CardHeader>
               <CardContent className="pt-6">
                 <div className="space-y-4">
