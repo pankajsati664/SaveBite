@@ -15,12 +15,16 @@ import {
   X,
   Bell,
   User,
-  Search
+  Search,
+  Loader2
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Separator } from "@/components/ui/separator"
 import { cn } from "@/lib/utils"
+import { useUser, useFirestore, useAuth, useDoc, useMemoFirebase } from "@/firebase"
+import { doc, getDoc } from "firebase/firestore"
+import { signOut } from "firebase/auth"
 
 interface NavItem {
   title: string
@@ -41,16 +45,45 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
   const pathname = usePathname()
   const router = useRouter()
-  
-  // Mock User Role
-  const userRole = 'store_owner' 
+  const auth = useAuth()
+  const firestore = useFirestore()
+  const { user, isUserLoading } = useUser()
+
+  const userDocRef = useMemoFirebase(() => {
+    if (!firestore || !user) return null
+    return doc(firestore, "users", user.uid)
+  }, [firestore, user])
+
+  const { data: userProfile, isLoading: isProfileLoading } = useDoc(userDocRef)
+
+  useEffect(() => {
+    if (!isUserLoading && !user) {
+      router.push("/login")
+    }
+  }, [user, isUserLoading, router])
+
+  if (isUserLoading || isProfileLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    )
+  }
+
+  if (!user) return null
+
+  const userRole = userProfile?.role || 'customer'
 
   const filteredNavItems = navItems.filter(item => 
     !item.roles || item.roles.includes(userRole)
   )
 
   const handleLogout = () => {
-    router.push("/login")
+    if (auth) {
+      signOut(auth).then(() => {
+        router.push("/login")
+      })
+    }
   }
 
   return (
@@ -146,11 +179,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             <Separator orientation="vertical" className="h-8 mx-1 hidden sm:block" />
             <div className="flex items-center gap-3">
               <div className="text-right hidden sm:block">
-                <p className="text-sm font-medium">Fresh Markets Inc.</p>
+                <p className="text-sm font-medium">{userProfile?.name || user.email}</p>
                 <p className="text-xs text-muted-foreground capitalize">{userRole.replace('_', ' ')}</p>
               </div>
               <Avatar>
-                <AvatarImage src="https://picsum.photos/seed/user1/40/40" />
+                <AvatarImage src={user.photoURL || `https://picsum.photos/seed/${user.uid}/40/40`} />
                 <AvatarFallback><User /></AvatarFallback>
               </Avatar>
             </div>

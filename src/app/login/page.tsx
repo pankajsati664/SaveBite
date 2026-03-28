@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { Leaf, LogIn, Mail, Lock, UserPlus } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -10,33 +10,115 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useToast } from "@/hooks/use-toast"
+import { useAuth, useUser, useFirestore } from "@/firebase"
+import { signInWithEmailAndPassword, createUserWithEmailAndPassword, GoogleAuthProvider, signInWithPopup } from "firebase/auth"
+import { doc, setDoc, serverTimestamp } from "firebase/firestore"
+import { errorEmitter } from "@/firebase/error-emitter"
+import { FirestorePermissionError } from "@/firebase/errors"
 
 export default function LoginPage() {
   const [loading, setLoading] = useState(false)
+  const [email, setEmail] = useState("")
+  const [password, setPassword] = useState("")
+  const [name, setName] = useState("")
+  const [role, setRole] = useState<string>("")
+  
   const router = useRouter()
   const { toast } = useToast()
+  const auth = useAuth()
+  const db = useFirestore()
+  const { user, isUserLoading } = useUser()
+
+  useEffect(() => {
+    if (user && !loading) {
+      router.push("/dashboard")
+    }
+  }, [user, loading, router])
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (!auth) return
     setLoading(true)
-    // Mock successful login
-    setTimeout(() => {
-      setLoading(false)
-      toast({ title: "Welcome back!", description: "Successfully logged in to FoodSaver AI." })
-      router.push("/dashboard")
-    }, 1000)
+    
+    signInWithEmailAndPassword(auth, email, password)
+      .then(() => {
+        toast({ title: "Welcome back!", description: "Successfully logged in." })
+      })
+      .catch((error: any) => {
+        setLoading(false)
+        toast({ 
+          variant: "destructive", 
+          title: "Login Failed", 
+          description: error.message 
+        })
+      })
   }
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (!auth || !db || !role) {
+      toast({ variant: "destructive", title: "Missing Information", description: "Please select a role." })
+      return
+    }
     setLoading(true)
-    // Mock successful registration
-    setTimeout(() => {
-      setLoading(false)
-      toast({ title: "Account created", description: "Your FoodSaver AI account is ready." })
-      router.push("/dashboard")
-    }, 1000)
+    
+    createUserWithEmailAndPassword(auth, email, password)
+      .then(async (userCredential) => {
+        const userId = userCredential.user.uid
+        
+        // Create user profile
+        const userRef = doc(db, "users", userId)
+        setDoc(userRef, {
+          id: userId,
+          email,
+          name,
+          role,
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp()
+        }).catch(err => {
+          errorEmitter.emit('permission-error', new FirestorePermissionError({
+            path: userRef.path,
+            operation: 'create',
+            requestResourceData: { id: userId, email, name, role }
+          }))
+        })
+
+        // Create role marker
+        const roleRef = doc(db, `roles_${role}`, userId)
+        setDoc(roleRef, { id: userId }).catch(err => {
+          errorEmitter.emit('permission-error', new FirestorePermissionError({
+            path: roleRef.path,
+            operation: 'create',
+            requestResourceData: { id: userId }
+          }))
+        })
+
+        toast({ title: "Account created", description: "Your FoodSaver AI account is ready." })
+      })
+      .catch((error: any) => {
+        setLoading(false)
+        toast({ 
+          variant: "destructive", 
+          title: "Registration Failed", 
+          description: error.message 
+        })
+      })
   }
+
+  const handleGoogleSignIn = () => {
+    if (!auth) return
+    const provider = new GoogleAuthProvider()
+    signInWithPopup(auth, provider)
+      .catch((error: any) => {
+        toast({ 
+          variant: "destructive", 
+          title: "Google Sign-In Failed", 
+          description: error.message 
+        })
+      })
+  }
+
+  if (isUserLoading) return null
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-background p-4">
@@ -67,14 +149,29 @@ export default function LoginPage() {
                   <Label htmlFor="email">Email</Label>
                   <div className="relative">
                     <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                    <Input id="email" type="email" placeholder="name@example.com" className="pl-10" required />
+                    <Input 
+                      id="email" 
+                      type="email" 
+                      placeholder="name@example.com" 
+                      className="pl-10" 
+                      required 
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                    />
                   </div>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="password">Password</Label>
                   <div className="relative">
                     <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                    <Input id="password" type="password" className="pl-10" required />
+                    <Input 
+                      id="password" 
+                      type="password" 
+                      className="pl-10" 
+                      required 
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                    />
                   </div>
                 </div>
                 <Button type="submit" className="w-full h-11" disabled={loading}>
@@ -88,15 +185,28 @@ export default function LoginPage() {
               <form onSubmit={handleRegister} className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="reg-name">Full Name</Label>
-                  <Input id="reg-name" placeholder="John Doe" required />
+                  <Input 
+                    id="reg-name" 
+                    placeholder="John Doe" 
+                    required 
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="reg-email">Email</Label>
-                  <Input id="reg-email" type="email" placeholder="name@example.com" required />
+                  <Input 
+                    id="reg-email" 
+                    type="email" 
+                    placeholder="name@example.com" 
+                    required 
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="role">I am a...</Label>
-                  <Select required>
+                  <Select onValueChange={setRole} required>
                     <SelectTrigger>
                       <SelectValue placeholder="Select your role" />
                     </SelectTrigger>
@@ -109,7 +219,13 @@ export default function LoginPage() {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="reg-password">Password</Label>
-                  <Input id="reg-password" type="password" required />
+                  <Input 
+                    id="reg-password" 
+                    type="password" 
+                    required 
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                  />
                 </div>
                 <Button type="submit" className="w-full h-11" disabled={loading}>
                   {loading ? "Creating account..." : "Create Account"}
@@ -120,7 +236,7 @@ export default function LoginPage() {
           </CardContent>
 
           <CardFooter className="flex flex-col gap-4 border-t pt-6">
-            <Button variant="outline" className="w-full" onClick={() => {}}>
+            <Button variant="outline" className="w-full" onClick={handleGoogleSignIn} disabled={loading}>
               <svg className="mr-2 h-4 w-4" viewBox="0 0 24 24">
                 <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
                 <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
