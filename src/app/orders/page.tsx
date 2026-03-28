@@ -119,7 +119,7 @@ export default function OrdersPage() {
                        </div>
                       <div>
                         <p className="font-black uppercase tracking-widest text-[10px] text-muted-foreground mb-1">Store details</p>
-                        <p className="text-foreground font-bold leading-relaxed italic">Verified SafeByte Partner Store • Check email for QR code</p>
+                        <p className="text-foreground font-bold leading-relaxed italic">Verified SaveByte Partner Store • Check email for QR code</p>
                       </div>
                     </div>
                   </div>

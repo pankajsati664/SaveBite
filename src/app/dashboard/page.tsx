@@ -82,9 +82,10 @@ export default function DashboardPage() {
         { label: "Impact Score", value: "94", icon: Heart, color: "bg-primary", trend: "+15%" },
       ]
     } else if (userRole === 'customer') {
+      const totalSavings = allOrders?.reduce((acc, curr) => acc + (curr.totalAmount || 0), 0) || 0
       return [
         { label: "Items Rescued", value: allOrders?.length.toString() || "0", icon: ShoppingBag, color: "bg-primary", trend: "+8%" },
-        { label: "Total Savings", value: `₹${allOrders?.reduce((acc, curr) => acc + (curr.totalAmount || 0), 0).toLocaleString('en-IN') || "0"}`, icon: TrendingUp, color: "bg-success", trend: "Great" },
+        { label: "Total Savings", value: `₹${totalSavings.toLocaleString('en-IN')}`, icon: TrendingUp, color: "bg-success", trend: "Great" },
         { label: "Active Orders", value: allOrders?.filter(o => o.status === 'Pending').length.toString() || "0", icon: Clock, color: "bg-blue-500", trend: "Active" },
         { label: "Food Points", value: "120", icon: Sprout, color: "bg-accent", trend: "+10" },
       ]
@@ -301,7 +302,12 @@ export default function DashboardPage() {
                   The journey starts with a single step. No activity yet.
                 </div>
               ) : (
-                (userRole === 'store_owner' ? allProducts?.slice(0, 5) : (userRole === 'customer' ? allOrders?.slice(0, 5) : allClaimed?.slice(0, 5)))?.map((item, idx) => {
+                (userRole === 'store_owner' ? allProducts?.slice(0, 5) : (userRole === 'customer' ? allOrders?.slice(0, 5) : allClaimed?.slice(0, 5)))?.map((item: any, idx) => {
+                  const displayDate = item.updatedAt?.seconds ? new Date(item.updatedAt.seconds * 1000) : 
+                                      item.createdAt?.seconds ? new Date(item.createdAt.seconds * 1000) : 
+                                      item.orderDate ? new Date(item.orderDate) : 
+                                      item.claimDate ? new Date(item.claimDate) : new Date()
+
                   return (
                     <div key={item.id} className={cn(
                       "flex flex-col sm:flex-row items-start sm:items-center justify-between group p-6 hover:bg-secondary/20 rounded-[2rem] transition-all duration-500 cursor-pointer border border-transparent hover:border-primary/5 animate-in fade-in slide-in-from-right-4",
@@ -316,7 +322,7 @@ export default function DashboardPage() {
                         </div>
                         <div>
                           <p className="font-black text-xl group-hover:text-primary transition-colors leading-tight mb-1">
-                            {userRole === 'store_owner' ? item.name : (userRole === 'customer' ? item.productName : item.name)}
+                            {userRole === 'store_owner' ? item.name : (userRole === 'customer' ? item.productName : item.name || "Surplus Rescue")}
                           </p>
                           <div className="flex items-center gap-2 text-[10px] text-muted-foreground font-black uppercase tracking-widest">
                             {userRole === 'store_owner' ? (
@@ -327,7 +333,7 @@ export default function DashboardPage() {
                             ) : (
                               <>
                                 <History className="h-3 w-3" />
-                                Updated {new Date(item.updatedAt?.seconds * 1000 || item.createdAt?.seconds * 1000 || Date.now()).toLocaleDateString()}
+                                Updated {displayDate.toLocaleDateString()}
                               </>
                             )}
                           </div>
@@ -335,7 +341,7 @@ export default function DashboardPage() {
                       </div>
                       <div className="text-left sm:text-right w-full sm:w-auto">
                         <Badge variant="outline" className="font-black text-sm px-5 py-2 rounded-xl border-primary/20 bg-primary/5 text-primary shadow-sm">
-                          {userRole === 'store_owner' ? `${item.quantity} Units` : (userRole === 'customer' ? `₹${item.totalAmount?.toLocaleString('en-IN')}` : 'Mission Active')}
+                          {userRole === 'store_owner' ? `${item.quantity} Units` : (userRole === 'customer' ? `₹${(item.totalAmount || 0).toLocaleString('en-IN')}` : 'Mission Active')}
                         </Badge>
                         <p className="text-[10px] font-black text-muted-foreground mt-2 uppercase tracking-[0.2em] opacity-60">
                           {userRole === 'store_owner' ? 'Inventory Level' : 'Deal Status'}

@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useRouter } from "next/navigation"
@@ -40,7 +39,7 @@ export default function LandingPage() {
           <div className="bg-primary p-2.5 rounded-2xl shadow-xl shadow-primary/20 rotate-3 group-hover:rotate-0 transition-transform">
             <Leaf className="h-7 w-7 text-white" />
           </div>
-          <span className="text-2xl font-headline font-black tracking-tighter text-primary">SafeByte</span>
+          <span className="text-2xl font-headline font-black tracking-tighter text-primary">SaveByte</span>
         </div>
         <div className="flex items-center gap-6">
           <Button variant="ghost" onClick={() => router.push("/login")} className="hidden sm:flex font-bold hover:text-primary">Login</Button>
@@ -60,7 +59,7 @@ export default function LandingPage() {
             <span className="text-primary italic">Feed People.</span>
           </h1>
           <p className="text-xl text-muted-foreground max-w-lg leading-relaxed font-medium">
-            SafeByte uses intelligent expiry tracking and AI-driven marketplace connectivity to bridge the gap between surplus food and those who need it.
+            SaveByte uses intelligent expiry tracking and AI-driven marketplace connectivity to bridge the gap between surplus food and those who need it.
           </p>
           <div className="flex flex-col sm:flex-row gap-5">
             <Button onClick={() => router.push("/login")} size="lg" className="h-16 px-10 text-xl font-black rounded-3xl bg-primary hover:bg-primary/90 shadow-2xl shadow-primary/30 transition-all hover:-translate-y-1">
@@ -164,7 +163,7 @@ export default function LandingPage() {
         <div className="max-w-3xl mx-auto px-6 relative z-10">
           <h2 className="text-5xl md:text-7xl font-headline font-black mb-8 tracking-tighter">Ready to join the food revolution?</h2>
           <p className="text-xl text-primary-foreground/90 mb-12 font-medium leading-relaxed">
-            Whether you're a local store looking to optimize or a citizen wanting to save, SafeByte is your gateway to a sustainable future.
+            Whether you're a local store looking to optimize or a citizen wanting to save, SaveByte is your gateway to a sustainable future.
           </p>
           <Button onClick={() => router.push("/login")} size="lg" className="h-16 px-12 text-2xl font-black rounded-3xl bg-white text-primary hover:bg-white/90 shadow-2xl transition-all">
             Join the Ecosystem
@@ -179,7 +178,7 @@ export default function LandingPage() {
             <div className="bg-primary p-2 rounded-xl">
               <Leaf className="h-6 w-6 text-white" />
             </div>
-            <span className="text-2xl font-headline font-black text-primary">SafeByte</span>
+            <span className="text-2xl font-headline font-black text-primary">SaveByte</span>
           </div>
           
           <div className="flex gap-12 text-sm font-bold text-muted-foreground uppercase tracking-widest">
@@ -188,7 +187,7 @@ export default function LandingPage() {
             <a href="#" className="hover:text-primary transition-colors">Impact Report</a>
           </div>
 
-          <p className="text-sm font-medium text-muted-foreground italic">© 2024 SafeByte. Built for a better planet.</p>
+          <p className="text-sm font-medium text-muted-foreground italic">© 2024 SaveByte. Built for a better planet.</p>
         </div>
       </footer>
     </div>

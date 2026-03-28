@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useState } from "react"
@@ -205,7 +204,7 @@ export default function MarketplacePage() {
                   </div>
                   <div className="flex items-center gap-2 text-[10px] font-black text-muted-foreground uppercase tracking-[0.1em] opacity-70">
                     <CheckCircle2 className="h-4 w-4 text-success" />
-                    Verified Surplus Deal • {product.quantity} In Stock
+                    Verified SaveByte Deal • {product.quantity} In Stock
                   </div>
                 </CardContent>
 

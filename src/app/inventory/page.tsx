@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useState } from "react"
@@ -42,7 +41,6 @@ import {
 } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
-import { Textarea } from "@/components/ui/textarea"
 import { Separator } from "@/components/ui/separator"
 import { useToast } from "@/hooks/use-toast"
 import { cn } from "@/lib/utils"
@@ -229,7 +227,7 @@ export default function InventoryPage() {
                 <DialogHeader className="space-y-4">
                   <DialogTitle className="text-3xl font-black tracking-tighter">Add to Inventory</DialogTitle>
                   <DialogDescription className="text-base font-medium italic leading-relaxed">
-                    Set your initial price and expiry date. SafeByte AI will automatically suggest markdowns as the date approaches.
+                    Set your initial price and expiry date. SaveByte AI will automatically suggest markdowns as the date approaches.
                   </DialogDescription>
                 </DialogHeader>
                 <form onSubmit={handleAddProduct} className="grid gap-8 py-6">

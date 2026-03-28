@@ -28,7 +28,7 @@ const generateMarketplaceBlurbPrompt = ai.definePrompt({
   name: 'generateMarketplaceBlurbPrompt',
   input: { schema: GenerateMarketplaceBlurbInputSchema },
   output: { schema: GenerateMarketplaceBlurbOutputSchema },
-  prompt: `You are a marketing specialist for SafeByte, a platform dedicated to reducing food waste in India. Your task is to write a concise and appealing marketing blurb for a product that is near its expiry date. The blurb should highlight its value, freshness, and the discount to encourage immediate customer purchase.
+  prompt: `You are a marketing specialist for SaveByte, a platform dedicated to reducing food waste in India. Your task is to write a concise and appealing marketing blurb for a product that is near its expiry date. The blurb should highlight its value, freshness, and the discount to encourage immediate customer purchase.
 
 Product Name: {{{productName}}}
 Original Price: ₹{{{originalPrice}}}

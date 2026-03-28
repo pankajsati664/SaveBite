@@ -94,12 +94,18 @@ export default function SettingsPage() {
     )
   }
 
+  const joinDate = userProfile?.createdAt?.seconds 
+    ? new Date(userProfile.createdAt.seconds * 1000).toLocaleDateString() 
+    : userProfile?.createdAt 
+    ? new Date(userProfile.createdAt).toLocaleDateString() 
+    : 'N/A'
+
   return (
     <DashboardLayout>
       <div className="max-w-4xl mx-auto space-y-8 animate-in fade-in duration-700">
         <div>
           <h1 className="text-4xl font-headline font-black text-foreground">Settings</h1>
-          <p className="text-muted-foreground text-lg italic">"Customize your SafeByte experience."</p>
+          <p className="text-muted-foreground text-lg italic">"Customize your SaveByte experience."</p>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -118,7 +124,7 @@ export default function SettingsPage() {
                 <div className="space-y-4">
                   <div className="flex items-center justify-between text-sm">
                     <span className="text-muted-foreground">Joined</span>
-                    <span className="font-bold">{userProfile?.createdAt ? new Date(userProfile.createdAt).toLocaleDateString() : 'N/A'}</span>
+                    <span className="font-bold">{joinDate}</span>
                   </div>
                   <div className="flex items-center justify-between text-sm">
                     <span className="text-muted-foreground">Status</span>
