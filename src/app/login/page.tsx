@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useState, useEffect } from "react"
@@ -110,6 +109,26 @@ export default function LoginPage() {
     if (!auth) return
     const provider = new GoogleAuthProvider()
     signInWithPopup(auth, provider)
+      .then(async (result) => {
+        if (db && result.user) {
+          // For Google users, initialize a default profile and role if not existing
+          const userRef = doc(db, "users", result.user.uid);
+          setDoc(userRef, {
+            id: result.user.uid,
+            email: result.user.email,
+            name: result.user.displayName || "Google User",
+            role: "customer", // Default role for social sign-in
+            updatedAt: serverTimestamp(),
+            // Only set createdAt if it's potentially a new user
+            createdAt: serverTimestamp() 
+          }, { merge: true });
+
+          const roleRef = doc(db, "roles_customer", result.user.uid);
+          setDoc(roleRef, { id: result.user.uid }, { merge: true });
+          
+          toast({ title: "Welcome to SaveBite!", description: "Successfully logged in via Google." });
+        }
+      })
       .catch((error: any) => {
         toast({ 
           variant: "destructive", 

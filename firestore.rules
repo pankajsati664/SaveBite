@@ -73,15 +73,12 @@ service cloud.firestore {
 
     /**
      * @description Public marketplace for products.
-     * Allows Customers to update quantity/status when reserving an item.
+     * Allows any signed-in user to update quantity/status when reserving an item.
      */
     match /products_marketplace/{productId} {
       allow get, list: if true;
       allow create: if isSignedIn() && request.resource.data.ownerId == request.auth.uid;
-      allow update: if isSignedIn() && (
-        resource.data.ownerId == request.auth.uid || 
-        hasRole('roles_customer', request.auth.uid)
-      );
+      allow update: if isSignedIn();
       allow delete: if isSignedIn() && resource.data.ownerId == request.auth.uid;
     }
 
@@ -91,10 +88,7 @@ service cloud.firestore {
     match /products_donations/{productId} {
       allow get, list: if true;
       allow create: if isSignedIn() && request.resource.data.ownerId == request.auth.uid;
-      allow update: if isSignedIn() && (
-        resource.data.ownerId == request.auth.uid || 
-        hasRole('roles_ngo', request.auth.uid)
-      );
+      allow update: if isSignedIn();
       allow delete: if isSignedIn() && resource.data.ownerId == request.auth.uid;
     }
 
@@ -123,19 +117,13 @@ service cloud.firestore {
     }
 
     /**
-     * @description Public donations. Allows NGOs to claim (update) or remove (delete) once secured.
+     * @description Public donations. Allows any signed-in user to claim (update) or remove (delete).
      */
     match /donations_public/{donationId} {
       allow get, list: if true;
       allow create: if isSignedIn() && request.resource.data.storeOwnerId == request.auth.uid;
-      allow update: if isSignedIn() && (
-        resource.data.storeOwnerId == request.auth.uid || 
-        hasRole('roles_ngo', request.auth.uid)
-      );
-      allow delete: if isSignedIn() && (
-        resource.data.storeOwnerId == request.auth.uid || 
-        hasRole('roles_ngo', request.auth.uid)
-      );
+      allow update: if isSignedIn();
+      allow delete: if isSignedIn();
     }
 
     match /users/{ngoId}/claimed_donations/{donationId} {
