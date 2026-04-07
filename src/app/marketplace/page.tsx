@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useState } from "react"
@@ -83,7 +84,7 @@ export default function MarketplacePage() {
 
     toast({
       title: "Order Reserved!",
-      description: `Successfully claimed ${product.name}. Head to the store for pickup.`,
+      description: `Successfully claimed ${product.name}.`,
     })
   }
 
@@ -95,31 +96,31 @@ export default function MarketplacePage() {
 
   return (
     <DashboardLayout>
-      <div className="space-y-10 animate-in fade-in slide-in-from-bottom-6 duration-1000">
-        <div className="relative overflow-hidden rounded-[3rem] bg-gradient-to-br from-primary via-primary to-accent px-10 py-20 text-white shadow-2xl border-4 border-white/10 group">
-          <div className="absolute inset-0 bg-grid-white/[0.1] [mask-image:linear-gradient(0deg,#fff,rgba(255,255,255,0.6))] pointer-events-none" />
-          <div className="relative z-10 max-w-2xl space-y-6">
-            <Badge className="bg-white/20 text-white border-none backdrop-blur-xl px-5 py-2 font-black uppercase tracking-widest text-xs">
-              <Sparkles className="mr-2 h-4 w-4 animate-pulse text-yellow-300" />
+      <div className="space-y-6 md:space-y-10 animate-in fade-in slide-in-from-bottom-6 duration-1000">
+        <div className="relative overflow-hidden rounded-2xl md:rounded-[3rem] bg-gradient-to-br from-primary via-primary to-accent px-6 py-12 md:px-10 md:py-20 text-white shadow-xl group">
+          <div className="absolute inset-0 bg-grid-white/[0.1] pointer-events-none" />
+          <div className="relative z-10 max-w-2xl space-y-4 md:space-y-6">
+            <Badge className="bg-white/20 text-white border-none backdrop-blur-xl px-4 py-1.5 md:px-5 md:py-2 font-black uppercase tracking-widest text-[9px] md:text-xs">
+              <Sparkles className="mr-2 h-3 w-3 md:h-4 md:w-4 text-yellow-300" />
               Live Marketplace
             </Badge>
-            <h1 className="text-5xl md:text-7xl font-headline font-black mb-4 leading-tight tracking-tighter">
+            <h1 className="text-4xl md:text-7xl font-headline font-black mb-2 leading-tight tracking-tighter">
               Eat Good. <br /><span className="text-accent underline decoration-white/20 underline-offset-8">Pay Less.</span>
             </h1>
-            <p className="text-xl text-primary-foreground/90 max-w-xl font-medium leading-relaxed italic opacity-90">
-              Discover premium surplus food from your favorite local stores at up to 90% off. Fresh items, incredible impact.
+            <p className="text-base md:text-xl text-primary-foreground/90 max-w-xl font-medium leading-relaxed italic opacity-90">
+              Discover premium surplus food from your favorite local stores.
             </p>
           </div>
-          <ShoppingBag className="absolute -bottom-16 -right-16 h-80 w-80 text-white/10 rotate-12 group-hover:rotate-0 transition-transform duration-1000" />
+          <ShoppingBag className="absolute -bottom-10 -right-10 md:-bottom-16 md:-right-16 h-40 w-40 md:h-80 md:w-80 text-white/10 rotate-12" />
         </div>
 
-        <div className="sticky top-16 z-20 bg-background/95 backdrop-blur-xl py-6 -mx-4 px-4 lg:-mx-8 lg:px-8 border-y border-secondary flex flex-col gap-6">
-          <div className="flex flex-col md:flex-row gap-6 items-center">
+        <div className="sticky top-16 z-20 bg-background/95 backdrop-blur-xl py-4 -mx-4 px-4 md:py-6 lg:-mx-8 lg:px-8 border-y border-secondary flex flex-col gap-4 md:gap-6">
+          <div className="flex flex-col md:flex-row gap-4 md:gap-6 items-center">
             <div className="relative flex-1 w-full group">
-              <Search className="absolute left-5 top-1/2 -translate-y-1/2 h-6 w-6 text-muted-foreground group-focus-within:text-primary transition-colors" />
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground group-focus-within:text-primary" />
               <Input 
-                placeholder="Search for fresh deals near you..." 
-                className="pl-14 h-16 rounded-[1.5rem] border-secondary bg-secondary/30 shadow-sm focus:ring-4 focus:ring-primary/10 transition-all text-lg font-medium"
+                placeholder="Search deals..." 
+                className="pl-12 h-14 rounded-xl md:rounded-[1.5rem] border-secondary bg-secondary/30 shadow-sm focus:ring-4 focus:ring-primary/10 transition-all text-sm md:text-lg font-medium"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
               />
@@ -130,8 +131,8 @@ export default function MarketplacePage() {
                   key={cat}
                   variant={activeCategory === cat ? "default" : "outline"}
                   className={cn(
-                    "h-14 px-8 rounded-2xl border-secondary whitespace-nowrap font-black uppercase tracking-widest text-[11px] transition-all duration-300",
-                    activeCategory === cat ? "shadow-xl shadow-primary/30" : "hover:bg-primary/5 hover:border-primary/20"
+                    "h-12 md:h-14 px-6 md:px-8 rounded-xl md:rounded-2xl border-secondary whitespace-nowrap font-black uppercase tracking-widest text-[10px] md:text-[11px] transition-all",
+                    activeCategory === cat ? "shadow-lg shadow-primary/30" : "hover:bg-primary/5"
                   )}
                   onClick={() => setActiveCategory(cat)}
                 >
@@ -142,10 +143,10 @@ export default function MarketplacePage() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 md:gap-8">
           {isLoading ? (
-             Array.from({ length: 8 }).map((_, i) => (
-                <div key={i} className="h-[450px] rounded-3xl bg-secondary/30 animate-pulse border border-secondary" />
+             Array.from({ length: 4 }).map((_, i) => (
+                <div key={i} className="h-[400px] rounded-2xl md:rounded-3xl bg-secondary/30 animate-pulse border border-secondary" />
              ))
           ) : filteredProducts.map((product, idx) => {
             const daysLeft = getDaysRemaining(product.expiryDate)
@@ -154,65 +155,56 @@ export default function MarketplacePage() {
             
             return (
               <Card key={product.id} className={cn(
-                "overflow-hidden border-none shadow-md hover:shadow-2xl transition-all duration-700 group flex flex-col rounded-[2.5rem] bg-card animate-in fade-in slide-in-from-bottom-4",
-                `delay-[${idx * 50}ms]`
+                "overflow-hidden border-none shadow-md hover:shadow-xl transition-all duration-500 flex flex-col rounded-2xl md:rounded-[2.5rem] bg-card",
+                `animate-in fade-in slide-in-from-bottom-4 delay-[${idx * 50}ms]`
               )}>
-                <div className="relative aspect-[5/4] overflow-hidden bg-secondary/30">
+                <div className="relative aspect-[4/3] md:aspect-[5/4] overflow-hidden bg-secondary/30">
                   <img 
                     src={product.imageUrl || placeholder.imageUrl} 
                     alt={product.name} 
-                    className="object-cover w-full h-full transition-transform duration-1000 group-hover:scale-110"
+                    className="object-cover w-full h-full transition-transform duration-700 group-hover:scale-110"
                     data-ai-hint={placeholder.imageHint}
                   />
-                  
                   {discount > 0 && (
-                    <div className="absolute top-4 left-4">
-                      <Badge className="bg-danger text-white border-none font-black text-xs px-4 py-2 shadow-2xl rounded-2xl transform -rotate-3 group-hover:rotate-0 transition-transform">
-                        SAVE {discount}%
+                    <div className="absolute top-3 left-3 md:top-4 md:left-4">
+                      <Badge className="bg-danger text-white border-none font-black text-[10px] md:text-xs px-3 py-1 md:px-4 md:py-2 shadow-xl rounded-xl">
+                        -{discount}%
                       </Badge>
                     </div>
                   )}
-                  <div className="absolute bottom-4 right-4 translate-y-2 group-hover:translate-y-0 transition-transform duration-500">
-                    <Badge variant="secondary" className="bg-white/95 backdrop-blur-xl text-foreground flex items-center gap-2 shadow-xl border-none py-2 px-4 rounded-2xl font-black text-[10px] uppercase tracking-widest">
-                      <Clock className="h-4 w-4 text-primary" />
-                      {daysLeft <= 0 ? "EXPIRES TODAY" : `${daysLeft}D REMAINING`}
+                  <div className="absolute bottom-3 right-3 md:bottom-4 md:right-4">
+                    <Badge variant="secondary" className="bg-white/95 text-foreground flex items-center gap-1.5 shadow-md border-none py-1.5 px-3 rounded-xl font-black text-[9px] uppercase tracking-widest">
+                      <Clock className="h-3 w-3 text-primary" />
+                      {daysLeft <= 0 ? "TODAY" : `${daysLeft}D`}
                     </Badge>
                   </div>
                 </div>
 
-                <CardHeader className="p-7 flex-1 space-y-3">
-                  <div className="space-y-1">
-                    <CardTitle className="text-2xl font-headline font-black line-clamp-1 group-hover:text-primary transition-colors leading-tight">{product.name}</CardTitle>
-                    <div className="flex items-center gap-2 text-[10px] font-black text-primary uppercase tracking-[0.2em]">
-                      <Store className="h-4 w-4" />
-                      Local Partner • {product.category || 'General'}
-                    </div>
+                <CardHeader className="p-5 md:p-7 flex-1 space-y-2">
+                  <CardTitle className="text-xl md:text-2xl font-headline font-black line-clamp-1 leading-tight">{product.name}</CardTitle>
+                  <div className="flex items-center gap-2 text-[9px] font-black text-primary uppercase tracking-widest">
+                    <Store className="h-3.5 w-3.5" />
+                    {product.category || 'General'}
                   </div>
-                  {product.description ? (
-                    <p className="text-sm text-muted-foreground line-clamp-2 italic font-medium leading-relaxed border-l-4 border-primary/20 pl-4 py-1">
+                  {product.description && (
+                    <p className="text-xs text-muted-foreground line-clamp-2 italic font-medium leading-relaxed opacity-80">
                       "{product.description}"
                     </p>
-                  ) : (
-                    <div className="h-[44px]" />
                   )}
                 </CardHeader>
 
-                <CardContent className="px-7 pt-0">
-                  <div className="flex items-baseline gap-3 mb-6">
-                    <span className="text-4xl font-black text-primary tracking-tighter">₹{(product.currentPrice || product.initialPrice).toFixed(0)}</span>
+                <CardContent className="px-5 md:px-7 pt-0">
+                  <div className="flex items-baseline gap-2 mb-4">
+                    <span className="text-3xl md:text-4xl font-black text-primary tracking-tighter">₹{(product.currentPrice || product.initialPrice).toFixed(0)}</span>
                     {discount > 0 && (
-                      <span className="text-base text-muted-foreground line-through font-bold opacity-60">₹{product.initialPrice.toFixed(0)}</span>
+                      <span className="text-sm md:text-base text-muted-foreground line-through font-bold opacity-60">₹{product.initialPrice.toFixed(0)}</span>
                     )}
-                  </div>
-                  <div className="flex items-center gap-2 text-[10px] font-black text-muted-foreground uppercase tracking-[0.1em] opacity-70">
-                    <CheckCircle2 className="h-4 w-4 text-success" />
-                    Verified SaveBite Deal • {product.quantity || 0} In Stock
                   </div>
                 </CardContent>
 
-                <CardFooter className="p-7 mt-auto border-t border-secondary bg-secondary/5">
+                <CardFooter className="p-5 md:p-7 mt-auto border-t border-secondary bg-secondary/5">
                   <Button 
-                    className="w-full h-14 bg-primary hover:bg-primary/90 text-white rounded-2xl shadow-xl shadow-primary/10 font-black text-sm uppercase tracking-widest transition-all hover:scale-[1.02] active:scale-[0.98]"
+                    className="w-full h-12 md:h-14 bg-primary hover:bg-primary/90 text-white rounded-xl md:rounded-2xl shadow-lg shadow-primary/10 font-black text-[11px] uppercase tracking-widest transition-all"
                     onClick={() => handleReserve(product)}
                   >
                     Reserve Now <ChevronRight className="ml-2 h-4 w-4" />
@@ -224,11 +216,11 @@ export default function MarketplacePage() {
         </div>
 
         {!isLoading && filteredProducts.length === 0 && (
-          <div className="flex flex-col items-center justify-center py-32 text-center bg-secondary/10 rounded-[3rem] border-2 border-dashed border-primary/20 animate-in zoom-in duration-500">
-             <AlertCircle className="h-16 w-16 text-muted-foreground opacity-50 mb-8" />
-            <h3 className="text-3xl font-black mb-3 text-foreground">No matching deals found</h3>
-            <p className="text-muted-foreground max-w-md mx-auto font-medium text-lg leading-relaxed">
-              New surplus items are added throughout the day. Try broadening your search or check back in a few hours!
+          <div className="flex flex-col items-center justify-center py-20 md:py-32 text-center bg-secondary/10 rounded-2xl md:rounded-[3rem] border-2 border-dashed border-primary/20">
+             <AlertCircle className="h-12 w-12 text-muted-foreground opacity-50 mb-6" />
+            <h3 className="text-2xl font-black mb-2 text-foreground">No matches found</h3>
+            <p className="text-muted-foreground max-w-xs mx-auto text-sm md:text-lg font-medium italic">
+              Try a different category or broaden your search!
             </p>
           </div>
         )}

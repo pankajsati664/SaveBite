@@ -122,116 +122,105 @@ export default function DashboardPage() {
   const getStats = () => {
     if (userRole === 'store_owner') {
       return [
-        { label: "Inventory Items", value: allProducts?.length.toString() || "0", icon: Package, color: "bg-blue-500", trend: "+2%" },
+        { label: "Inventory", value: allProducts?.length.toString() || "0", icon: Package, color: "bg-blue-500", trend: "+2%" },
         { label: "Near Expiry", value: nearExpiryCount.toString() || "0", icon: AlertTriangle, color: "bg-warning", trend: "Alert" },
         { label: "Expired", value: allProducts?.filter(p => getExpiryStatus(p.expiryDate) === 'expired').length.toString() || "0", icon: History, color: "bg-danger", trend: "-5%" },
-        { label: "Impact Score", value: "94", icon: Heart, color: "bg-primary", trend: "+15%" },
+        { label: "Impact", value: "94", icon: Heart, color: "bg-primary", trend: "+15%" },
       ]
     } else if (userRole === 'customer') {
       const totalSavings = allOrders?.reduce((acc, curr) => acc + (curr.totalAmount || 0), 0) || 0
       return [
-        { label: "Items Rescued", value: allOrders?.length.toString() || "0", icon: ShoppingBag, color: "bg-primary", trend: "+8%" },
-        { label: "Total Savings", value: `₹${totalSavings.toLocaleString('en-IN')}`, icon: TrendingUp, color: "bg-success", trend: "Great" },
-        { label: "Active Orders", value: allOrders?.filter(o => o.status === 'Pending').length.toString() || "0", icon: Clock, color: "bg-blue-500", trend: "Active" },
-        { label: "Food Points", value: "120", icon: Sprout, color: "bg-accent", trend: "+10" },
+        { label: "Rescued", value: allOrders?.length.toString() || "0", icon: ShoppingBag, color: "bg-primary", trend: "+8%" },
+        { label: "Savings", value: `₹${totalSavings.toLocaleString('en-IN')}`, icon: TrendingUp, color: "bg-success", trend: "Great" },
+        { label: "Active", value: allOrders?.filter(o => o.status === 'Pending').length.toString() || "0", icon: Clock, color: "bg-blue-500", trend: "Active" },
+        { label: "Points", value: "120", icon: Sprout, color: "bg-accent", trend: "+10" },
       ]
     } else { // NGO
       return [
-        { label: "Total Rescues", value: allClaimed?.length.toString() || "0", icon: Heart, color: "bg-primary", trend: "+12%" },
-        { label: "Pending Pickups", value: allClaimed?.filter(d => d.status === 'Claimed').length.toString() || "0", icon: Clock, color: "bg-warning", trend: "Urgent" },
-        { label: "Meals Provided", value: ((allClaimed?.length || 0) * 5).toString(), icon: Users, color: "bg-blue-500", trend: "+20%" },
-        { label: "Partner Stores", value: "8", icon: Package, color: "bg-accent", trend: "Stable" },
+        { label: "Rescues", value: allClaimed?.length.toString() || "0", icon: Heart, color: "bg-primary", trend: "+12%" },
+        { label: "Pending", value: allClaimed?.filter(d => d.status === 'Claimed').length.toString() || "0", icon: Clock, color: "bg-warning", trend: "Urgent" },
+        { label: "Meals", value: ((allClaimed?.length || 0) * 5).toString(), icon: Users, color: "bg-blue-500", trend: "+20%" },
+        { label: "Partners", value: "8", icon: Package, color: "bg-accent", trend: "Stable" },
       ]
     }
   }
 
   return (
     <DashboardLayout>
-      <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+      <div className="space-y-6 md:space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 md:gap-6">
           <div className="space-y-1">
-            <h1 className="text-4xl font-headline font-black text-foreground flex items-center gap-3">
+            <h1 className="text-3xl md:text-4xl font-headline font-black text-foreground flex items-center gap-2">
               Hello, {userProfile?.name?.split(' ')[0] || user?.email?.split('@')[0]}!
               <span className="animate-bounce">👋</span>
             </h1>
-            <p className="text-muted-foreground text-lg font-medium italic">"Every bite saved is a win for the planet."</p>
+            <p className="text-muted-foreground text-sm md:text-lg font-medium italic">"Every bite saved is a win for the planet."</p>
           </div>
           <div className="flex items-center">
-            <Badge variant="outline" className="px-5 py-2.5 bg-primary/5 border-primary/20 text-primary font-bold rounded-2xl shadow-sm">
+            <Badge variant="outline" className="px-4 py-2 md:px-5 md:py-2.5 bg-primary/5 border-primary/20 text-primary font-bold rounded-xl md:rounded-2xl shadow-sm w-full md:w-auto justify-center">
               <CalendarDays className="mr-2 h-4 w-4" />
-              {new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })}
+              {new Date().toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })}
             </Badge>
           </div>
         </div>
 
         {/* Stats Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
           {getStats().map((stat, idx) => (
             <Card key={stat.label} className={cn(
-              "border-none shadow-md overflow-hidden group hover:shadow-2xl transition-all duration-500 rounded-3xl animate-in fade-in slide-in-from-bottom-4",
-              `delay-[${idx * 100}ms]`
+              "border-none shadow-md overflow-hidden group hover:shadow-xl transition-all duration-500 rounded-2xl md:rounded-3xl",
+              `animate-in fade-in slide-in-from-bottom-4 delay-[${idx * 100}ms]`
             )}>
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between mb-6">
-                  <div className={cn("p-4 rounded-2xl text-white shadow-lg transform group-hover:scale-110 group-hover:rotate-6 transition-all duration-500", stat.color)}>
-                    <stat.icon className="h-6 w-6" />
+              <CardContent className="p-4 md:p-6">
+                <div className="flex items-center justify-between mb-3 md:mb-6">
+                  <div className={cn("p-2 md:p-4 rounded-xl md:rounded-2xl text-white shadow-lg", stat.color)}>
+                    <stat.icon className="h-5 w-5 md:h-6 md:w-6" />
                   </div>
                   <div className={cn(
-                    "flex items-center text-xs font-black px-3 py-1 rounded-full uppercase tracking-tighter",
+                    "hidden sm:flex items-center text-[10px] font-black px-2 py-0.5 rounded-full uppercase tracking-tighter",
                     stat.trend.startsWith('+') ? "text-success bg-success/10" : 
                     stat.trend === "Alert" || stat.trend === "Urgent" ? "text-warning bg-warning/10" : "text-danger bg-danger/10"
                   )}>
-                    {stat.trend.startsWith('+') ? <ArrowUpRight className="h-3 w-3 mr-1" /> : 
-                     (stat.trend === "Alert" || stat.trend === "Urgent") ? <AlertTriangle className="h-3 w-3 mr-1" /> : <ArrowDownRight className="h-3 w-3 mr-1" />}
                     {stat.trend}
                   </div>
                 </div>
                 <div>
-                  <p className="text-xs text-muted-foreground font-black uppercase tracking-widest mb-1">{stat.label}</p>
-                  <p className="text-4xl font-black tracking-tight">{stat.value}</p>
+                  <p className="text-[10px] text-muted-foreground font-black uppercase tracking-widest mb-0.5 md:mb-1">{stat.label}</p>
+                  <p className="text-2xl md:text-4xl font-black tracking-tight">{stat.value}</p>
                 </div>
               </CardContent>
             </Card>
           ))}
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8">
           {/* Main Chart Placeholder */}
-          <Card className="lg:col-span-2 border-none shadow-lg rounded-3xl overflow-hidden bg-gradient-to-br from-card to-secondary/5">
-            <CardHeader className="pb-2">
+          <Card className="lg:col-span-2 border-none shadow-lg rounded-2xl md:rounded-[2.5rem] overflow-hidden bg-gradient-to-br from-card to-secondary/5">
+            <CardHeader className="p-6 pb-2">
               <div className="flex items-center justify-between">
-                <div>
-                  <CardTitle className="flex items-center gap-2 text-2xl font-black">
-                    <TrendingUp className="h-6 w-6 text-primary" />
+                <div className="space-y-1">
+                  <CardTitle className="flex items-center gap-2 text-xl md:text-2xl font-black">
+                    <TrendingUp className="h-5 w-5 md:h-6 md:w-6 text-primary" />
                     Impact Performance
                   </CardTitle>
-                  <CardDescription className="text-base font-medium">
-                    {userRole === 'store_owner' ? 'Food saved from landfill (kg)' : 
-                     userRole === 'customer' ? 'Money saved through surplus deals (₹)' : 'Donations rescued (units)'} over the last 7 days
+                  <CardDescription className="text-sm md:text-base font-medium">
+                    {userRole === 'store_owner' ? 'Food saved (kg)' : 
+                     userRole === 'customer' ? 'Money saved (₹)' : 'Donations (units)'} - Last 7 days
                   </CardDescription>
-                </div>
-                <div className="hidden sm:flex items-center gap-1 bg-secondary/50 p-1 rounded-xl">
-                  {['W', 'M', 'Y'].map(t => (
-                    <Button key={t} variant={t === 'W' ? 'default' : 'ghost'} size="sm" className="h-8 w-8 rounded-lg font-bold text-xs p-0">{t}</Button>
-                  ))}
                 </div>
               </div>
             </CardHeader>
-            <CardContent>
-              <div className="h-[320px] w-full bg-secondary/10 rounded-[2.5rem] flex items-end justify-between p-10 gap-4 border border-primary/5 relative overflow-hidden group">
-                <div className="absolute inset-0 bg-grid-slate-100 [mask-image:linear-gradient(0deg,#fff,rgba(255,255,255,0.6))] dark:bg-grid-slate-700/25 dark:[mask-image:linear-gradient(0deg,rgba(255,255,255,0.1),rgba(255,255,255,0.5))] pointer-events-none" />
+            <CardContent className="p-6">
+              <div className="h-[200px] md:h-[320px] w-full bg-secondary/10 rounded-2xl md:rounded-[2.5rem] flex items-end justify-between p-4 md:p-10 gap-2 md:gap-4 border border-primary/5 relative overflow-hidden">
+                <div className="absolute inset-0 bg-grid-slate-100 [mask-image:linear-gradient(0deg,#fff,rgba(255,255,255,0.6))] pointer-events-none" />
                 {[45, 65, 35, 75, 85, 100, 80].map((val, i) => (
                   <div key={i} className="flex-1 flex flex-col items-center group/bar relative z-10">
                     <div 
-                      className="w-full max-w-[50px] bg-primary/40 group-hover/bar:bg-primary transition-all duration-500 rounded-2xl relative shadow-lg shadow-primary/10" 
+                      className="w-full max-w-[40px] bg-primary/40 group-hover/bar:bg-primary transition-all duration-500 rounded-lg md:rounded-2xl relative shadow-lg shadow-primary/10" 
                       style={{ height: `${val}%` }} 
-                    >
-                      <div className="absolute -top-10 left-1/2 -translate-x-1/2 opacity-0 group-hover/bar:opacity-100 transition-all duration-300 scale-90 group-hover/bar:scale-100 bg-foreground text-background px-3 py-1.5 rounded-xl text-xs font-black shadow-xl">
-                        {val}{userRole === 'customer' ? '₹' : 'kg'}
-                      </div>
-                    </div>
-                    <span className="text-[10px] text-muted-foreground mt-4 font-black uppercase tracking-widest opacity-70">
-                      {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'][i]}
+                    />
+                    <span className="text-[8px] md:text-[10px] text-muted-foreground mt-2 md:mt-4 font-black uppercase tracking-widest opacity-70">
+                      {['M', 'T', 'W', 'T', 'F', 'S', 'S'][i]}
                     </span>
                   </div>
                 ))}
@@ -240,25 +229,22 @@ export default function DashboardPage() {
           </Card>
 
           {/* Contextual Action Panel */}
-          <Card className="border-none shadow-lg rounded-3xl overflow-hidden bg-gradient-to-tr from-primary/5 to-transparent">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-2xl font-black">
-                {userRole === 'store_owner' ? <Clock className="h-6 w-6 text-warning" /> : <Sprout className="h-6 w-6 text-primary" />}
+          <Card className="border-none shadow-lg rounded-2xl md:rounded-[2.5rem] overflow-hidden bg-gradient-to-tr from-primary/5 to-transparent">
+            <CardHeader className="p-6">
+              <CardTitle className="flex items-center gap-2 text-xl md:text-2xl font-black">
+                {userRole === 'store_owner' ? <Clock className="h-5 w-5 md:h-6 md:w-6 text-warning" /> : <Sprout className="h-5 w-5 md:h-6 md:w-6 text-primary" />}
                 {userRole === 'store_owner' ? 'Critical Alerts' : 'Impact Growth'}
               </CardTitle>
-              <CardDescription className="text-base font-medium">
-                {userRole === 'store_owner' ? 'Immediate attention needed' : 'Your sustainability metrics'}
-              </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-8">
+            <CardContent className="p-6 pt-0 space-y-6 md:space-y-8">
               {userRole === 'store_owner' && (
                 <div className="space-y-4">
-                  <div className="flex justify-between text-sm font-black uppercase tracking-wider">
+                  <div className="flex justify-between text-[10px] md:text-sm font-black uppercase tracking-wider">
                     <span className="text-muted-foreground">Inventory at Risk</span>
                     <span className="text-warning">{Math.round(progressValue)}%</span>
                   </div>
-                  <Progress value={progressValue} className="h-4 bg-secondary rounded-full shadow-inner" />
-                  <p className="text-xs text-muted-foreground italic font-medium leading-relaxed">
+                  <Progress value={progressValue} className="h-3 md:h-4 bg-secondary rounded-full shadow-inner" />
+                  <p className="text-[10px] md:text-xs text-muted-foreground italic font-medium leading-relaxed">
                     <span className="text-warning font-black not-italic">{nearExpiryCount} items</span> are expiring within 72 hours.
                   </p>
                 </div>
@@ -266,11 +252,10 @@ export default function DashboardPage() {
 
               {userRole !== 'store_owner' && (
                 <div className="space-y-4">
-                  <div className="bg-primary/5 p-6 rounded-[2rem] border border-primary/10 shadow-sm relative overflow-hidden group">
-                    <Sprout className="absolute -right-4 -bottom-4 h-24 w-24 text-primary/5 rotate-12 group-hover:rotate-0 transition-transform duration-700" />
-                    <p className="text-xs font-black text-primary mb-2 uppercase tracking-widest">Sustainability Milestone</p>
-                    <p className="text-sm font-bold leading-relaxed text-foreground/80">
-                      You've prevented <span className="text-primary font-black">12.5kg of CO2</span> emissions this month! That's equivalent to planting <span className="text-primary font-black">2 trees</span>.
+                  <div className="bg-primary/5 p-4 md:p-6 rounded-2xl md:rounded-[2rem] border border-primary/10 shadow-sm relative overflow-hidden group">
+                    <p className="text-[10px] font-black text-primary mb-2 uppercase tracking-widest">Sustainability Milestone</p>
+                    <p className="text-xs md:text-sm font-bold leading-relaxed text-foreground/80">
+                      You've prevented <span className="text-primary font-black">12.5kg of CO2</span> emissions this month!
                     </p>
                   </div>
                 </div>
@@ -278,49 +263,42 @@ export default function DashboardPage() {
 
               <Separator className="bg-primary/10" />
 
-              <div className="space-y-5">
-                <h4 className="text-[11px] font-black uppercase tracking-[0.2em] text-primary/70">
+              <div className="space-y-4">
+                <h4 className="text-[10px] font-black uppercase tracking-widest text-primary/70">
                   {userRole === 'store_owner' ? 'Recommended Actions' : 'Discovery Hub'}
                 </h4>
                 <div className="grid grid-cols-1 gap-3">
                   {userRole === 'store_owner' ? (
                     <>
-                      <Link href="/inventory">
-                        <Button className="w-full justify-start h-14 rounded-2xl border-none bg-warning/10 text-warning-foreground hover:bg-warning/20 shadow-none font-black text-sm">
-                          <AlertTriangle className="mr-4 h-6 w-6" />
+                      <Link href="/inventory" className="w-full">
+                        <Button className="w-full justify-start h-12 md:h-14 rounded-xl md:rounded-2xl border-none bg-warning/10 text-warning-foreground hover:bg-warning/20 shadow-none font-black text-xs">
+                          <AlertTriangle className="mr-3 md:mr-4 h-5 w-5" />
                           Optimize Near-Expiry Pricing
                         </Button>
                       </Link>
-                      <Link href="/donations">
-                        <Button className="w-full justify-start h-14 rounded-2xl border-none bg-primary/10 text-primary hover:bg-primary/20 shadow-none font-black text-sm">
-                          <Heart className="mr-4 h-6 w-6" />
-                          Quick Donate Surplus
-                        </Button>
-                      </Link>
 
-                      {/* Quick Discount Tool */}
                       {nearExpiryCount > 0 && (
-                        <div className="mt-4 pt-4 border-t border-primary/10 space-y-4">
+                        <div className="mt-2 pt-4 border-t border-primary/10 space-y-4">
                           <div className="flex items-center justify-between">
-                            <h4 className="text-[10px] font-black uppercase tracking-widest text-primary/70">Quick Discount Tool</h4>
+                            <h4 className="text-[9px] md:text-[10px] font-black uppercase tracking-widest text-primary/70">Quick Discount Tool</h4>
                             <Badge variant="secondary" className="bg-primary/10 text-primary font-black">{quickDiscount}%</Badge>
                           </div>
-                          <div className="px-2">
+                          <div className="px-1">
                             <Slider 
                               value={[quickDiscount]} 
                               onValueChange={(vals) => setQuickDiscount(vals[0])} 
                               max={95} 
                               min={5}
                               step={5} 
-                              className="py-2"
+                              className="py-1"
                             />
                           </div>
                           <Button 
                             onClick={handleQuickDiscount}
                             disabled={isApplying}
-                            className="w-full h-12 rounded-xl bg-primary text-white font-black uppercase tracking-widest text-[10px] shadow-lg shadow-primary/20 transition-all hover:scale-[1.02]"
+                            className="w-full h-10 md:h-12 rounded-xl bg-primary text-white font-black uppercase tracking-widest text-[9px] shadow-lg shadow-primary/20"
                           >
-                            {isApplying ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Percent className="mr-3 h-4 w-4" />}
+                            {isApplying ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Percent className="mr-2 h-4 w-4" />}
                             Apply to {nearExpiryCount} Items
                           </Button>
                         </div>
@@ -328,15 +306,15 @@ export default function DashboardPage() {
                     </>
                   ) : (
                     <>
-                      <Link href="/marketplace">
-                        <Button className="w-full justify-start h-14 rounded-2xl border-none bg-primary/10 text-primary hover:bg-primary/20 shadow-none font-black text-sm">
-                          <ShoppingBag className="mr-4 h-6 w-6" />
+                      <Link href="/marketplace" className="w-full">
+                        <Button className="w-full justify-start h-12 md:h-14 rounded-xl md:rounded-2xl border-none bg-primary/10 text-primary hover:bg-primary/20 shadow-none font-black text-xs">
+                          <ShoppingBag className="mr-3 md:mr-4 h-5 w-5" />
                           Explore Live Deals
                         </Button>
                       </Link>
-                      <Link href="/orders">
-                        <Button className="w-full justify-start h-14 rounded-2xl border-none bg-blue-500/10 text-blue-600 hover:bg-blue-500/20 shadow-none font-black text-sm">
-                          <ClipboardList className="mr-4 h-6 w-6" />
+                      <Link href="/orders" className="w-full">
+                        <Button className="w-full justify-start h-12 md:h-14 rounded-xl md:rounded-2xl border-none bg-blue-500/10 text-blue-600 hover:bg-blue-500/20 shadow-none font-black text-xs">
+                          <ClipboardList className="mr-3 md:mr-4 h-5 w-5" />
                           My Rescue Journal
                         </Button>
                       </Link>
@@ -349,74 +327,49 @@ export default function DashboardPage() {
         </div>
 
         {/* Recent Activity List */}
-        <Card className="border-none shadow-xl rounded-[2.5rem] overflow-hidden bg-card transition-all duration-500 hover:shadow-2xl">
-          <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-8 border-b border-secondary">
-            <div>
-              <CardTitle className="text-3xl font-headline font-black">Community Activity</CardTitle>
-              <CardDescription className="text-lg font-medium">Your most recent contributions to zero waste</CardDescription>
+        <Card className="border-none shadow-xl rounded-2xl md:rounded-[2.5rem] overflow-hidden bg-card">
+          <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-6 md:p-8 border-b border-secondary">
+            <div className="space-y-1">
+              <CardTitle className="text-xl md:text-3xl font-headline font-black">Recent Activity</CardTitle>
+              <CardDescription className="text-sm md:text-lg font-medium">Your contributions to zero waste</CardDescription>
             </div>
-            <Link href={userRole === 'store_owner' ? "/inventory" : (userRole === 'customer' ? "/orders" : "/donations")}>
-              <Button variant="ghost" className="mt-4 sm:mt-0 text-primary hover:text-primary/80 hover:bg-primary/5 font-black uppercase tracking-widest text-xs px-6 py-6 rounded-2xl border border-primary/10 transition-all">
-                View All Missions <ChevronRight className="ml-2 h-4 w-4" />
-              </Button>
-            </Link>
           </CardHeader>
-          <CardContent className="p-8">
-            <div className="space-y-4">
+          <CardContent className="p-4 md:p-8">
+            <div className="space-y-2 md:space-y-4">
               {isLoading ? (
-                <div className="flex flex-col items-center justify-center py-20 gap-4">
-                  <Loader2 className="h-12 w-12 animate-spin text-primary" />
-                  <p className="text-muted-foreground font-black uppercase tracking-widest text-xs">Syncing impact data...</p>
+                <div className="flex flex-col items-center justify-center py-10 gap-3">
+                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                  <p className="text-muted-foreground font-black uppercase tracking-widest text-[10px]">Syncing impact data...</p>
                 </div>
               ) : (userRole === 'store_owner' ? allProducts : (userRole === 'customer' ? allOrders : allClaimed))?.length === 0 ? (
-                <div className="py-20 text-center text-muted-foreground italic font-medium text-lg">
-                  The journey starts with a single step. No activity yet.
+                <div className="py-10 text-center text-muted-foreground italic font-medium text-sm">
+                  No activity yet.
                 </div>
               ) : (
                 (userRole === 'store_owner' ? allProducts?.slice(0, 5) : (userRole === 'customer' ? allOrders?.slice(0, 5) : allClaimed?.slice(0, 5)))?.map((item: any, idx) => {
-                  const displayDate = item.updatedAt?.seconds ? new Date(item.updatedAt.seconds * 1000) : 
-                                      item.createdAt?.seconds ? new Date(item.createdAt.seconds * 1000) : 
-                                      item.orderDate ? new Date(item.orderDate) : 
-                                      item.claimDate ? new Date(item.claimDate) : new Date()
-
                   return (
                     <div key={item.id} className={cn(
-                      "flex flex-col sm:flex-row items-start sm:items-center justify-between group p-6 hover:bg-secondary/20 rounded-[2rem] transition-all duration-500 cursor-pointer border border-transparent hover:border-primary/5 animate-in fade-in slide-in-from-right-4",
-                      `delay-[${idx * 100}ms]`
+                      "flex items-center justify-between p-3 md:p-6 hover:bg-secondary/20 rounded-xl md:rounded-[2rem] transition-all duration-300 border border-transparent hover:border-primary/5",
+                      `animate-in fade-in slide-in-from-right-4 delay-[${idx * 50}ms]`
                     )}>
-                      <div className="flex items-center gap-6 mb-4 sm:mb-0">
-                        <div className={cn(
-                          "h-16 w-16 rounded-2xl flex items-center justify-center shadow-md bg-white text-primary transform group-hover:rotate-6 transition-all duration-500 border border-secondary"
-                        )}>
-                          {userRole === 'store_owner' ? <Package className="h-8 w-8" /> : 
-                           userRole === 'customer' ? <ShoppingBag className="h-8 w-8" /> : <Heart className="h-8 w-8 text-danger" />}
+                      <div className="flex items-center gap-3 md:gap-6">
+                        <div className="h-10 w-10 md:h-16 md:w-16 rounded-lg md:rounded-2xl flex items-center justify-center shadow-md bg-white text-primary border border-secondary shrink-0">
+                          {userRole === 'store_owner' ? <Package className="h-5 w-5 md:h-8 md:w-8" /> : 
+                           userRole === 'customer' ? <ShoppingBag className="h-5 w-5 md:h-8 md:w-8" /> : <Heart className="h-5 w-5 md:h-8 md:w-8" />}
                         </div>
-                        <div>
-                          <p className="font-black text-xl group-hover:text-primary transition-colors leading-tight mb-1">
+                        <div className="min-w-0">
+                          <p className="font-black text-sm md:text-xl truncate leading-tight mb-0.5">
                             {userRole === 'store_owner' ? item.name : (userRole === 'customer' ? item.productName : item.name || "Surplus Rescue")}
                           </p>
-                          <div className="flex items-center gap-2 text-[10px] text-muted-foreground font-black uppercase tracking-widest">
-                            {userRole === 'store_owner' ? (
-                               <>
-                                 <Clock className="h-3 w-3" />
-                                 Expires {new Date(item.expiryDate).toLocaleDateString()}
-                               </>
-                            ) : (
-                              <>
-                                <History className="h-3 w-3" />
-                                Updated {displayDate.toLocaleDateString()}
-                              </>
-                            )}
-                          </div>
+                          <p className="text-[8px] md:text-[10px] text-muted-foreground font-black uppercase tracking-widest truncate">
+                            {userRole === 'store_owner' ? `Exp: ${new Date(item.expiryDate).toLocaleDateString()}` : 'Mission Active'}
+                          </p>
                         </div>
                       </div>
-                      <div className="text-left sm:text-right w-full sm:w-auto">
-                        <Badge variant="outline" className="font-black text-sm px-5 py-2 rounded-xl border-primary/20 bg-primary/5 text-primary shadow-sm">
-                          {userRole === 'store_owner' ? `${item.quantity} Units` : (userRole === 'customer' ? `₹${(item.totalAmount || 0).toLocaleString('en-IN')}` : 'Mission Active')}
+                      <div className="text-right">
+                        <Badge variant="outline" className="font-black text-[10px] md:text-sm px-2 py-0.5 md:px-5 md:py-2 rounded-lg md:rounded-xl border-primary/20 bg-primary/5 text-primary whitespace-nowrap">
+                          {userRole === 'store_owner' ? `${item.quantity} Units` : (userRole === 'customer' ? `₹${(item.totalAmount || 0)}` : 'Active')}
                         </Badge>
-                        <p className="text-[10px] font-black text-muted-foreground mt-2 uppercase tracking-[0.2em] opacity-60">
-                          {userRole === 'store_owner' ? 'Inventory Level' : 'Deal Status'}
-                        </p>
                       </div>
                     </div>
                   )
