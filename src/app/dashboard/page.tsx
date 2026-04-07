@@ -101,30 +101,30 @@ export default function DashboardPage() {
   const getStats = () => {
     if (userRole === 'store_owner') {
       return [
-        { label: "Inventory", value: allProducts?.length.toString() || "0", icon: Package, color: "bg-blue-500" },
-        { label: "At Risk", value: nearExpiryCount.toString() || "0", icon: AlertTriangle, color: "bg-amber-500" },
-        { label: "Waste Prevented", value: "142kg", icon: Sprout, color: "bg-emerald-500" },
-        { label: "Social Score", value: "9.8", icon: Heart, color: "bg-rose-500" },
+        { label: "Inventory", value: allProducts?.length.toString() || "0", icon: Package, color: "bg-blue-600" },
+        { label: "At Risk", value: nearExpiryCount.toString() || "0", icon: AlertTriangle, color: "bg-amber-600" },
+        { label: "Waste Prevented", value: "142kg", icon: Sprout, color: "bg-emerald-600" },
+        { label: "Social Score", value: "9.8", icon: Heart, color: "bg-rose-600" },
       ]
     } else if (userRole === 'customer') {
       const totalSavings = allOrders?.reduce((acc, curr) => acc + (curr.totalAmount || 0), 0) || 0
       return [
-        { label: "Rescued", value: allOrders?.length.toString() || "0", icon: ShoppingBag, color: "bg-emerald-500" },
-        { label: "Saved", value: `₹${totalSavings.toLocaleString('en-IN')}`, icon: TrendingUp, color: "bg-blue-500" },
-        { label: "Eco Points", value: "1,240", icon: Zap, color: "bg-amber-500" },
-        { label: "Impact", value: "Global", icon: Heart, color: "bg-rose-500" },
+        { label: "Rescued", value: allOrders?.length.toString() || "0", icon: ShoppingBag, color: "bg-emerald-600" },
+        { label: "Saved", value: `₹${totalSavings.toLocaleString('en-IN')}`, icon: TrendingUp, color: "bg-blue-600" },
+        { label: "Eco Points", value: "1,240", icon: Zap, color: "bg-amber-600" },
+        { label: "Impact", value: "Global", icon: Heart, color: "bg-rose-600" },
       ]
     } else { // NGO
       return [
-        { label: "Claimed", value: allClaimed?.length.toString() || "0", icon: Heart, color: "bg-rose-500" },
-        { label: "Pending", value: allClaimed?.filter(d => d.status === 'Claimed').length.toString() || "0", icon: Clock, color: "bg-amber-500" },
-        { label: "Meals Provided", value: ((allClaimed?.length || 0) * 8).toString(), icon: Users, color: "bg-emerald-500" },
-        { label: "Network", value: "12 Stores", icon: Package, color: "bg-blue-500" },
+        { label: "Claimed", value: allClaimed?.length.toString() || "0", icon: Heart, color: "bg-rose-600" },
+        { label: "Pending", value: allClaimed?.filter(d => d.status === 'Claimed').length.toString() || "0", icon: Clock, color: "bg-amber-600" },
+        { label: "Meals Provided", value: ((allClaimed?.length || 0) * 8).toString(), icon: Users, color: "bg-emerald-600" },
+        { label: "Network", value: "12 Stores", icon: Package, color: "bg-blue-600" },
       ]
     }
   }
 
-  const heroImage = getPlaceholderById('hero-bg')
+  const chartImage = getPlaceholderById('hero-bg')
 
   return (
     <DashboardLayout>
@@ -162,21 +162,21 @@ export default function DashboardPage() {
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8">
           {/* Main Visual Panel */}
-          <Card className="lg:col-span-2 border-none shadow-2xl rounded-[2.5rem] sm:rounded-[3rem] overflow-hidden bg-zinc-900 text-white relative h-fit lg:h-auto">
+          <Card className="lg:col-span-2 border-none shadow-2xl rounded-[2.5rem] sm:rounded-[3rem] overflow-hidden bg-emerald-950 text-white relative h-fit lg:h-auto">
             <img 
-              src={heroImage.imageUrl} 
-              className="absolute inset-0 object-cover w-full h-full opacity-30 mix-blend-luminosity" 
+              src={chartImage.imageUrl} 
+              className="absolute inset-0 object-cover w-full h-full opacity-50 mix-blend-overlay" 
               alt="Performance Overview"
-              data-ai-hint={heroImage.imageHint}
+              data-ai-hint={chartImage.imageHint}
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-zinc-900 via-zinc-900/40 to-transparent pointer-events-none" />
+            <div className="absolute inset-0 bg-gradient-to-t from-emerald-950 via-emerald-950/40 to-transparent pointer-events-none" />
             <CardHeader className="p-6 sm:p-10 relative z-10">
               <div className="flex justify-between items-start">
                 <div className="space-y-1">
-                  <Badge className="bg-primary text-white border-none px-3 py-1 font-black uppercase tracking-widest text-[8px] sm:text-[10px]">Weekly Impact</Badge>
+                  <Badge className="bg-emerald-500 text-white border-none px-3 py-1 font-black uppercase tracking-widest text-[8px] sm:text-[10px]">Weekly Impact</Badge>
                   <CardTitle className="text-2xl sm:text-4xl font-black tracking-tighter">Performance</CardTitle>
                 </div>
-                <TrendingUp className="h-6 w-6 sm:h-10 sm:w-10 text-primary" />
+                <TrendingUp className="h-6 w-6 sm:h-10 sm:w-10 text-emerald-400" />
               </div>
             </CardHeader>
             <CardContent className="p-6 sm:p-10 pt-0 relative z-10">
@@ -184,10 +184,10 @@ export default function DashboardPage() {
                 {[30, 45, 35, 60, 80, 50, 95].map((val, i) => (
                   <div key={i} className="flex-1 group relative">
                     <div 
-                      className="w-full bg-primary/20 group-hover:bg-primary transition-all duration-700 rounded-lg sm:rounded-2xl relative border border-white/5" 
+                      className="w-full bg-emerald-400/30 group-hover:bg-emerald-400 transition-all duration-700 rounded-lg sm:rounded-2xl relative border border-white/10" 
                       style={{ height: `${val}%` }} 
                     />
-                    <p className="text-center mt-3 sm:mt-6 font-black text-[8px] sm:text-[10px] text-white/50 uppercase">
+                    <p className="text-center mt-3 sm:mt-6 font-black text-[8px] sm:text-[10px] text-white/70 uppercase">
                       {['M', 'T', 'W', 'T', 'F', 'S', 'S'][i]}
                     </p>
                   </div>

@@ -71,10 +71,10 @@ export default function AdminPage() {
   }
 
   const stats = [
-    { label: "Users", value: allUsers?.length || 0, icon: Users, color: "bg-blue-500" },
-    { label: "Market", value: marketplaceItems?.length || 0, icon: ShoppingBag, color: "bg-primary" },
-    { label: "Donations", value: publicDonations?.length || 0, icon: Heart, color: "bg-danger" },
-    { label: "Health", value: "99%", icon: ShieldAlert, color: "bg-success" },
+    { label: "Users", value: allUsers?.length || 0, icon: Users, color: "bg-blue-600" },
+    { label: "Market", value: marketplaceItems?.length || 0, icon: ShoppingBag, color: "bg-emerald-600" },
+    { label: "Donations", value: publicDonations?.length || 0, icon: Heart, color: "bg-rose-600" },
+    { label: "Health", value: "99%", icon: ShieldAlert, color: "bg-amber-600" },
   ]
 
   const filteredUsers = allUsers?.filter(u => 
@@ -88,28 +88,28 @@ export default function AdminPage() {
   return (
     <DashboardLayout>
       <div className="space-y-6 sm:space-y-10 pb-24 animate-in fade-in duration-1000">
-        <div className="relative overflow-hidden rounded-[2.5rem] bg-zinc-900 px-6 py-10 sm:px-12 sm:py-16 text-white shadow-2xl">
+        <div className="relative overflow-hidden rounded-[2.5rem] bg-zinc-950 px-6 py-10 sm:px-12 sm:py-16 text-white shadow-2xl">
           <img 
             src={heroImage.imageUrl} 
-            className="absolute inset-0 object-cover w-full h-full opacity-30 mix-blend-overlay" 
+            className="absolute inset-0 object-cover w-full h-full opacity-50 mix-blend-overlay" 
             alt="Admin Command Center"
             data-ai-hint={heroImage.imageHint}
           />
-          <div className="absolute inset-0 bg-gradient-to-br from-zinc-900 via-zinc-900/40 to-transparent pointer-events-none" />
+          <div className="absolute inset-0 bg-gradient-to-br from-zinc-950 via-zinc-900/40 to-transparent pointer-events-none" />
           <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-6">
             <div className="space-y-2 text-center md:text-left">
               <Badge className="bg-white/10 text-white border-none backdrop-blur-md px-4 py-1.5 font-black uppercase tracking-widest text-[8px] sm:text-[10px]">
                 Command Center
               </Badge>
               <h1 className="text-3xl sm:text-5xl font-black tracking-tighter">SaveBite <span className="text-primary italic">Admin.</span></h1>
-              <p className="text-zinc-400 font-medium italic text-xs sm:text-lg max-w-xl opacity-80">
+              <p className="text-zinc-300 font-medium italic text-xs sm:text-lg max-w-xl opacity-80">
                 Monitoring the ecosystem impact at scale.
               </p>
             </div>
             <div className="flex items-center gap-4 bg-white/5 p-4 sm:p-6 rounded-[1.5rem] sm:rounded-[2rem] border border-white/10 backdrop-blur-md">
                <TrendingUp className="h-6 w-6 sm:h-10 sm:w-10 text-primary" />
                <div className="text-center sm:text-left">
-                  <p className="text-[8px] font-black uppercase tracking-widest text-zinc-500">Global Saved</p>
+                  <p className="text-[8px] font-black uppercase tracking-widest text-zinc-400">Global Saved</p>
                   <p className="text-xl sm:text-3xl font-black">4.2 Tons</p>
                </div>
             </div>
@@ -119,7 +119,7 @@ export default function AdminPage() {
         {/* Dynamic Stats Grid */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-8">
           {stats.map((stat, idx) => (
-            <Card key={stat.label} className="border-none shadow-xl rounded-[1.5rem] sm:rounded-[2rem] overflow-hidden card-3d">
+            <Card key={stat.label} className={cn("border-none shadow-xl rounded-[1.5rem] sm:rounded-[2rem] overflow-hidden card-3d", idx % 2 === 0 ? "bg-white" : "bg-zinc-50")}>
               <CardContent className="p-4 sm:p-8">
                 <div className={cn("p-2 sm:p-4 rounded-xl sm:rounded-2xl text-white shadow-lg w-fit mb-4", stat.color)}>
                   <stat.icon className="h-4 w-4 sm:h-6 sm:w-6" />

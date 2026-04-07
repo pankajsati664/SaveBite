@@ -83,14 +83,14 @@ export default function DonationsPage() {
   return (
     <DashboardLayout>
       <div className="space-y-10 animate-in fade-in slide-in-from-bottom-6 duration-1000">
-        <div className="relative overflow-hidden rounded-[3rem] bg-zinc-900 px-10 py-20 text-white shadow-2xl border-4 border-white/10">
+        <div className="relative overflow-hidden rounded-[3rem] bg-rose-900 px-10 py-20 text-white shadow-2xl border-4 border-white/10">
           <img 
             src={heroImage.imageUrl} 
-            className="absolute inset-0 object-cover w-full h-full opacity-40 mix-blend-overlay" 
+            className="absolute inset-0 object-cover w-full h-full opacity-60 mix-blend-overlay" 
             alt="NGO Impact Hero"
             data-ai-hint={heroImage.imageHint}
           />
-          <div className="absolute inset-0 bg-gradient-to-br from-primary/80 via-primary/40 to-transparent pointer-events-none" />
+          <div className="absolute inset-0 bg-gradient-to-br from-rose-950 via-rose-900/40 to-transparent pointer-events-none" />
           <div className="relative z-10 flex flex-col md:flex-row items-center gap-12">
             <div className="h-32 w-32 bg-white/20 backdrop-blur-xl rounded-[2rem] flex items-center justify-center shrink-0 shadow-2xl border border-white/20 animate-pulse">
               <Heart className="h-16 w-16 text-white fill-white" />
@@ -99,8 +99,8 @@ export default function DonationsPage() {
               <Badge className="bg-white/20 text-white border-none backdrop-blur-xl px-5 py-2 font-black uppercase tracking-widest text-xs">
                 NGO Impact Center
               </Badge>
-              <h1 className="text-5xl md:text-6xl font-headline font-black leading-tight tracking-tighter">Rescuing Hope. <br />Feeding the <span className="text-accent underline decoration-white/20 underline-offset-8">Future.</span></h1>
-              <p className="text-xl text-primary-foreground/90 max-w-2xl font-medium italic opacity-90 leading-relaxed">
+              <h1 className="text-5xl md:text-6xl font-headline font-black leading-tight tracking-tighter">Rescuing Hope. <br />Feeding the <span className="text-rose-300 underline decoration-white/20 underline-offset-8">Future.</span></h1>
+              <p className="text-xl text-rose-50 max-w-2xl font-medium italic opacity-90 leading-relaxed">
                 Connect directly with local retailers to redistribute surplus food. Your organization turns waste into nourishment for those in need.
               </p>
             </div>
