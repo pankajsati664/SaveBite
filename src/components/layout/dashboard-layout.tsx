@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useState, useEffect } from "react"
@@ -44,11 +45,10 @@ interface NavItem {
 const navItems: NavItem[] = [
   { title: "Home", href: "/dashboard", icon: LayoutDashboard },
   { title: "Market", href: "/marketplace", icon: ShoppingBag },
-  { title: "Inventory", href: "/inventory", icon: Package, roles: ['store_owner', 'admin'] },
-  { title: "Rescue", href: "/donations", icon: HandHelping, roles: ['ngo', 'store_owner', 'admin'] },
+  { title: "Vault", href: "/inventory", icon: Package, roles: ['store_owner', 'admin'] },
+  { title: "NGO", href: "/donations", icon: HandHelping, roles: ['ngo', 'admin'] },
   { title: "Orders", href: "/orders", icon: ClipboardList, roles: ['customer', 'admin'] },
   { title: "Admin", href: "/admin", icon: ShieldAlert, roles: ['admin'] },
-  { title: "Profile", href: "/settings", icon: User },
 ]
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -91,17 +91,19 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   const filteredNavItems = navItems.filter(item => 
     !item.roles || item.roles.includes(userRole)
-  ).slice(0, 5)
+  )
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
       {/* Top Header */}
       <header className="h-16 sm:h-20 flex items-center justify-between px-6 sm:px-10 bg-card/80 backdrop-blur-xl sticky top-0 z-40 border-b border-secondary/50 shadow-sm">
         <div className="flex items-center gap-3">
-          <div className="bg-primary p-2 rounded-xl shadow-lg shadow-primary/20">
-            <Leaf className="h-5 w-5 text-primary-foreground" />
-          </div>
-          <span className="text-xl sm:text-2xl font-headline font-black text-primary tracking-tighter">SaveBite</span>
+          <Link href="/dashboard" className="flex items-center gap-3">
+            <div className="bg-primary p-2 rounded-xl shadow-lg shadow-primary/20">
+              <Leaf className="h-5 w-5 text-primary-foreground" />
+            </div>
+            <span className="text-xl sm:text-2xl font-headline font-black text-primary tracking-tighter">SaveBite</span>
+          </Link>
         </div>
 
         <div className="flex items-center gap-4 sm:gap-6">
@@ -152,20 +154,20 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
       {/* Snackbar Navigation Bar */}
       <div className="fixed bottom-6 left-0 right-0 z-50 flex justify-center px-4 animate-in slide-in-from-bottom-10 duration-700">
-        <nav className="bg-zinc-900/95 backdrop-blur-2xl border border-white/10 rounded-[2.5rem] p-2 flex items-center gap-1 sm:gap-2 shadow-[0_20px_50px_rgba(0,0,0,0.3)] w-full max-w-lg">
+        <nav className="bg-zinc-900/95 backdrop-blur-2xl border border-white/10 rounded-[2.5rem] p-2 flex items-center gap-1 sm:gap-2 shadow-[0_20px_50px_rgba(0,0,0,0.3)] w-full max-w-2xl overflow-x-auto scrollbar-hide">
           {filteredNavItems.map((item) => (
             <Link 
               key={item.href} 
               href={item.href}
               className={cn(
-                "flex-1 flex flex-col items-center justify-center gap-1.5 py-3 rounded-[2rem] transition-all duration-300",
+                "flex-1 min-w-[60px] flex flex-col items-center justify-center gap-1 py-3 rounded-[1.5rem] sm:rounded-[2rem] transition-all duration-300",
                 pathname === item.href 
                   ? "bg-primary text-white shadow-lg shadow-primary/20 scale-105" 
                   : "text-zinc-400 hover:text-white hover:bg-white/5"
               )}
             >
-              <item.icon className={cn("h-5 w-5 sm:h-6", pathname === item.href ? "animate-pulse" : "")} />
-              <span className="text-[9px] sm:text-[10px] font-black uppercase tracking-[0.1em]">{item.title}</span>
+              <item.icon className={cn("h-4 w-4 sm:h-5 sm:w-5", pathname === item.href ? "animate-pulse" : "")} />
+              <span className="text-[7px] sm:text-[9px] font-black uppercase tracking-[0.1em] whitespace-nowrap">{item.title}</span>
             </Link>
           ))}
         </nav>

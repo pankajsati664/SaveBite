@@ -19,7 +19,8 @@ import {
   ChevronRight,
   Zap,
   ShieldAlert,
-  ShieldCheck
+  ShieldCheck,
+  Globe
 } from "lucide-react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -60,17 +61,17 @@ export default function DashboardPage() {
   const userRole = userProfile?.role || 'customer'
 
   const productsQuery = useMemoFirebase(() => {
-    if (!firestore || !user || userRole !== 'store_owner') return null
+    if (!firestore || !user || (userRole !== 'store_owner' && userRole !== 'admin')) return null
     return query(collection(firestore, "users", user.uid, "products"), orderBy("updatedAt", "desc"))
   }, [firestore, user, userRole])
 
   const ordersQuery = useMemoFirebase(() => {
-    if (!firestore || !user || userRole !== 'customer') return null
+    if (!firestore || !user || (userRole !== 'customer' && userRole !== 'admin')) return null
     return query(collection(firestore, "users", user.uid, "orders"), orderBy("createdAt", "desc"))
   }, [firestore, user, userRole])
 
   const claimedDonationsQuery = useMemoFirebase(() => {
-    if (!firestore || !user || userRole !== 'ngo') return null
+    if (!firestore || !user || (userRole !== 'ngo' && userRole !== 'admin')) return null
     return query(collection(firestore, "users", user.uid, "claimed_donations"), orderBy("updatedAt", "desc"))
   }, [firestore, user, userRole])
 
@@ -123,10 +124,10 @@ export default function DashboardPage() {
   const getStats = () => {
     if (userRole === 'admin') {
       return [
-        { label: "Authority", value: "Root", icon: ShieldAlert, color: "bg-zinc-900" },
-        { label: "Global Users", value: "Active", icon: Users, color: "bg-blue-600" },
-        { label: "Health", value: "100%", icon: ShieldCheck, color: "bg-emerald-600" },
-        { label: "Scale", value: "Enterprise", icon: Sprout, color: "bg-rose-600" },
+        { label: "Platform Health", value: "100%", icon: ShieldCheck, color: "bg-emerald-600" },
+        { label: "Global Presence", value: "Active", icon: Globe, color: "bg-blue-600" },
+        { label: "System Uptime", value: "99.9%", icon: Zap, color: "bg-amber-600" },
+        { label: "Root Access", value: "Verified", icon: ShieldAlert, color: "bg-zinc-950" },
       ]
     }
     if (userRole === 'store_owner') {
@@ -165,7 +166,9 @@ export default function DashboardPage() {
             <h1 className="text-3xl sm:text-5xl font-black tracking-tighter leading-none">
               Hello, <span className="text-primary">{userProfile?.name?.split(' ')[0] || 'Member'}</span>!
             </h1>
-            <p className="text-muted-foreground font-medium italic text-base sm:text-lg opacity-80">Track your zero-waste impact.</p>
+            <p className="text-muted-foreground font-medium italic text-base sm:text-lg opacity-80">
+              {userRole === 'admin' ? "Global platform oversight active." : "Track your zero-waste impact."}
+            </p>
           </div>
           <Badge variant="outline" className="px-4 py-2 rounded-xl bg-white border-none shadow-lg flex items-center gap-2 w-fit">
             <CalendarDays className="h-4 w-4 text-primary" />
@@ -204,8 +207,8 @@ export default function DashboardPage() {
             <CardHeader className="p-6 sm:p-10 relative z-10">
               <div className="flex justify-between items-start">
                 <div className="space-y-1">
-                  <Badge className="bg-emerald-500 text-white border-none px-3 py-1 font-black uppercase tracking-widest text-[8px] sm:text-[10px]">Weekly Impact</Badge>
-                  <CardTitle className="text-2xl sm:text-4xl font-black tracking-tighter">Performance</CardTitle>
+                  <Badge className="bg-emerald-500 text-white border-none px-3 py-1 font-black uppercase tracking-widest text-[8px] sm:text-[10px]">Platform Trends</Badge>
+                  <CardTitle className="text-2xl sm:text-4xl font-black tracking-tighter">System Health</CardTitle>
                 </div>
                 <TrendingUp className="h-6 w-6 sm:h-10 sm:w-10 text-emerald-400" />
               </div>
@@ -232,32 +235,49 @@ export default function DashboardPage() {
             <CardHeader className="p-6 sm:p-10">
               <CardTitle className="text-xl sm:text-3xl font-black tracking-tighter flex items-center gap-2 sm:gap-3">
                 <Zap className="h-5 w-5 sm:h-7 sm:w-7 text-amber-500 fill-amber-500" />
-                Action Hub
+                Developer Hub
               </CardTitle>
-              <CardDescription className="font-medium italic text-sm sm:text-lg">Rescue surplus instantly.</CardDescription>
+              <CardDescription className="font-medium italic text-sm sm:text-lg">Access all platform modules.</CardDescription>
             </CardHeader>
-            <CardContent className="p-6 sm:p-10 pt-0 space-y-6 sm:space-y-8 flex-1">
+            <CardContent className="p-6 sm:p-10 pt-0 space-y-4 sm:space-y-6 flex-1">
               {isTargetUID && userRole !== 'admin' && (
-                <div className="bg-zinc-950 p-6 rounded-3xl border border-zinc-800 shadow-2xl animate-bounce">
-                  <p className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500 mb-2 text-center">Emergency Protocol</p>
+                <div className="bg-zinc-950 p-6 rounded-3xl border border-zinc-800 shadow-2xl">
+                  <p className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500 mb-2 text-center">Identity Override</p>
                   <Button onClick={handleSelfPromoteAdmin} className="w-full h-16 rounded-2xl bg-white text-zinc-950 font-black text-lg hover:bg-zinc-200">
-                    Promote to Admin <ShieldAlert className="ml-2 h-6 w-6" />
+                    Grant Dev Access <ShieldAlert className="ml-2 h-6 w-6" />
                   </Button>
                 </div>
               )}
 
-              {userRole === 'admin' && (
-                <div className="space-y-4">
-                  <Link href="/admin" className="block">
-                    <Button className="w-full h-20 rounded-[2rem] bg-zinc-900 text-white font-black text-xl shadow-2xl shadow-zinc-900/40">
-                      Enter Control <ShieldAlert className="ml-2 h-6 w-6 text-primary" />
+              {userRole === 'admin' ? (
+                <div className="grid grid-cols-1 gap-3">
+                  <Link href="/admin">
+                    <Button className="w-full h-14 rounded-2xl bg-zinc-900 text-white font-black text-sm shadow-xl shadow-zinc-900/20">
+                      System Admin Panel <ShieldAlert className="ml-2 h-4 w-4 text-primary" />
                     </Button>
                   </Link>
-                  <p className="text-center text-[10px] font-black uppercase tracking-widest text-muted-foreground italic">Full platform visibility active.</p>
+                  <Link href="/marketplace">
+                    <Button variant="outline" className="w-full h-14 rounded-2xl border-secondary font-black text-sm hover:bg-secondary">
+                      Customer Market <ShoppingBag className="ml-2 h-4 w-4" />
+                    </Button>
+                  </Link>
+                  <Link href="/inventory">
+                    <Button variant="outline" className="w-full h-14 rounded-2xl border-secondary font-black text-sm hover:bg-secondary">
+                      Shop Inventory <Package className="ml-2 h-4 w-4" />
+                    </Button>
+                  </Link>
+                  <Link href="/donations">
+                    <Button variant="outline" className="w-full h-14 rounded-2xl border-secondary font-black text-sm hover:bg-secondary">
+                      NGO Rescue Portal <Heart className="ml-2 h-4 w-4" />
+                    </Button>
+                  </Link>
+                  <Link href="/orders">
+                    <Button variant="outline" className="w-full h-14 rounded-2xl border-secondary font-black text-sm hover:bg-secondary">
+                      Order History <ClipboardList className="ml-2 h-4 w-4" />
+                    </Button>
+                  </Link>
                 </div>
-              )}
-
-              {userRole === 'store_owner' ? (
+              ) : userRole === 'store_owner' ? (
                 <div className="space-y-6">
                   <div className="bg-secondary/40 p-6 sm:p-8 rounded-2xl sm:rounded-[2rem] border border-secondary shadow-inner">
                     <div className="flex justify-between items-center mb-4 sm:mb-6">
@@ -278,67 +298,52 @@ export default function DashboardPage() {
                       {isApplying ? <Loader2 className="animate-spin h-5 w-5" /> : `Rescue ${nearExpiryCount} Items`}
                     </Button>
                   </div>
-                  <Link href="/inventory" className="block">
-                    <Button variant="outline" className="w-full h-12 sm:h-16 rounded-xl sm:rounded-2xl border-secondary font-black uppercase tracking-widest text-[9px] sm:text-[11px] hover:bg-secondary">
-                      Inventory Management <ChevronRight className="ml-1 h-3 w-3 sm:h-4 sm:w-4" />
-                    </Button>
-                  </Link>
                 </div>
-              ) : userRole !== 'admin' && (
-                <div className="space-y-3 sm:space-y-4">
+              ) : (
+                <div className="space-y-3">
                   <Link href="/marketplace" className="block">
                     <Button className="w-full h-16 sm:h-20 rounded-2xl sm:rounded-[2rem] bg-primary text-white font-black text-lg sm:text-xl shadow-2xl shadow-primary/30">
                       Browse Deals <ShoppingBag className="ml-2 h-5 w-5 sm:h-6 sm:w-6" />
                     </Button>
                   </Link>
-                  <Link href="/orders" className="block">
-                    <Button variant="ghost" className="w-full h-16 sm:h-20 rounded-2xl sm:rounded-[2rem] bg-blue-500/10 text-blue-600 font-black text-lg sm:text-xl">
-                      Rescue Journal <ClipboardList className="ml-2 h-5 w-5 sm:h-6 sm:w-6" />
-                    </Button>
-                  </Link>
-                  <div className="bg-emerald-50 p-4 sm:p-6 rounded-2xl sm:rounded-[2rem] border border-emerald-100 mt-2 sm:mt-4">
-                    <p className="text-[8px] sm:text-[10px] font-black uppercase tracking-widest text-emerald-600 mb-1">Eco Tip</p>
-                    <p className="text-emerald-900 font-medium italic text-xs sm:text-sm">Rescuing dairy today saves 5kg of CO2 emissions per item!</p>
-                  </div>
                 </div>
               )}
             </CardContent>
           </Card>
         </div>
 
-        {/* Activity Panel */}
+        {/* Impact Journal */}
         <Card className="border-none shadow-2xl rounded-[2.5rem] sm:rounded-[3rem] overflow-hidden bg-white">
           <CardHeader className="p-6 sm:p-10 border-b border-secondary/50">
             <CardTitle className="text-xl sm:text-3xl font-black tracking-tighter">Impact Journal</CardTitle>
           </CardHeader>
           <CardContent className="p-4 sm:p-10">
-            <div className="space-y-3 sm:space-y-4">
-              {isLoading ? (
-                <div className="flex flex-col items-center py-12 gap-3">
-                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                  <p className="font-black uppercase tracking-widest text-[8px] sm:text-[10px] text-muted-foreground">Syncing...</p>
-                </div>
-              ) : (userRole === 'store_owner' ? allProducts : (userRole === 'customer' ? allOrders : allClaimed))?.length === 0 ? (
-                <p className="text-center py-12 text-muted-foreground font-medium italic">No recent activity detected.</p>
-              ) : (
-                (userRole === 'store_owner' ? allProducts?.slice(0, 5) : (userRole === 'customer' ? allOrders?.slice(0, 5) : allClaimed?.slice(0, 5)))?.map((item: any, i) => (
-                  <div key={item.id} className="flex items-center justify-between p-4 sm:p-6 hover:bg-secondary/30 rounded-2xl sm:rounded-3xl transition-all border border-transparent hover:border-secondary">
-                    <div className="flex items-center gap-4 sm:gap-6">
-                      <div className="h-10 w-10 sm:h-16 sm:w-16 rounded-lg sm:rounded-2xl bg-secondary/50 flex items-center justify-center text-primary shadow-sm group-hover:scale-105 transition-transform">
-                        {userRole === 'store_owner' ? <Package className="h-5 w-5 sm:h-8 sm:w-8" /> : <ShoppingBag className="h-5 w-5 sm:h-8 sm:w-8" />}
-                      </div>
-                      <div>
-                        <p className="font-black text-sm sm:text-xl tracking-tight leading-tight line-clamp-1">{userRole === 'store_owner' ? item.name : item.productName || 'Surplus Rescue'}</p>
-                        <p className="text-[8px] sm:text-[10px] text-muted-foreground font-black uppercase tracking-widest">{new Date(item.updatedAt?.seconds * 1000 || Date.now()).toLocaleDateString()}</p>
-                      </div>
-                    </div>
-                    <Badge variant="outline" className="px-3 py-1 sm:px-6 sm:py-2 rounded-lg sm:rounded-xl font-black text-[10px] sm:text-sm border-primary/20 text-primary bg-primary/5">
-                      {userRole === 'store_owner' ? `${item.quantity}U` : `₹${item.totalAmount}`}
-                    </Badge>
+             <div className="space-y-3">
+               {isLoading ? (
+                  <div className="flex flex-col items-center py-12">
+                    <Loader2 className="h-8 w-8 animate-spin text-primary" />
                   </div>
-                ))
-              )}
-            </div>
+               ) : (userRole === 'store_owner' ? allProducts : (userRole === 'customer' ? allOrders : allClaimed))?.length === 0 ? (
+                  <p className="text-center py-12 text-muted-foreground font-medium italic">No recent activity found.</p>
+               ) : (
+                  (userRole === 'store_owner' ? allProducts?.slice(0, 5) : (userRole === 'customer' ? allOrders?.slice(0, 5) : allClaimed?.slice(0, 5)))?.map((item: any) => (
+                    <div key={item.id} className="flex items-center justify-between p-4 sm:p-6 hover:bg-secondary/30 rounded-2xl sm:rounded-3xl transition-all">
+                      <div className="flex items-center gap-4">
+                        <div className="h-10 w-10 sm:h-14 sm:w-14 rounded-xl bg-secondary flex items-center justify-center text-primary">
+                          {userRole === 'store_owner' ? <Package className="h-5 w-5 sm:h-7 sm:w-7" /> : <ShoppingBag className="h-5 w-5 sm:h-7 sm:w-7" />}
+                        </div>
+                        <div>
+                          <p className="font-black text-sm sm:text-lg tracking-tight line-clamp-1">{userRole === 'store_owner' ? item.name : item.productName || 'Surplus Rescue'}</p>
+                          <p className="text-[8px] sm:text-[10px] text-muted-foreground font-black uppercase tracking-widest">{new Date(item.updatedAt?.seconds * 1000 || Date.now()).toLocaleDateString()}</p>
+                        </div>
+                      </div>
+                      <Badge variant="outline" className="px-4 py-1.5 rounded-lg font-black text-[10px] sm:text-xs">
+                        {userRole === 'store_owner' ? `${item.quantity}U` : `₹${item.totalAmount}`}
+                      </Badge>
+                    </div>
+                  ))
+               )}
+             </div>
           </CardContent>
         </Card>
       </div>
