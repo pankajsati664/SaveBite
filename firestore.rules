@@ -11,18 +11,18 @@ service cloud.firestore {
      * contain the necessary UIDs (ownerId, customerId, etc.) required to make an 
      * authorization decision without performing additional document lookups (get() calls).
      *
-     * Data Structure:
-     * - /users/{userId}: Private user profiles and role-specific root nodes.
-     * - /roles_{role}/{userId}: Existence-based marker documents for DBAC (Database Access Control).
-     * - /products_marketplace, /products_donations, /donations_public: Flattened collections 
-     *   for public discovery with owner-restricted writes.
-     * - /users/{userId}/...: Hierarchical private data for products, orders, and donations.
+     * Admin Bypass:
+     * Users with an entry in /roles_admin/{uid} have full read/write access to the entire DB.
      */
 
     // --- Helper Functions ---
 
     function isSignedIn() {
       return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isSignedIn() && exists(/databases/$(database)/documents/roles_admin/$(request.auth.uid));
     }
 
     function isOwner(userId) {
@@ -39,6 +39,11 @@ service cloud.firestore {
 
     function isUnchanged(key) {
       return request.resource.data[key] == resource.data[key];
+    }
+
+    // --- Global Admin Access ---
+    match /{document=**} {
+      allow read, write: if isAdmin();
     }
 
     // --- Collection Rules ---
@@ -60,10 +65,6 @@ service cloud.firestore {
       }
     }
 
-    /**
-     * @description Private inventory for Store Owners.
-     * Allows Customers to update quantity/status when reserving an item.
-     */
     match /users/{storeOwnerId}/products/{productId} {
       allow get, list: if isOwner(storeOwnerId) || isSignedIn();
       allow create: if isOwner(storeOwnerId) && request.resource.data.ownerId == storeOwnerId;
@@ -71,10 +72,6 @@ service cloud.firestore {
       allow delete: if isOwner(storeOwnerId);
     }
 
-    /**
-     * @description Public marketplace for products.
-     * Allows any signed-in user to update quantity/status when reserving an item.
-     */
     match /products_marketplace/{productId} {
       allow get, list: if true;
       allow create: if isSignedIn() && request.resource.data.ownerId == request.auth.uid;
@@ -82,9 +79,6 @@ service cloud.firestore {
       allow delete: if isSignedIn() && resource.data.ownerId == request.auth.uid;
     }
 
-    /**
-     * @description Public list of products available for donation.
-     */
     match /products_donations/{productId} {
       allow get, list: if true;
       allow create: if isSignedIn() && request.resource.data.ownerId == request.auth.uid;
@@ -106,9 +100,6 @@ service cloud.firestore {
       allow delete: if false;
     }
 
-    /**
-     * @description Primary storage for donations. Allows NGOs to update status when claiming.
-     */
     match /users/{storeOwnerId}/donations/{donationId} {
       allow get, list: if isOwner(storeOwnerId) || (isSignedIn() && hasRole('roles_ngo', request.auth.uid));
       allow create: if isOwner(storeOwnerId) && request.resource.data.storeOwnerId == storeOwnerId;
@@ -116,9 +107,6 @@ service cloud.firestore {
       allow delete: if isOwner(storeOwnerId);
     }
 
-    /**
-     * @description Public donations. Allows any signed-in user to claim (update) or remove (delete).
-     */
     match /donations_public/{donationId} {
       allow get, list: if true;
       allow create: if isSignedIn() && request.resource.data.storeOwnerId == request.auth.uid;

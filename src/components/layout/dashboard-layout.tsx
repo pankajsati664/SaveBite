@@ -18,7 +18,8 @@ import {
   User,
   Search,
   Loader2,
-  ClipboardList
+  ClipboardList,
+  ShieldAlert
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -37,6 +38,7 @@ interface NavItem {
 
 const navItems: NavItem[] = [
   { title: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
+  { title: "Admin Panel", href: "/admin", icon: ShieldAlert, roles: ['admin'] },
   { title: "Inventory", href: "/inventory", icon: Package, roles: ['store_owner', 'admin'] },
   { title: "Marketplace", href: "/marketplace", icon: ShoppingBag },
   { title: "My Orders", href: "/orders", icon: ClipboardList, roles: ['customer', 'admin'] },
@@ -120,7 +122,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             </Button>
           </div>
 
-          <nav className="flex-1 space-y-2 sm:space-y-3">
+          <nav className="flex-1 space-y-2 sm:space-y-3 overflow-y-auto pr-2 scrollbar-hide">
             {filteredNavItems.map((item) => (
               <Link 
                 key={item.href} 
