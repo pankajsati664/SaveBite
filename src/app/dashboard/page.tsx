@@ -4,187 +4,108 @@
 import { useState } from "react"
 import DashboardLayout from "@/components/layout/dashboard-layout"
 import { 
-  Package, 
-  AlertTriangle, 
-  Heart, 
   TrendingUp, 
-  Clock,
-  CalendarDays,
-  ShoppingBag,
-  ClipboardList,
-  Users,
-  Sprout,
-  Percent,
+  Leaf, 
+  Zap, 
+  ShieldCheck, 
+  ShoppingBag, 
+  Package, 
+  Heart, 
+  AlertTriangle,
+  Award,
+  Globe,
   Loader2,
-  ChevronRight,
-  Zap,
-  ShieldAlert,
-  ShieldCheck,
-  Globe
+  ChevronRight
 } from "lucide-react"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Progress } from "@/components/ui/progress"
 import { Badge } from "@/components/ui/badge"
-import { Separator } from "@/components/ui/separator"
-import { Slider } from "@/components/ui/slider"
+import { Progress } from "@/components/ui/progress"
 import { cn } from "@/lib/utils"
-import { 
-  useUser, 
-  useFirestore, 
-  useCollection, 
-  useMemoFirebase, 
-  useDoc, 
-  updateDocumentNonBlocking,
-  setDocumentNonBlocking 
-} from "@/firebase"
-import { collection, query, orderBy, doc, serverTimestamp } from "firebase/firestore"
-import { getExpiryStatus } from "@/lib/utils/expiry"
-import { useToast } from "@/hooks/use-toast"
+import { useUser, useFirestore, useDoc, useCollection, useMemoFirebase } from "@/firebase"
+import { doc } from "firebase/firestore"
 import { getPlaceholderById } from "@/lib/placeholder-images"
 import Link from "next/link"
 
 export default function DashboardPage() {
   const { user } = useUser()
   const firestore = useFirestore()
-  const { toast } = useToast()
-
-  const [quickDiscount, setQuickDiscount] = useState(30)
-  const [isApplying, setIsApplying] = useState(false)
 
   const userDocRef = useMemoFirebase(() => {
     if (!firestore || !user) return null
     return doc(firestore, "users", user.uid)
   }, [firestore, user])
 
-  const { data: userProfile } = useDoc(userDocRef)
-  const userRole = userProfile?.role || 'customer'
+  const { data: profile } = useDoc(userDocRef)
+  const role = profile?.role || 'customer'
 
-  const productsQuery = useMemoFirebase(() => {
-    if (!firestore || !user || (userRole !== 'store_owner' && userRole !== 'admin')) return null
-    return query(collection(firestore, "users", user.uid, "products"), orderBy("updatedAt", "desc"))
-  }, [firestore, user, userRole])
+  const stats = {
+    admin: [
+      { label: "Global Impact", value: "2.4 Tons CO2", icon: Globe, color: "bg-emerald-600" },
+      { label: "Network Health", value: "99.9%", icon: ShieldCheck, color: "bg-blue-600" },
+      { label: "Active Nodes", value: "1,240", icon: Zap, color: "bg-amber-600" },
+      { label: "Revenue Share", value: "₹45.2k", icon: TrendingUp, color: "bg-zinc-950" },
+    ],
+    store_owner: [
+      { label: "Food Rescued", value: "142 kg", icon: Leaf, color: "bg-emerald-600" },
+      { label: "Eco Points", value: profile?.points || "0", icon: Award, color: "bg-amber-500" },
+      { label: "Revenue", value: "₹12.4k", icon: TrendingUp, color: "bg-blue-600" },
+      { label: "Social Reach", value: "9.8/10", icon: Heart, color: "bg-rose-600" },
+    ],
+    customer: [
+      { label: "Savings", value: "₹2,140", icon: TrendingUp, color: "bg-emerald-600" },
+      { label: "Your Impact", value: `${profile?.impactScore || 0} kg CO2`, icon: Leaf, color: "bg-emerald-500" },
+      { label: "Rescue Level", value: "Silver", icon: Award, color: "bg-amber-500" },
+      { label: "Cart Status", value: "Ready", icon: ShoppingBag, color: "bg-blue-600" },
+    ],
+    ngo: [
+      { label: "Meals Served", value: "840", icon: Heart, color: "bg-rose-600" },
+      { label: "CO2 Mitigated", value: "120 kg", icon: Leaf, color: "bg-emerald-600" },
+      { label: "Pickup Fleet", value: "Active", icon: Zap, color: "bg-blue-600" },
+      { label: "Partner Shops", value: "12", icon: Package, color: "bg-amber-600" },
+    ]
+  }[role] || []
 
-  const ordersQuery = useMemoFirebase(() => {
-    if (!firestore || !user || (userRole !== 'customer' && userRole !== 'admin')) return null
-    return query(collection(firestore, "users", user.uid, "orders"), orderBy("createdAt", "desc"))
-  }, [firestore, user, userRole])
-
-  const claimedDonationsQuery = useMemoFirebase(() => {
-    if (!firestore || !user || (userRole !== 'ngo' && userRole !== 'admin')) return null
-    return query(collection(firestore, "users", user.uid, "claimed_donations"), orderBy("updatedAt", "desc"))
-  }, [firestore, user, userRole])
-
-  const { data: allProducts, isLoading: isProductsLoading } = useCollection(productsQuery)
-  const { data: allOrders, isLoading: isOrdersLoading } = useCollection(ordersQuery)
-  const { data: allClaimed, isLoading: isClaimedLoading } = useCollection(claimedDonationsQuery)
-
-  const isLoading = isProductsLoading || isOrdersLoading || isClaimedLoading
-
-  const nearExpiryCount = allProducts?.filter(p => getExpiryStatus(p.expiryDate) === 'near-expiry').length || 0
-
-  const handleSelfPromoteAdmin = () => {
-    if (!user || !firestore) return
-    const userRef = doc(firestore, "users", user.uid)
-    const roleRef = doc(firestore, "roles_admin", user.uid)
-    
-    updateDocumentNonBlocking(userRef, { role: 'admin', updatedAt: serverTimestamp() })
-    setDocumentNonBlocking(roleRef, { id: user.uid }, { merge: true })
-    
-    toast({ title: "Authority Granted", description: "You are now a System Admin." })
-  }
-
-  const handleQuickDiscount = () => {
-    if (!user || !firestore || !allProducts) return
-    setIsApplying(true)
-    const nearExpiryItems = allProducts.filter(p => getExpiryStatus(p.expiryDate) === 'near-expiry')
-    if (nearExpiryItems.length === 0) {
-      toast({ title: "No items at risk", description: "You have no near-expiry items to discount right now." })
-      setIsApplying(false)
-      return
-    }
-    nearExpiryItems.forEach(product => {
-      const newPrice = (product.initialPrice * (100 - quickDiscount)) / 100
-      const productRef = doc(firestore, "users", user.uid, "products", product.id)
-      const marketplaceRef = doc(firestore, "products_marketplace", product.id)
-      const updateData = {
-        currentPrice: newPrice,
-        lastAIRecommendation: `Quick Discount ${quickDiscount}%`,
-        recommendedActionDate: new Date().toISOString(),
-        updatedAt: serverTimestamp(),
-        status: quickDiscount >= 100 ? 'AVAILABLE_FOR_DONATION' : 'AVAILABLE_FOR_SALE'
-      }
-      updateDocumentNonBlocking(productRef, updateData)
-      updateDocumentNonBlocking(marketplaceRef, updateData)
-    })
-    toast({ title: "Impact Applied!", description: `Successfully applied a ${quickDiscount}% discount to ${nearExpiryItems.length} items.` })
-    setIsApplying(false)
-  }
-
-  const getStats = () => {
-    if (userRole === 'admin') {
-      return [
-        { label: "Platform Health", value: "100%", icon: ShieldCheck, color: "bg-emerald-600" },
-        { label: "Global Presence", value: "Active", icon: Globe, color: "bg-blue-600" },
-        { label: "System Uptime", value: "99.9%", icon: Zap, color: "bg-amber-600" },
-        { label: "Root Access", value: "Verified", icon: ShieldAlert, color: "bg-zinc-950" },
-      ]
-    }
-    if (userRole === 'store_owner') {
-      return [
-        { label: "Inventory", value: allProducts?.length.toString() || "0", icon: Package, color: "bg-blue-600" },
-        { label: "At Risk", value: nearExpiryCount.toString() || "0", icon: AlertTriangle, color: "bg-amber-600" },
-        { label: "Waste Prevented", value: "142kg", icon: Sprout, color: "bg-emerald-600" },
-        { label: "Social Score", value: "9.8", icon: Heart, color: "bg-rose-600" },
-      ]
-    } else if (userRole === 'customer') {
-      const totalSavings = allOrders?.reduce((acc, curr) => acc + (curr.totalAmount || 0), 0) || 0
-      return [
-        { label: "Rescued", value: allOrders?.length.toString() || "0", icon: ShoppingBag, color: "bg-emerald-600" },
-        { label: "Saved", value: `₹${totalSavings.toLocaleString('en-IN')}`, icon: TrendingUp, color: "bg-blue-600" },
-        { label: "Eco Points", value: "1,240", icon: Zap, color: "bg-amber-600" },
-        { label: "Impact", value: "Global", icon: Heart, color: "bg-rose-600" },
-      ]
-    } else { // NGO
-      return [
-        { label: "Claimed", value: allClaimed?.length.toString() || "0", icon: Heart, color: "bg-rose-600" },
-        { label: "Pending", value: allClaimed?.filter(d => d.status === 'Claimed').length.toString() || "0", icon: Clock, color: "bg-amber-600" },
-        { label: "Meals Provided", value: ((allClaimed?.length || 0) * 8).toString(), icon: Users, color: "bg-emerald-600" },
-        { label: "Network", value: "12 Stores", icon: Package, color: "bg-blue-600" },
-      ]
-    }
-  }
-
-  const chartImage = getPlaceholderById('hero-bg')
-  const isTargetUID = user?.uid === '0EvPdWQHFzMCyKcfaEWul1JKXkf2'
+  const heroImage = getPlaceholderById('hero-bg')
 
   return (
     <DashboardLayout>
-      <div className="space-y-6 sm:space-y-10 pb-24 animate-in fade-in duration-1000">
-        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
-          <div className="space-y-1">
-            <h1 className="text-3xl sm:text-5xl font-black tracking-tighter leading-none">
-              Hello, <span className="text-primary">{userProfile?.name?.split(' ')[0] || 'Member'}</span>!
+      <div className="space-y-6 sm:space-y-10 animate-in fade-in duration-700">
+        {/* Advanced Hero Section */}
+        <div className="relative overflow-hidden rounded-[2.5rem] bg-zinc-950 px-6 py-10 sm:px-12 sm:py-16 text-white shadow-2xl">
+          <img 
+            src={heroImage.imageUrl} 
+            className="absolute inset-0 object-cover w-full h-full opacity-40 mix-blend-overlay" 
+            alt="Hero"
+            data-ai-hint={heroImage.imageHint}
+          />
+          <div className="absolute inset-0 bg-gradient-to-br from-zinc-950 via-zinc-900/60 to-transparent" />
+          <div className="relative z-10 space-y-4">
+            <div className="flex items-center gap-3">
+              <Badge className="bg-primary/20 text-primary border-none px-4 py-1.5 font-black uppercase tracking-widest text-[10px]">
+                {role.replace('_', ' ')} Command
+              </Badge>
+              {profile?.points > 0 && (
+                <Badge className="bg-amber-500/20 text-amber-500 border-none px-4 py-1.5 font-black uppercase tracking-widest text-[10px]">
+                  {profile.points} XP Earned
+                </Badge>
+              )}
+            </div>
+            <h1 className="text-3xl sm:text-6xl font-black tracking-tighter leading-tight">
+              Impact <span className="text-primary italic">Intelligence.</span>
             </h1>
-            <p className="text-muted-foreground font-medium italic text-base sm:text-lg opacity-80">
-              {userRole === 'admin' ? "Global platform oversight active." : "Track your zero-waste impact."}
+            <p className="text-zinc-300 font-medium italic text-base sm:text-xl max-w-xl opacity-80">
+              {role === 'customer' ? "Rescuing surplus food, one bite at a time." : "Optimizing global surplus for zero waste."}
             </p>
           </div>
-          <Badge variant="outline" className="px-4 py-2 rounded-xl bg-white border-none shadow-lg flex items-center gap-2 w-fit">
-            <CalendarDays className="h-4 w-4 text-primary" />
-            <span className="font-black text-[10px] sm:text-xs uppercase tracking-widest">{new Date().toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}</span>
-          </Badge>
         </div>
 
-        {/* Responsive Stats Grid */}
+        {/* Real-time Stats Grid */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
-          {getStats().map((stat, idx) => (
-            <Card key={stat.label} className={cn(
-              "border-none shadow-xl card-3d overflow-hidden rounded-[1.5rem] sm:rounded-[2rem]",
-              `animate-in fade-in slide-in-from-bottom-4 delay-[${idx * 100}ms]`
-            )}>
+          {stats.map((stat, idx) => (
+            <Card key={stat.label} className="border-none shadow-xl card-3d overflow-hidden rounded-[1.5rem] sm:rounded-[2rem] bg-white">
               <CardContent className="p-4 sm:p-8">
-                <div className={cn("h-10 w-10 sm:h-14 sm:w-14 rounded-xl sm:rounded-2xl mb-4 sm:mb-6 flex items-center justify-center text-white shadow-lg", stat.color)}>
+                <div className={cn("h-10 w-10 sm:h-14 sm:w-14 rounded-xl mb-4 flex items-center justify-center text-white shadow-lg", stat.color)}>
                   <stat.icon className="h-5 w-5 sm:h-7 sm:w-7" />
                 </div>
                 <p className="text-[8px] sm:text-[10px] text-muted-foreground font-black uppercase tracking-widest mb-1">{stat.label}</p>
@@ -195,157 +116,84 @@ export default function DashboardPage() {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8">
-          {/* Main Visual Panel */}
-          <Card className="lg:col-span-2 border-none shadow-2xl rounded-[2.5rem] sm:rounded-[3rem] overflow-hidden bg-emerald-950 text-white relative h-fit lg:h-auto">
-            <img 
-              src={chartImage.imageUrl} 
-              className="absolute inset-0 object-cover w-full h-full opacity-50 mix-blend-overlay" 
-              alt="Performance Overview"
-              data-ai-hint={chartImage.imageHint}
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-emerald-950 via-emerald-950/40 to-transparent pointer-events-none" />
-            <CardHeader className="p-6 sm:p-10 relative z-10">
-              <div className="flex justify-between items-start">
-                <div className="space-y-1">
-                  <Badge className="bg-emerald-500 text-white border-none px-3 py-1 font-black uppercase tracking-widest text-[8px] sm:text-[10px]">Platform Trends</Badge>
-                  <CardTitle className="text-2xl sm:text-4xl font-black tracking-tighter">System Health</CardTitle>
-                </div>
-                <TrendingUp className="h-6 w-6 sm:h-10 sm:w-10 text-emerald-400" />
-              </div>
+          {/* Carbon Impact Tracker (Visual) */}
+          <Card className="lg:col-span-2 border-none shadow-2xl rounded-[2.5rem] overflow-hidden bg-emerald-950 text-white relative">
+            <div className="absolute top-6 right-6 h-20 w-20 bg-primary/20 rounded-full blur-3xl animate-pulse" />
+            <CardHeader className="p-8 pb-4">
+              <CardTitle className="text-2xl sm:text-3xl font-black tracking-tighter flex items-center gap-3">
+                <Leaf className="text-primary h-8 w-8" />
+                Carbon Offset Tracker
+              </CardTitle>
             </CardHeader>
-            <CardContent className="p-6 sm:p-10 pt-0 relative z-10">
-              <div className="h-[150px] sm:h-[250px] flex items-end justify-between gap-2 sm:gap-6">
-                {[30, 45, 35, 60, 80, 50, 95].map((val, i) => (
-                  <div key={i} className="flex-1 group relative">
-                    <div 
-                      className="w-full bg-emerald-400/30 group-hover:bg-emerald-400 transition-all duration-700 rounded-lg sm:rounded-2xl relative border border-white/10" 
-                      style={{ height: `${val}%` }} 
-                    />
-                    <p className="text-center mt-3 sm:mt-6 font-black text-[8px] sm:text-[10px] text-white/70 uppercase">
-                      {['M', 'T', 'W', 'T', 'F', 'S', 'S'][i]}
-                    </p>
+            <CardContent className="p-8 pt-0 space-y-6">
+              <div className="space-y-2">
+                <div className="flex justify-between text-[10px] font-black uppercase tracking-widest opacity-70">
+                  <span>Current Milestone</span>
+                  <span>75% to Next Badge</span>
+                </div>
+                <Progress value={75} className="h-4 bg-white/10" />
+              </div>
+              <div className="grid grid-cols-3 gap-4">
+                {[
+                  { l: "CO2 Saved", v: "14.2kg" },
+                  { l: "Water Saved", v: "2.4k L" },
+                  { l: "Trees Eq.", v: "1.2" }
+                ].map(m => (
+                  <div key={m.l} className="bg-white/5 p-4 rounded-2xl border border-white/10 text-center">
+                    <p className="text-2xl font-black tracking-tighter text-primary">{m.v}</p>
+                    <p className="text-[8px] font-black uppercase opacity-60 tracking-widest">{m.l}</p>
                   </div>
                 ))}
               </div>
             </CardContent>
           </Card>
 
-          {/* Action Hub */}
-          <Card className="border-none shadow-2xl rounded-[2.5rem] sm:rounded-[3rem] bg-white overflow-hidden flex flex-col">
-            <CardHeader className="p-6 sm:p-10">
-              <CardTitle className="text-xl sm:text-3xl font-black tracking-tighter flex items-center gap-2 sm:gap-3">
-                <Zap className="h-5 w-5 sm:h-7 sm:w-7 text-amber-500 fill-amber-500" />
-                Developer Hub
+          {/* Quick Actions / Gamification Hub */}
+          <Card className="border-none shadow-2xl rounded-[2.5rem] bg-white overflow-hidden">
+            <CardHeader className="p-8">
+              <CardTitle className="text-xl sm:text-2xl font-black tracking-tighter flex items-center gap-3">
+                <Zap className="text-amber-500 fill-amber-500 h-6 w-6" />
+                Impact Hub
               </CardTitle>
-              <CardDescription className="font-medium italic text-sm sm:text-lg">Access all platform modules.</CardDescription>
             </CardHeader>
-            <CardContent className="p-6 sm:p-10 pt-0 space-y-4 sm:space-y-6 flex-1">
-              {isTargetUID && userRole !== 'admin' && (
-                <div className="bg-zinc-950 p-6 rounded-3xl border border-zinc-800 shadow-2xl">
-                  <p className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500 mb-2 text-center">Identity Override</p>
-                  <Button onClick={handleSelfPromoteAdmin} className="w-full h-16 rounded-2xl bg-white text-zinc-950 font-black text-lg hover:bg-zinc-200">
-                    Grant Dev Access <ShieldAlert className="ml-2 h-6 w-6" />
-                  </Button>
-                </div>
-              )}
-
-              {userRole === 'admin' ? (
-                <div className="grid grid-cols-1 gap-3">
-                  <Link href="/admin">
-                    <Button className="w-full h-14 rounded-2xl bg-zinc-900 text-white font-black text-sm shadow-xl shadow-zinc-900/20">
-                      System Admin Panel <ShieldAlert className="ml-2 h-4 w-4 text-primary" />
-                    </Button>
-                  </Link>
+            <CardContent className="p-8 pt-0 space-y-4">
+              {role === 'customer' && (
+                <>
                   <Link href="/marketplace">
-                    <Button variant="outline" className="w-full h-14 rounded-2xl border-secondary font-black text-sm hover:bg-secondary">
-                      Customer Market <ShoppingBag className="ml-2 h-4 w-4" />
+                    <Button className="w-full h-16 rounded-2xl bg-primary text-white font-black text-lg shadow-xl shadow-primary/20">
+                      Rescue Now <ChevronRight className="ml-2 h-5 w-5" />
                     </Button>
                   </Link>
-                  <Link href="/inventory">
-                    <Button variant="outline" className="w-full h-14 rounded-2xl border-secondary font-black text-sm hover:bg-secondary">
-                      Shop Inventory <Package className="ml-2 h-4 w-4" />
-                    </Button>
-                  </Link>
-                  <Link href="/donations">
-                    <Button variant="outline" className="w-full h-14 rounded-2xl border-secondary font-black text-sm hover:bg-secondary">
-                      NGO Rescue Portal <Heart className="ml-2 h-4 w-4" />
-                    </Button>
-                  </Link>
-                  <Link href="/orders">
-                    <Button variant="outline" className="w-full h-14 rounded-2xl border-secondary font-black text-sm hover:bg-secondary">
-                      Order History <ClipboardList className="ml-2 h-4 w-4" />
-                    </Button>
-                  </Link>
-                </div>
-              ) : userRole === 'store_owner' ? (
-                <div className="space-y-6">
-                  <div className="bg-secondary/40 p-6 sm:p-8 rounded-2xl sm:rounded-[2rem] border border-secondary shadow-inner">
-                    <div className="flex justify-between items-center mb-4 sm:mb-6">
-                      <span className="text-[9px] sm:text-[10px] font-black uppercase tracking-widest text-muted-foreground">Quick Discount</span>
-                      <Badge variant="secondary" className="bg-primary/10 text-primary font-black px-2 py-0.5 rounded-lg">{quickDiscount}%</Badge>
-                    </div>
-                    <Slider 
-                      value={[quickDiscount]} 
-                      onValueChange={(vals) => setQuickDiscount(vals[0])} 
-                      max={90} min={10} step={5}
-                      className="mb-6 sm:mb-8"
-                    />
-                    <Button 
-                      onClick={handleQuickDiscount} 
-                      disabled={isApplying || nearExpiryCount === 0}
-                      className="w-full h-12 sm:h-16 rounded-xl sm:rounded-2xl bg-primary text-white font-black text-base sm:text-lg shadow-xl shadow-primary/20"
-                    >
-                      {isApplying ? <Loader2 className="animate-spin h-5 w-5" /> : `Rescue ${nearExpiryCount} Items`}
-                    </Button>
+                  <div className="p-4 bg-secondary/30 rounded-2xl border border-secondary text-center">
+                    <p className="text-[10px] font-black uppercase text-muted-foreground mb-1">Referral Reward</p>
+                    <p className="text-sm font-bold italic">Invite a friend, get ₹50 credit</p>
                   </div>
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  <Link href="/marketplace" className="block">
-                    <Button className="w-full h-16 sm:h-20 rounded-2xl sm:rounded-[2rem] bg-primary text-white font-black text-lg sm:text-xl shadow-2xl shadow-primary/30">
-                      Browse Deals <ShoppingBag className="ml-2 h-5 w-5 sm:h-6 sm:w-6" />
-                    </Button>
-                  </Link>
-                </div>
+                </>
+              )}
+              {role === 'store_owner' && (
+                <Link href="/inventory">
+                  <Button className="w-full h-16 rounded-2xl bg-zinc-900 text-white font-black text-lg">
+                    Manage Stock <Package className="ml-2 h-5 w-5" />
+                  </Button>
+                </Link>
+              )}
+              {role === 'ngo' && (
+                <Link href="/donations">
+                  <Button className="w-full h-16 rounded-2xl bg-rose-600 text-white font-black text-lg">
+                    Claim Surplus <Heart className="ml-2 h-5 w-5" />
+                  </Button>
+                </Link>
+              )}
+              {role === 'admin' && (
+                <Link href="/admin">
+                  <Button className="w-full h-16 rounded-2xl bg-zinc-950 text-white font-black text-lg">
+                    System Control <ShieldCheck className="ml-2 h-5 w-5" />
+                  </Button>
+                </Link>
               )}
             </CardContent>
           </Card>
         </div>
-
-        {/* Impact Journal */}
-        <Card className="border-none shadow-2xl rounded-[2.5rem] sm:rounded-[3rem] overflow-hidden bg-white">
-          <CardHeader className="p-6 sm:p-10 border-b border-secondary/50">
-            <CardTitle className="text-xl sm:text-3xl font-black tracking-tighter">Impact Journal</CardTitle>
-          </CardHeader>
-          <CardContent className="p-4 sm:p-10">
-             <div className="space-y-3">
-               {isLoading ? (
-                  <div className="flex flex-col items-center py-12">
-                    <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                  </div>
-               ) : (userRole === 'store_owner' ? allProducts : (userRole === 'customer' ? allOrders : allClaimed))?.length === 0 ? (
-                  <p className="text-center py-12 text-muted-foreground font-medium italic">No recent activity found.</p>
-               ) : (
-                  (userRole === 'store_owner' ? allProducts?.slice(0, 5) : (userRole === 'customer' ? allOrders?.slice(0, 5) : allClaimed?.slice(0, 5)))?.map((item: any) => (
-                    <div key={item.id} className="flex items-center justify-between p-4 sm:p-6 hover:bg-secondary/30 rounded-2xl sm:rounded-3xl transition-all">
-                      <div className="flex items-center gap-4">
-                        <div className="h-10 w-10 sm:h-14 sm:w-14 rounded-xl bg-secondary flex items-center justify-center text-primary">
-                          {userRole === 'store_owner' ? <Package className="h-5 w-5 sm:h-7 sm:w-7" /> : <ShoppingBag className="h-5 w-5 sm:h-7 sm:w-7" />}
-                        </div>
-                        <div>
-                          <p className="font-black text-sm sm:text-lg tracking-tight line-clamp-1">{userRole === 'store_owner' ? item.name : item.productName || 'Surplus Rescue'}</p>
-                          <p className="text-[8px] sm:text-[10px] text-muted-foreground font-black uppercase tracking-widest">{new Date(item.updatedAt?.seconds * 1000 || Date.now()).toLocaleDateString()}</p>
-                        </div>
-                      </div>
-                      <Badge variant="outline" className="px-4 py-1.5 rounded-lg font-black text-[10px] sm:text-xs">
-                        {userRole === 'store_owner' ? `${item.quantity}U` : `₹${item.totalAmount}`}
-                      </Badge>
-                    </div>
-                  ))
-               )}
-             </div>
-          </CardContent>
-        </Card>
       </div>
     </DashboardLayout>
   )

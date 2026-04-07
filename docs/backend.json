@@ -2,511 +2,69 @@
 {
   "entities": {
     "User": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "User",
       "type": "object",
-      "description": "Represents a user of the SaveBite application, including their role and basic profile information. Authentication details are handled externally by Firebase.",
-      "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the User entity."
-        },
-        "email": {
-          "type": "string",
-          "description": "The user's email address.",
-          "format": "email"
-        },
-        "name": {
-          "type": "string",
-          "description": "The full name of the user or organization."
-        },
-        "role": {
-          "type": "string",
-          "description": "The role assigned to the user within the application (Store Owner, Customer, NGO, Admin)."
-        },
-        "address": {
-          "type": "string",
-          "description": "The physical address of the user or organization, optional for customers.",
-          "format": "uri"
-        },
-        "phoneNumber": {
-          "type": "string",
-          "description": "The contact phone number for the user or organization."
-        },
-        "createdAt": {
-          "type": "string",
-          "description": "Timestamp when the user account was created.",
-          "format": "date-time"
-        },
-        "updatedAt": {
-          "type": "string",
-          "description": "Timestamp when the user account was last updated.",
-          "format": "date-time"
-        }
-      },
-      "required": [
-        "id",
-        "email",
-        "name",
-        "role",
-        "createdAt",
-        "updatedAt"
-      ]
-    },
-    "Product": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "Product",
-      "type": "object",
-      "description": "Represents a food product managed by a Store Owner, including inventory details, expiry information, and status for sales or donations.",
-      "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the Product entity."
-        },
-        "name": {
-          "type": "string",
-          "description": "The name of the product."
-        },
-        "description": {
-          "type": "string",
-          "description": "A detailed description of the product."
-        },
-        "quantity": {
-          "type": "number",
-          "description": "The current quantity of the product available in stock."
-        },
-        "initialPrice": {
-          "type": "number",
-          "description": "The original selling price of the product before any discounts."
-        },
-        "currentPrice": {
-          "type": "number",
-          "description": "The current selling price of the product, reflecting any applied discounts."
-        },
-        "expiryDate": {
-          "type": "string",
-          "description": "The expiration date of the product.",
-          "format": "date-time"
-        },
-        "imageUrl": {
-          "type": "string",
-          "description": "URL to an image of the product.",
-          "format": "uri"
-        },
-        "ownerId": {
-          "type": "string",
-          "description": "Reference to the User who owns this product (StoreOwner). (Relationship: User 1:N Product)"
-        },
-        "status": {
-          "type": "string",
-          "description": "The current status of the product, influencing its visibility in the marketplace or donation panel."
-        },
-        "barcode": {
-          "type": "string",
-          "description": "The barcode string for the product, if available."
-        },
-        "lastAIRecommendation": {
-          "type": "string",
-          "description": "The last action recommended by the AI (e.g., 'Discount', 'Donate')."
-        },
-        "recommendedActionDate": {
-          "type": "string",
-          "description": "Timestamp when the AI last made a recommendation for this product.",
-          "format": "date-time"
-        },
-        "createdAt": {
-          "type": "string",
-          "description": "Timestamp when the product was added to the inventory.",
-          "format": "date-time"
-        },
-        "updatedAt": {
-          "type": "string",
-          "description": "Timestamp when the product details were last updated.",
-          "format": "date-time"
-        }
-      },
-      "required": [
-        "id",
-        "name",
-        "quantity",
-        "initialPrice",
-        "currentPrice",
-        "expiryDate",
-        "ownerId",
-        "status",
-        "createdAt",
-        "updatedAt"
-      ]
-    },
-    "StockImage": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "StockImage",
-      "type": "object",
-      "description": "Represents a high-quality stock image uploaded by an Admin for use by store owners.",
+      "description": "User profile with points and impact tracking.",
       "properties": {
         "id": { "type": "string" },
-        "url": { "type": "string", "format": "uri" },
+        "email": { "type": "string", "format": "email" },
         "name": { "type": "string" },
-        "createdAt": { "type": "string", "format": "date-time" }
+        "role": { "type": "string", "enum": ["admin", "store_owner", "customer", "ngo"] },
+        "points": { "type": "number", "description": "Gamification points." },
+        "impactScore": { "type": "number", "description": "CO2 kg saved." },
+        "isBlocked": { "type": "boolean" },
+        "preferredLanguage": { "type": "string", "enum": ["en", "hi"] },
+        "address": { "type": "string" },
+        "phoneNumber": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
       },
-      "required": ["id", "url", "name", "createdAt"]
+      "required": ["id", "email", "name", "role", "createdAt", "updatedAt"]
+    },
+    "Product": {
+      "title": "Product",
+      "type": "object",
+      "description": "Inventory item with AI and expiry tracking.",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "category": { "type": "string" },
+        "initialPrice": { "type": "number" },
+        "currentPrice": { "type": "number" },
+        "quantity": { "type": "number" },
+        "expiryDate": { "type": "string", "format": "date-time" },
+        "ownerId": { "type": "string" },
+        "status": { "type": "string" },
+        "imageUrl": { "type": "string" },
+        "carbonSaved": { "type": "number" },
+        "aiPrediction": { "type": "string" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "name", "ownerId", "status", "expiryDate"]
     },
     "Order": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "Order",
       "type": "object",
-      "description": "Represents a customer's purchase request for one or more products from the marketplace.",
       "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the Order entity."
-        },
-        "customerId": {
-          "type": "string",
-          "description": "Reference to the User who placed the order (Customer). (Relationship: User 1:N Order)"
-        },
-        "orderDate": {
-          "type": "string",
-          "description": "Timestamp when the order was placed.",
-          "format": "date-time"
-        },
-        "totalAmount": {
-          "type": "number",
-          "description": "The total monetary amount of the order."
-        },
-        "status": {
-          "type": "string",
-          "description": "The current status of the order (e.g., Pending, Confirmed, Completed, Cancelled)."
-        },
-        "createdAt": {
-          "type": "string",
-          "description": "Timestamp when the order record was created.",
-          "format": "date-time"
-        },
-        "updatedAt": {
-          "type": "string",
-          "description": "Timestamp when the order record was last updated.",
-          "format": "date-time"
-        }
-      },
-      "required": [
-        "id",
-        "customerId",
-        "orderDate",
-        "totalAmount",
-        "status",
-        "createdAt",
-        "updatedAt"
-      ]
-    },
-    "OrderItem": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "OrderItem",
-      "type": "object",
-      "description": "Represents a single product item included within a specific customer order.",
-      "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the OrderItem entity."
-        },
-        "orderId": {
-          "type": "string",
-          "description": "Reference to the Order this item belongs to. (Relationship: Order 1:N OrderItem)"
-        },
-        "productId": {
-          "type": "string",
-          "description": "Reference to the Product being purchased. (Relationship: Product 1:N OrderItem)"
-        },
-        "quantity": {
-          "type": "number",
-          "description": "The quantity of the product ordered."
-        },
-        "priceAtPurchase": {
-          "type": "number",
-          "description": "The price of the product at the time of purchase for this specific item."
-        },
-        "createdAt": {
-          "type": "string",
-          "description": "Timestamp when the order item record was created.",
-          "format": "date-time"
-        },
-        "updatedAt": {
-          "type": "string",
-          "description": "Timestamp when the order item record was last updated.",
-          "format": "date-time"
-        }
-      },
-      "required": [
-        "id",
-        "orderId",
-        "productId",
-        "quantity",
-        "priceAtPurchase",
-        "createdAt",
-        "updatedAt"
-      ]
-    },
-    "Donation": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "Donation",
-      "type": "object",
-      "description": "Represents a record of a food product being donated, tracking its claim and pickup status.",
-      "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the Donation entity."
-        },
-        "productId": {
-          "type": "string",
-          "description": "Reference to the Product being donated. (Relationship: Product 1:N Donation)"
-        },
-        "storeOwnerId": {
-          "type": "string",
-          "description": "Reference to the User (StoreOwner) who is donating the product. (Relationship: User 1:N Donation)"
-        },
-        "ngoId": {
-          "type": "string",
-          "description": "Reference to the User (NGO) who claimed or received the donation. (Relationship: User 1:N Donation)"
-        },
-        "quantity": {
-          "type": "number",
-          "description": "The quantity of the product donated."
-        },
-        "status": {
-          "type": "string",
-          "description": "The current status of the donation (e.g., PendingClaim, Claimed, ScheduledForPickup, PickedUp, Cancelled)."
-        },
-        "claimDate": {
-          "type": "string",
-          "description": "Timestamp when the donation was claimed by an NGO.",
-          "format": "date-time"
-        },
-        "pickupScheduledDate": {
-          "type": "string",
-          "description": "Timestamp when the pickup for the donation was scheduled.",
-          "format": "date-time"
-        },
-        "pickupCompletedDate": {
-          "type": "string",
-          "description": "Timestamp when the donation pickup was successfully completed.",
-          "format": "date-time"
-        },
-        "createdAt": {
-          "type": "string",
-          "description": "Timestamp when the donation record was created.",
-          "format": "date-time"
-        },
-        "updatedAt": {
-          "type": "string",
-          "description": "Timestamp when the donation record was last updated.",
-          "format": "date-time"
-        }
-      },
-      "required": [
-        "id",
-        "productId",
-        "storeOwnerId",
-        "quantity",
-        "status",
-        "createdAt",
-        "updatedAt"
-      ]
+        "id": { "type": "string" },
+        "customerId": { "type": "string" },
+        "shopId": { "type": "string" },
+        "totalAmount": { "type": "number" },
+        "status": { "type": "string" },
+        "items": { "type": "array", "items": { "type": "object" } },
+        "createdAt": { "type": "string", "format": "date-time" }
+      }
     }
   },
   "auth": {
-    "providers": [
-      "password",
-      "anonymous"
-    ]
+    "providers": ["password", "google.com"]
   },
   "firestore": {
     "structure": [
-      {
-        "path": "/users/{userId}",
-        "definition": {
-          "entityName": "User",
-          "schema": {
-            "$ref": "#/backend/entities/User"
-          },
-          "description": "Stores individual user profiles.",
-          "params": [
-            { "name": "userId", "description": "The unique identifier of the user." }
-          ]
-        }
-      },
-      {
-        "path": "/stock_images/{imageId}",
-        "definition": {
-          "entityName": "StockImage",
-          "schema": { "$ref": "#/backend/entities/StockImage" },
-          "description": "Publicly accessible stock images uploaded by Admins.",
-          "params": [
-            { "name": "imageId", "description": "Unique identifier for the stock image record." }
-          ]
-        }
-      },
-      {
-        "path": "/roles_admin/{adminId}",
-        "definition": {
-          "entityName": "User",
-          "schema": {
-            "$ref": "#/backend/entities/User"
-          },
-          "description": "Marker documents for users with the 'Admin' role.",
-          "params": [
-            { "name": "adminId", "description": "The unique identifier of the admin user." }
-          ]
-        }
-      },
-      {
-        "path": "/roles_store_owner/{storeOwnerId}",
-        "definition": {
-          "entityName": "User",
-          "schema": {
-            "$ref": "#/backend/entities/User"
-          },
-          "description": "Marker documents for users with the 'Store Owner' role.",
-          "params": [
-            { "name": "storeOwnerId", "description": "The unique identifier of the store owner user." }
-          ]
-        }
-      },
-      {
-        "path": "/roles_customer/{customerId}",
-        "definition": {
-          "entityName": "User",
-          "schema": {
-            "$ref": "#/backend/entities/User"
-          },
-          "description": "Marker documents for users with the 'Customer' role.",
-          "params": [
-            { "name": "customerId", "description": "The unique identifier of the customer user." }
-          ]
-        }
-      },
-      {
-        "path": "/roles_ngo/{ngoId}",
-        "definition": {
-          "entityName": "User",
-          "schema": {
-            "$ref": "#/backend/entities/User"
-          },
-          "description": "Marker documents for users with the 'NGO' role.",
-          "params": [
-            { "name": "ngoId", "description": "The unique identifier of the NGO user." }
-          ]
-        }
-      },
-      {
-        "path": "/users/{storeOwnerId}/products/{productId}",
-        "definition": {
-          "entityName": "Product",
-          "schema": {
-            "$ref": "#/backend/entities/Product"
-          },
-          "description": "Primary storage for a Store Owner's private product inventory.",
-          "params": [
-            { "name": "storeOwnerId", "description": "The unique identifier of the Store Owner." },
-            { "name": "productId", "description": "The unique identifier of the product." }
-          ]
-        }
-      },
-      {
-        "path": "/products_marketplace/{productId}",
-        "definition": {
-          "entityName": "Product",
-          "schema": {
-            "$ref": "#/backend/entities/Product"
-          },
-          "description": "Denormalized subset of product data for items available in the public marketplace.",
-          "params": [
-            { "name": "productId", "description": "The unique identifier of the product." }
-          ]
-        }
-      },
-      {
-        "path": "/products_donations/{productId}",
-        "definition": {
-          "entityName": "Product",
-          "schema": {
-            "$ref": "#/backend/entities/Product"
-          },
-          "description": "Denormalized subset of product data for items available for donation.",
-          "params": [
-            { "name": "productId", "description": "The unique identifier of the product." }
-          ]
-        }
-      },
-      {
-        "path": "/users/{customerId}/orders/{orderId}",
-        "definition": {
-          "entityName": "Order",
-          "schema": {
-            "$ref": "#/backend/entities/Order"
-          },
-          "description": "Stores a customer's specific orders.",
-          "params": [
-            { "name": "customerId", "description": "The unique identifier of the customer." },
-            { "name": "orderId", "description": "The unique identifier of the order." }
-          ]
-        }
-      },
-      {
-        "path": "/users/{customerId}/orders/{orderId}/orderItems/{orderItemId}",
-        "definition": {
-          "entityName": "OrderItem",
-          "schema": {
-            "$ref": "#/backend/entities/OrderItem"
-          },
-          "description": "Details of individual products within a customer's order.",
-          "params": [
-            { "name": "customerId", "description": "The unique identifier of the customer." },
-            { "name": "orderId", "description": "The unique identifier of the parent order." },
-            { "name": "orderItemId", "description": "The unique identifier of the item." }
-          ]
-        }
-      },
-      {
-        "path": "/users/{storeOwnerId}/donations/{donationId}",
-        "definition": {
-          "entityName": "Donation",
-          "schema": {
-            "$ref": "#/backend/entities/Donation"
-          },
-          "description": "Primary storage for donations created by a Store Owner.",
-          "params": [
-            { "name": "storeOwnerId", "description": "The unique identifier of the Store Owner." },
-            { "name": "donationId", "description": "The unique identifier of the donation." }
-          ]
-        }
-      },
-      {
-        "path": "/donations_public/{donationId}",
-        "definition": {
-          "entityName": "Donation",
-          "schema": {
-            "$ref": "#/backend/entities/Donation"
-          },
-          "description": "Denormalized list of donations publicly available for NGOs.",
-          "params": [
-            { "name": "donationId", "description": "The unique identifier of the donation." }
-          ]
-        }
-      },
-      {
-        "path": "/users/{ngoId}/claimed_donations/{donationId}",
-        "definition": {
-          "entityName": "Donation",
-          "schema": {
-            "$ref": "#/backend/entities/Donation"
-          },
-          "description": "Denormalized view of donations claimed by a specific NGO.",
-          "params": [
-            { "name": "ngoId", "description": "The unique identifier of the NGO." },
-            { "name": "donationId", "description": "The unique identifier of the donation." }
-          ]
-        }
-      }
+      { "path": "/users/{userId}", "definition": { "schema": { "$ref": "#/backend/entities/User" }, "description": "Profiles" } },
+      { "path": "/products_marketplace/{productId}", "definition": { "schema": { "$ref": "#/backend/entities/Product" }, "description": "Public Marketplace" } },
+      { "path": "/donations_public/{donationId}", "definition": { "schema": { "type": "object" }, "description": "NGO Pool" } },
+      { "path": "/platform_stats/global", "definition": { "schema": { "type": "object" }, "description": "Global Impact Stats" } }
     ]
   }
 }
