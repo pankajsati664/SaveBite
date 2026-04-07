@@ -8,41 +8,45 @@ service cloud.firestore {
     }
 
     function isAdmin() {
-      return isSignedIn() && exists(/databases/$(database)/documents/roles_admin/$(request.auth.uid));
+      return isSignedIn() && (
+        exists(/databases/$(database)/documents/roles_admin/$(request.auth.uid)) ||
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == "admin"
+      );
     }
 
     function isOwner(userId) {
       return isSignedIn() && request.auth.uid == userId;
     }
 
+    // Global Admin Bypass
     match /{document=**} {
       allow read, write: if isAdmin();
     }
 
     match /users/{userId} {
-      allow get, list: if isOwner(userId);
-      allow create: if isOwner(userId);
-      allow update: if isOwner(userId);
+      allow get, list: if isSignedIn(); // Allow searching users for collaboration
+      allow create, update: if isOwner(userId);
     }
 
     match /stock_images/{imageId} {
       allow read: if isSignedIn();
-      allow create, update, delete: if isAdmin();
+      allow write: if isAdmin();
     }
 
     match /roles_{role}/{uid} {
       allow get: if isSignedIn();
-      allow create: if isOwner(uid);
+      allow create, update: if isOwner(uid) || isAdmin();
+      allow delete: if isAdmin();
     }
 
     match /users/{storeOwnerId}/products/{productId} {
       allow read: if isSignedIn();
-      allow write: if isOwner(storeOwnerId);
+      allow write: if isOwner(storeOwnerId) || isAdmin();
     }
 
     match /products_marketplace/{productId} {
       allow read: if true;
-      allow write: if isSignedIn();
+      allow write: if isSignedIn(); // Broad write for prototype, refined by logic
     }
 
     match /products_donations/{productId} {
@@ -51,18 +55,9 @@ service cloud.firestore {
     }
 
     match /users/{customerId}/orders/{orderId} {
-      allow read: if isOwner(customerId);
+      allow read: if isOwner(customerId) || isAdmin();
       allow create: if isOwner(customerId);
-    }
-
-    match /users/{customerId}/orders/{orderId}/orderItems/{orderItemId} {
-      allow read: if isOwner(customerId);
-      allow create: if isOwner(customerId);
-    }
-
-    match /users/{storeOwnerId}/donations/{donationId} {
-      allow read: if isSignedIn();
-      allow write: if isOwner(storeOwnerId);
+      allow update: if isOwner(customerId) || isAdmin();
     }
 
     match /donations_public/{donationId} {
@@ -71,7 +66,12 @@ service cloud.firestore {
     }
 
     match /users/{ngoId}/claimed_donations/{donationId} {
-      allow read, write: if isOwner(ngoId);
+      allow read, write: if isOwner(ngoId) || isAdmin();
+    }
+    
+    match /platform_stats/{statId} {
+      allow read: if true;
+      allow write: if isAdmin();
     }
   }
 }

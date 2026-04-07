@@ -38,7 +38,8 @@ import {
   useMemoFirebase, 
   addDocumentNonBlocking, 
   deleteDocumentNonBlocking, 
-  updateDocumentNonBlocking
+  updateDocumentNonBlocking,
+  setDocumentNonBlocking
 } from "@/firebase"
 import { collection, doc, serverTimestamp, query, orderBy } from "firebase/firestore"
 import { getPlaceholderByCategory } from "@/lib/placeholder-images"
@@ -130,7 +131,8 @@ export default function InventoryPage() {
     addDocumentNonBlocking(collection(firestore, "users", user.uid, "products"), productData)
       .then(docRef => {
         if (docRef) {
-          updateDocumentNonBlocking(doc(firestore, "products_marketplace", docRef.id), { ...productData, id: docRef.id })
+          // Use setDocumentNonBlocking for the first marketplace sync to avoid "Update missing document" error
+          setDocumentNonBlocking(doc(firestore, "products_marketplace", docRef.id), { ...productData, id: docRef.id }, { merge: true })
         }
       })
 
