@@ -14,10 +14,10 @@ import {
   ShieldAlert, 
   Loader2,
   TrendingUp,
-  Globe,
   Bell,
   Settings,
-  LogOut
+  LogOut,
+  ChevronRight
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -42,11 +42,11 @@ interface NavItem {
 }
 
 const navItems: NavItem[] = [
-  { title: "Home", href: "/dashboard", icon: LayoutDashboard },
+  { title: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   { title: "Market", href: "/marketplace", icon: ShoppingBag },
   { title: "Vault", href: "/inventory", icon: Package, roles: ['store_owner', 'admin'] },
-  { title: "Rescue", href: "/donations", icon: HandHelping, roles: ['ngo', 'admin'] },
-  { title: "Orders", href: "/orders", icon: TrendingUp, roles: ['customer', 'admin'] },
+  { title: "NGO Hub", href: "/donations", icon: HandHelping, roles: ['ngo', 'admin'] },
+  { title: "Journal", href: "/orders", icon: TrendingUp, roles: ['customer', 'admin'] },
   { title: "Admin", href: "/admin", icon: ShieldAlert, roles: ['admin'] },
 ]
 
@@ -85,70 +85,76 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const filteredNavItems = navItems.filter(item => !item.roles || item.roles.includes(role))
 
   return (
-    <div className="min-h-screen flex flex-col bg-background">
-      <header className="h-16 sm:h-20 flex items-center justify-between px-6 sm:px-10 bg-card/80 backdrop-blur-xl sticky top-0 z-40 border-b border-secondary/50">
+    <div className="min-h-screen flex flex-col bg-background pb-32">
+      <header className="h-16 sm:h-24 flex items-center justify-between px-6 sm:px-12 bg-white/80 backdrop-blur-2xl sticky top-0 z-40 border-b border-zinc-100">
         <Link href="/dashboard" className="flex items-center gap-3 group">
-          <div className="bg-primary p-2 rounded-xl shadow-lg group-hover:scale-110 transition-transform">
-            <Leaf className="h-5 w-5 text-primary-foreground" />
+          <div className="bg-primary p-2.5 rounded-2xl shadow-xl group-hover:scale-110 transition-transform shadow-primary/20">
+            <Leaf className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
           </div>
-          <span className="text-xl sm:text-2xl font-black text-primary tracking-tighter">SaveBite</span>
+          <span className="text-xl sm:text-3xl font-black text-primary tracking-tighter leading-none">SaveBite</span>
         </Link>
 
-        <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon" className="relative rounded-xl h-10 w-10">
-            <Bell className="h-5 w-5" />
-            <span className="absolute top-2 right-2 h-2 w-2 bg-danger rounded-full ring-2 ring-card" />
+        <div className="flex items-center gap-2 sm:gap-6">
+          <Button variant="ghost" size="icon" className="relative rounded-2xl h-10 w-10 sm:h-14 sm:w-14 bg-zinc-50 border border-zinc-100">
+            <Bell className="h-5 w-5 sm:h-6 sm:w-6 text-zinc-400" />
+            <span className="absolute top-4 right-4 h-2.5 w-2.5 bg-rose-500 rounded-full ring-4 ring-white" />
           </Button>
           
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Avatar className="h-10 w-10 ring-2 ring-primary/10 shadow-md cursor-pointer hover:scale-105 transition-all">
-                <AvatarImage src={user.photoURL || `https://picsum.photos/seed/${user.uid}/64/64`} />
-                <AvatarFallback className="bg-secondary text-primary font-black"><User className="h-5 w-5" /></AvatarFallback>
-              </Avatar>
+              <div className="flex items-center gap-4 cursor-pointer group">
+                <div className="hidden sm:block text-right">
+                   <p className="font-black text-sm tracking-tighter">{profile?.name || "Member"}</p>
+                   <p className="text-[9px] font-black uppercase text-primary tracking-widest opacity-60">{role.replace('_', ' ')}</p>
+                </div>
+                <Avatar className="h-10 w-10 sm:h-14 sm:w-14 ring-4 ring-zinc-50 shadow-2xl transition-all group-hover:ring-primary/10">
+                  <AvatarImage src={user.photoURL || `https://picsum.photos/seed/${user.uid}/64/64`} />
+                  <AvatarFallback className="bg-primary text-white font-black"><User className="h-6 w-6" /></AvatarFallback>
+                </Avatar>
+              </div>
             </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-64 rounded-[2rem] p-4 mt-2 shadow-2xl border-none" align="end">
-              <DropdownMenuLabel className="space-y-1 p-2">
-                <p className="font-black text-lg tracking-tighter leading-none">{profile?.name || "Member"}</p>
+            <DropdownMenuContent className="w-72 rounded-[2.5rem] p-6 mt-4 shadow-3xl border-none animate-in slide-in-from-top-2 duration-300" align="end">
+              <DropdownMenuLabel className="space-y-1 p-0 mb-4">
+                <p className="font-black text-2xl tracking-tighter leading-none">{profile?.name || "Member"}</p>
                 <p className="text-[10px] text-muted-foreground uppercase font-black tracking-widest">{role}</p>
               </DropdownMenuLabel>
-              <DropdownMenuSeparator className="my-2" />
-              <DropdownMenuItem className="rounded-xl p-3 cursor-pointer gap-3 font-bold" onClick={() => router.push('/settings')}>
-                <Settings className="h-4 w-4" /> Impact Settings
+              <DropdownMenuSeparator className="my-4" />
+              <DropdownMenuItem className="rounded-2xl p-4 cursor-pointer gap-4 font-black text-xs uppercase tracking-widest" onClick={() => router.push('/settings')}>
+                <Settings className="h-5 w-5 text-zinc-400" /> Profile Settings
               </DropdownMenuItem>
               {role === 'admin' && (
-                <DropdownMenuItem className="rounded-xl p-3 cursor-pointer gap-3 font-bold text-primary" onClick={() => router.push('/admin')}>
-                  <ShieldAlert className="h-4 w-4" /> Global Command
+                <DropdownMenuItem className="rounded-2xl p-4 cursor-pointer gap-4 font-black text-xs uppercase tracking-widest text-primary bg-primary/5" onClick={() => router.push('/admin')}>
+                  <ShieldAlert className="h-5 w-5" /> Global Command
                 </DropdownMenuItem>
               )}
-              <DropdownMenuSeparator className="my-2" />
-              <DropdownMenuItem className="rounded-xl p-3 cursor-pointer text-danger font-bold gap-3" onClick={handleLogout}>
-                <LogOut className="h-4 w-4" /> Terminate Session
+              <DropdownMenuSeparator className="my-4" />
+              <DropdownMenuItem className="rounded-2xl p-4 cursor-pointer text-rose-600 font-black text-xs uppercase tracking-widest gap-4 hover:bg-rose-50" onClick={handleLogout}>
+                <LogOut className="h-5 w-5" /> Terminate Session
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
       </header>
 
-      <main className="flex-1 pb-32 pt-6 px-4 sm:px-8 lg:px-12 max-w-7xl mx-auto w-full">
+      <main className="flex-1 px-4 sm:px-12 pt-8 max-w-7xl mx-auto w-full">
         {children}
       </main>
 
-      <div className="fixed bottom-6 left-0 right-0 z-50 flex justify-center px-4 animate-in slide-in-from-bottom-10 duration-700">
-        <nav className="bg-zinc-900/95 backdrop-blur-2xl border border-white/10 rounded-[2.5rem] p-2 flex items-center gap-1 sm:gap-2 shadow-2xl w-full max-w-2xl overflow-x-auto scrollbar-hide">
+      <div className="fixed bottom-8 left-0 right-0 z-50 flex justify-center px-4">
+        <nav className="bg-zinc-950/95 backdrop-blur-3xl border border-white/10 rounded-[3rem] p-3 flex items-center gap-2 shadow-[0_32px_64px_-12px_rgba(0,0,0,0.5)] w-full max-w-2xl overflow-x-auto scrollbar-hide">
           {filteredNavItems.map((item) => (
             <Link 
               key={item.href} 
               href={item.href}
               className={cn(
-                "flex-1 min-w-[60px] flex flex-col items-center justify-center gap-1 py-3 rounded-[2rem] transition-all duration-300",
+                "flex-1 min-w-[70px] flex flex-col items-center justify-center gap-1.5 py-4 rounded-[2.5rem] transition-all duration-500",
                 pathname === item.href 
-                  ? "bg-primary text-white shadow-xl scale-105" 
-                  : "text-zinc-400 hover:text-white hover:bg-white/5"
+                  ? "bg-primary text-white shadow-2xl scale-105" 
+                  : "text-zinc-500 hover:text-white hover:bg-white/5"
               )}
             >
-              <item.icon className={cn("h-4 w-4 sm:h-5 sm:w-5", pathname === item.href ? "animate-pulse" : "")} />
-              <span className="text-[7px] sm:text-[9px] font-black uppercase tracking-widest">{item.title}</span>
+              <item.icon className={cn("h-5 w-5 sm:h-6 sm:w-6", pathname === item.href ? "animate-pulse" : "")} />
+              <span className="text-[8px] sm:text-[10px] font-black uppercase tracking-widest">{item.title}</span>
             </Link>
           ))}
         </nav>

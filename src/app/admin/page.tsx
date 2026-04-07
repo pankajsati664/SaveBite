@@ -7,15 +7,16 @@ import {
   Users, 
   Globe, 
   ShieldAlert, 
-  TrendingUp, 
   Loader2,
   Trash2,
   Search,
-  UserCog,
-  ShieldCheck,
+  Image as ImageIcon,
+  Upload,
   BarChart3,
   AlertOctagon,
-  FileText
+  FileText,
+  UserCheck,
+  Plus
 } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -36,7 +37,8 @@ import {
   useMemoFirebase, 
   deleteDocumentNonBlocking, 
   updateDocumentNonBlocking,
-  setDocumentNonBlocking
+  setDocumentNonBlocking,
+  addDocumentNonBlocking
 } from "@/firebase"
 import { collection, query, orderBy, doc, serverTimestamp } from "firebase/firestore"
 import { cn } from "@/lib/utils"
@@ -47,19 +49,20 @@ export default function AdminPage() {
   const firestore = useFirestore()
   const { toast } = useToast()
   const [search, setSearch] = useState("")
+  const [isUploading, setIsUploading] = useState(false)
 
   const usersQuery = useMemoFirebase(() => {
     if (!firestore) return null
     return query(collection(firestore, "users"), orderBy("createdAt", "desc"))
   }, [firestore])
 
-  const productsQuery = useMemoFirebase(() => {
+  const stockImagesQuery = useMemoFirebase(() => {
     if (!firestore) return null
-    return collection(firestore, "products_marketplace")
+    return query(collection(firestore, "stock_images"), orderBy("createdAt", "desc"))
   }, [firestore])
 
   const { data: allUsers, isLoading: isUsersLoading } = useCollection(usersQuery)
-  const { data: allProducts, isLoading: isProductsLoading } = useCollection(productsQuery)
+  const { data: stockImages, isLoading: isImagesLoading } = useCollection(stockImagesQuery)
 
   const handleUpdateRole = (userId: string, newRole: string) => {
     if (!firestore) return
@@ -76,10 +79,35 @@ export default function AdminPage() {
     toast({ title: "Authority Updated", description: `User role modified to ${newRole}.` })
   }
 
-  const handleBlockUser = (userId: string, isBlocked: boolean) => {
-    if (!firestore) return
-    updateDocumentNonBlocking(doc(firestore, "users", userId), { isBlocked, updatedAt: serverTimestamp() })
-    toast({ title: isBlocked ? "User Restricted" : "User Restored", description: "Access privileges updated." })
+  const handleCloudinaryUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file || !firestore) return
+
+    setIsUploading(true)
+    const formData = new FormData()
+    formData.append("file", file)
+    formData.append("upload_preset", "freshtrack")
+
+    try {
+      const response = await fetch(`https://api.cloudinary.com/v1_1/dian1nfyk/image/upload`, {
+        method: "POST",
+        body: formData
+      })
+      const data = await response.json()
+      
+      if (data.secure_url) {
+        addDocumentNonBlocking(collection(firestore, "stock_images"), {
+          url: data.secure_url,
+          name: file.name,
+          createdAt: serverTimestamp()
+        })
+        toast({ title: "Asset Secured", description: "Image uploaded to Cloudinary library." })
+      }
+    } catch (error) {
+      toast({ variant: "destructive", title: "Upload Failed", description: "Network error during Cloudinary transfer." })
+    } finally {
+      setIsUploading(false)
+    }
   }
 
   const heroImage = getPlaceholderById('landing-store')
@@ -103,31 +131,12 @@ export default function AdminPage() {
           </div>
         </div>
 
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          {[
-            { l: "Nodes", v: allUsers?.length || 0, c: "bg-blue-600", i: Users },
-            { l: "Surplus", v: allProducts?.length || 0, c: "bg-emerald-600", i: BarChart3 },
-            { l: "CO2 Offset", v: "12.4t", c: "bg-primary", i: Globe },
-            { l: "Incidents", v: "0", c: "bg-rose-600", i: AlertOctagon }
-          ].map(s => (
-            <Card key={s.l} className="border-none shadow-xl rounded-3xl bg-white overflow-hidden">
-               <CardContent className="p-6">
-                  <div className={cn("p-3 rounded-2xl text-white w-fit mb-4", s.c)}>
-                     <s.i className="h-6 w-6" />
-                  </div>
-                  <p className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">{s.l}</p>
-                  <p className="text-3xl font-black tracking-tighter">{s.v}</p>
-               </CardContent>
-            </Card>
-          ))}
-        </div>
-
         <Tabs defaultValue="users" className="w-full">
           <div className="flex flex-col sm:flex-row items-center justify-between mb-8 gap-4">
             <TabsList className="bg-secondary/40 p-1.5 rounded-2xl h-16 w-full sm:w-auto">
-              <TabsTrigger value="users" className="flex-1 sm:flex-none rounded-xl px-8 h-12 font-black uppercase tracking-widest text-[10px]">Users</TabsTrigger>
-              <TabsTrigger value="inventory" className="flex-1 sm:flex-none rounded-xl px-8 h-12 font-black uppercase tracking-widest text-[10px]">Inventory</TabsTrigger>
-              <TabsTrigger value="reports" className="flex-1 sm:flex-none rounded-xl px-8 h-12 font-black uppercase tracking-widest text-[10px]">Reports</TabsTrigger>
+              <TabsTrigger value="users" className="flex-1 sm:flex-none rounded-xl px-8 h-12 font-black uppercase tracking-widest text-[10px]">Nodes</TabsTrigger>
+              <TabsTrigger value="images" className="flex-1 sm:flex-none rounded-xl px-8 h-12 font-black uppercase tracking-widest text-[10px]">Library</TabsTrigger>
+              <TabsTrigger value="reports" className="flex-1 sm:flex-none rounded-xl px-8 h-12 font-black uppercase tracking-widest text-[10px]">Audit</TabsTrigger>
             </TabsList>
             <div className="relative w-full sm:w-[300px]">
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
@@ -179,7 +188,7 @@ export default function AdminPage() {
                         </TableCell>
                         <TableCell className="text-right pr-10">
                            <div className="flex justify-end gap-2">
-                              <Button size="icon" variant="ghost" className="h-10 w-10 text-rose-600" onClick={() => handleBlockUser(u.id, !u.isBlocked)}>
+                              <Button size="icon" variant="ghost" className="h-10 w-10 text-rose-600" onClick={() => updateDocumentNonBlocking(doc(firestore!, "users", u.id), { isBlocked: !u.isBlocked })}>
                                  <Trash2 className="h-5 w-5" />
                               </Button>
                            </div>
@@ -190,6 +199,45 @@ export default function AdminPage() {
                 </Table>
               </div>
             </Card>
+          </TabsContent>
+
+          <TabsContent value="images">
+            <div className="grid grid-cols-1 sm:grid-cols-4 gap-6">
+              <Card className="border-2 border-dashed border-zinc-200 bg-zinc-50 rounded-[2rem] flex flex-col items-center justify-center p-8 min-h-[250px] relative group overflow-hidden">
+                <input 
+                  type="file" 
+                  accept="image/*" 
+                  onChange={handleCloudinaryUpload}
+                  className="absolute inset-0 opacity-0 cursor-pointer z-20"
+                  disabled={isUploading}
+                />
+                {isUploading ? (
+                  <Loader2 className="h-12 w-12 animate-spin text-primary" />
+                ) : (
+                  <>
+                    <div className="p-4 bg-white rounded-2xl shadow-lg mb-4 group-hover:scale-110 transition-transform">
+                      <Plus className="h-8 w-8 text-primary" />
+                    </div>
+                    <p className="font-black text-[10px] uppercase tracking-widest text-zinc-400">Add Stock Asset</p>
+                  </>
+                )}
+              </Card>
+              {stockImages?.map((img) => (
+                <Card key={img.id} className="border-none shadow-xl rounded-[2rem] overflow-hidden bg-white aspect-square relative group">
+                  <img src={img.url} className="object-cover w-full h-full" alt="Stock" />
+                  <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                    <Button 
+                      variant="destructive" 
+                      size="icon" 
+                      className="rounded-full"
+                      onClick={() => deleteDocumentNonBlocking(doc(firestore!, "stock_images", img.id))}
+                    >
+                      <Trash2 className="h-5 w-5" />
+                    </Button>
+                  </div>
+                </Card>
+              ))}
+            </div>
           </TabsContent>
           
           <TabsContent value="reports" className="py-12 text-center space-y-4">
