@@ -29,6 +29,7 @@ import { useUser, useFirestore, useCollection, useMemoFirebase, useDoc, updateDo
 import { collection, query, orderBy, doc, serverTimestamp } from "firebase/firestore"
 import { getExpiryStatus } from "@/lib/utils/expiry"
 import { useToast } from "@/hooks/use-toast"
+import { getPlaceholderById } from "@/lib/placeholder-images"
 import Link from "next/link"
 
 export default function DashboardPage() {
@@ -123,6 +124,8 @@ export default function DashboardPage() {
     }
   }
 
+  const heroImage = getPlaceholderById('hero-bg')
+
   return (
     <DashboardLayout>
       <div className="space-y-6 sm:space-y-10 pb-24 animate-in fade-in duration-1000">
@@ -160,7 +163,13 @@ export default function DashboardPage() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8">
           {/* Main Visual Panel */}
           <Card className="lg:col-span-2 border-none shadow-2xl rounded-[2.5rem] sm:rounded-[3rem] overflow-hidden bg-zinc-900 text-white relative h-fit lg:h-auto">
-            <div className="absolute inset-0 bg-grid-white opacity-5 pointer-events-none" />
+            <img 
+              src={heroImage.imageUrl} 
+              className="absolute inset-0 object-cover w-full h-full opacity-30 mix-blend-luminosity" 
+              alt="Performance Overview"
+              data-ai-hint={heroImage.imageHint}
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-zinc-900 via-zinc-900/40 to-transparent pointer-events-none" />
             <CardHeader className="p-6 sm:p-10 relative z-10">
               <div className="flex justify-between items-start">
                 <div className="space-y-1">

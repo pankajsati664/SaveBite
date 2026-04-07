@@ -31,6 +31,7 @@ import { getDaysRemaining } from "@/lib/utils/expiry"
 import { useFirestore, useCollection, useMemoFirebase, useUser, deleteDocumentNonBlocking, setDocumentNonBlocking } from "@/firebase"
 import { collection, doc, serverTimestamp } from "firebase/firestore"
 import { cn } from "@/lib/utils"
+import { getPlaceholderById } from "@/lib/placeholder-images"
 
 export default function DonationsPage() {
   const { user } = useUser()
@@ -77,11 +78,19 @@ export default function DonationsPage() {
     })
   }
 
+  const heroImage = getPlaceholderById('landing-ngo')
+
   return (
     <DashboardLayout>
       <div className="space-y-10 animate-in fade-in slide-in-from-bottom-6 duration-1000">
-        <div className="relative overflow-hidden rounded-[3rem] bg-gradient-to-br from-primary via-primary to-accent-foreground px-10 py-20 text-white shadow-2xl border-4 border-white/10">
-          <div className="absolute inset-0 bg-grid-white/[0.05] pointer-events-none" />
+        <div className="relative overflow-hidden rounded-[3rem] bg-zinc-900 px-10 py-20 text-white shadow-2xl border-4 border-white/10">
+          <img 
+            src={heroImage.imageUrl} 
+            className="absolute inset-0 object-cover w-full h-full opacity-40 mix-blend-overlay" 
+            alt="NGO Impact Hero"
+            data-ai-hint={heroImage.imageHint}
+          />
+          <div className="absolute inset-0 bg-gradient-to-br from-primary/80 via-primary/40 to-transparent pointer-events-none" />
           <div className="relative z-10 flex flex-col md:flex-row items-center gap-12">
             <div className="h-32 w-32 bg-white/20 backdrop-blur-xl rounded-[2rem] flex items-center justify-center shrink-0 shadow-2xl border border-white/20 animate-pulse">
               <Heart className="h-16 w-16 text-white fill-white" />
@@ -157,7 +166,7 @@ export default function DonationsPage() {
                               Pickup: Partner Store Venue
                             </CardDescription>
                           </div>
-                          <Badge variant="secondary" className="bg-danger/10 text-danger border-none font-black py-2 px-5 rounded-2xl shadow-sm text-[10px] uppercase tracking-widest">
+                          <Badge className={cn("border-none font-black py-2 px-5 rounded-2xl shadow-sm text-[10px] uppercase tracking-widest", daysLeft <= 3 ? "bg-danger/10 text-danger" : "bg-success/10 text-success")}>
                             <Clock className="h-4 w-4 mr-2" />
                             {daysLeft}D UNTIL EXPIRE
                           </Badge>

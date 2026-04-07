@@ -23,11 +23,11 @@ import {
 } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { useToast } from "@/hooks/use-toast"
-import { getDaysRemaining } from "@/lib/utils/expiry"
+import { getExpiryStatus, getDaysRemaining } from "@/lib/utils/expiry"
 import { useFirestore, useCollection, useMemoFirebase, useUser, addDocumentNonBlocking, updateDocumentNonBlocking } from "@/firebase"
 import { collection, doc, serverTimestamp } from "firebase/firestore"
 import { cn } from "@/lib/utils"
-import { getPlaceholderByCategory } from "@/lib/placeholder-images"
+import { getPlaceholderByCategory, getPlaceholderById } from "@/lib/placeholder-images"
 
 export default function MarketplacePage() {
   const [search, setSearch] = useState("")
@@ -74,11 +74,19 @@ export default function MarketplacePage() {
     return matchesSearch && matchesCategory && p.status !== 'SOLD'
   }) || []
 
+  const heroImage = getPlaceholderById('landing-customer')
+
   return (
     <DashboardLayout>
       <div className="space-y-6 sm:space-y-12 pb-24 animate-in fade-in duration-1000">
         <div className="relative overflow-hidden rounded-[2.5rem] sm:rounded-[4rem] bg-zinc-900 px-6 py-12 sm:px-10 sm:py-24 text-white shadow-2xl">
-          <div className="absolute inset-0 bg-grid-white opacity-10 pointer-events-none" />
+          <img 
+            src={heroImage.imageUrl} 
+            className="absolute inset-0 object-cover w-full h-full opacity-40 mix-blend-overlay" 
+            alt="Marketplace Hero"
+            data-ai-hint={heroImage.imageHint}
+          />
+          <div className="absolute inset-0 bg-gradient-to-r from-zinc-900 via-zinc-900/40 to-transparent pointer-events-none" />
           <div className="relative z-10 max-w-2xl space-y-4 sm:space-y-8 text-center sm:text-left">
             <Badge className="bg-primary text-white border-none px-4 py-1.5 sm:px-6 sm:py-2 font-black uppercase tracking-[0.2em] text-[8px] sm:text-[10px] mx-auto sm:mx-0 w-fit">
               <Sparkles className="mr-2 h-3 w-3 sm:h-4 sm:w-4 text-amber-400 fill-amber-400" />
@@ -91,7 +99,7 @@ export default function MarketplacePage() {
               Premium surplus food from verified local partners. High quality, zero waste, incredible prices.
             </p>
           </div>
-          <ShoppingBag className="absolute -bottom-10 -right-10 h-48 w-48 sm:h-96 sm:w-96 text-white/5 rotate-12" />
+          <ShoppingBag className="absolute -bottom-10 -right-10 h-48 w-48 sm:h-96 sm:w-96 text-white/10 rotate-12" />
         </div>
 
         <div className="sticky top-16 sm:top-20 z-20 bg-background/95 backdrop-blur-xl py-4 sm:py-8 flex flex-col gap-4 items-center border-b border-secondary/50">

@@ -30,6 +30,7 @@ import { useFirestore, useCollection, useMemoFirebase, deleteDocumentNonBlocking
 import { collection, query, orderBy, doc } from "firebase/firestore"
 import { cn } from "@/lib/utils"
 import { useToast } from "@/hooks/use-toast"
+import { getPlaceholderById } from "@/lib/placeholder-images"
 
 export default function AdminPage() {
   const firestore = useFirestore()
@@ -82,11 +83,19 @@ export default function AdminPage() {
     u.role?.toLowerCase().includes(search.toLowerCase())
   ) || []
 
+  const heroImage = getPlaceholderById('landing-store')
+
   return (
     <DashboardLayout>
       <div className="space-y-6 sm:space-y-10 pb-24 animate-in fade-in duration-1000">
         <div className="relative overflow-hidden rounded-[2.5rem] bg-zinc-900 px-6 py-10 sm:px-12 sm:py-16 text-white shadow-2xl">
-          <div className="absolute inset-0 bg-grid-white opacity-10 pointer-events-none" />
+          <img 
+            src={heroImage.imageUrl} 
+            className="absolute inset-0 object-cover w-full h-full opacity-30 mix-blend-overlay" 
+            alt="Admin Command Center"
+            data-ai-hint={heroImage.imageHint}
+          />
+          <div className="absolute inset-0 bg-gradient-to-br from-zinc-900 via-zinc-900/40 to-transparent pointer-events-none" />
           <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-6">
             <div className="space-y-2 text-center md:text-left">
               <Badge className="bg-white/10 text-white border-none backdrop-blur-md px-4 py-1.5 font-black uppercase tracking-widest text-[8px] sm:text-[10px]">
@@ -97,7 +106,7 @@ export default function AdminPage() {
                 Monitoring the ecosystem impact at scale.
               </p>
             </div>
-            <div className="flex items-center gap-4 bg-white/5 p-4 sm:p-6 rounded-[1.5rem] sm:rounded-[2rem] border border-white/10">
+            <div className="flex items-center gap-4 bg-white/5 p-4 sm:p-6 rounded-[1.5rem] sm:rounded-[2rem] border border-white/10 backdrop-blur-md">
                <TrendingUp className="h-6 w-6 sm:h-10 sm:w-10 text-primary" />
                <div className="text-center sm:text-left">
                   <p className="text-[8px] font-black uppercase tracking-widest text-zinc-500">Global Saved</p>
