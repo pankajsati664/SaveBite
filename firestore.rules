@@ -1,21 +1,7 @@
+
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-
-    /**
-     * SAVEBITE SECURITY RULES
-     * 
-     * Core Philosophy:
-     * This ruleset implements a strict user-ownership model combined with role-based access 
-     * markers. It prioritizes "Authorization Independence" by ensuring all documents 
-     * contain the necessary UIDs (ownerId, customerId, etc.) required to make an 
-     * authorization decision without performing additional document lookups (get() calls).
-     *
-     * Admin Bypass:
-     * Users with an entry in /roles_admin/{uid} have full read/write access to the entire DB.
-     */
-
-    // --- Helper Functions ---
 
     function isSignedIn() {
       return request.auth != null;
@@ -29,96 +15,63 @@ service cloud.firestore {
       return isSignedIn() && request.auth.uid == userId;
     }
 
-    function isExistingOwner(userId) {
-      return resource != null && isOwner(userId);
-    }
-
-    function hasRole(roleCollection, userId) {
-      return exists(/databases/$(database)/documents/$(roleCollection)/$(userId));
-    }
-
-    function isUnchanged(key) {
-      return request.resource.data[key] == resource.data[key];
-    }
-
-    // --- Global Admin Access ---
     match /{document=**} {
       allow read, write: if isAdmin();
     }
 
-    // --- Collection Rules ---
-
     match /users/{userId} {
       allow get, list: if isOwner(userId);
-      allow create: if isOwner(userId) && request.resource.data.id == userId;
-      allow update: if isExistingOwner(userId) && isUnchanged('id');
-      allow delete: if false;
+      allow create: if isOwner(userId);
+      allow update: if isOwner(userId);
     }
 
-    match /{role_collection}/{uid} {
-      allow get: if isSignedIn() && isRoleCollection();
-      allow create: if isOwner(uid) && isRoleCollection();
-      allow list, update, delete: if false; 
-      
-      function isRoleCollection() {
-        return role_collection in ['roles_admin', 'roles_store_owner', 'roles_customer', 'roles_ngo'];
-      }
+    match /stock_images/{imageId} {
+      allow read: if isSignedIn();
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /roles_{role}/{uid} {
+      allow get: if isSignedIn();
+      allow create: if isOwner(uid);
     }
 
     match /users/{storeOwnerId}/products/{productId} {
-      allow get, list: if isOwner(storeOwnerId) || isSignedIn();
-      allow create: if isOwner(storeOwnerId) && request.resource.data.ownerId == storeOwnerId;
-      allow update: if isOwner(storeOwnerId) || isSignedIn();
-      allow delete: if isOwner(storeOwnerId);
+      allow read: if isSignedIn();
+      allow write: if isOwner(storeOwnerId);
     }
 
     match /products_marketplace/{productId} {
-      allow get, list: if true;
-      allow create: if isSignedIn() && request.resource.data.ownerId == request.auth.uid;
-      allow update: if isSignedIn();
-      allow delete: if isSignedIn() && resource.data.ownerId == request.auth.uid;
+      allow read: if true;
+      allow write: if isSignedIn();
     }
 
     match /products_donations/{productId} {
-      allow get, list: if true;
-      allow create: if isSignedIn() && request.resource.data.ownerId == request.auth.uid;
-      allow update: if isSignedIn();
-      allow delete: if isSignedIn() && resource.data.ownerId == request.auth.uid;
+      allow read: if true;
+      allow write: if isSignedIn();
     }
 
     match /users/{customerId}/orders/{orderId} {
-      allow get, list: if isOwner(customerId);
-      allow create: if isOwner(customerId) && request.resource.data.customerId == customerId;
-      allow update: if isExistingOwner(customerId) && isUnchanged('customerId');
-      allow delete: if false;
+      allow read: if isOwner(customerId);
+      allow create: if isOwner(customerId);
     }
 
     match /users/{customerId}/orders/{orderId}/orderItems/{orderItemId} {
-      allow get, list: if isOwner(customerId) || (isSignedIn() && resource.data.storeOwnerId == request.auth.uid);
+      allow read: if isOwner(customerId);
       allow create: if isOwner(customerId);
-      allow update: if isExistingOwner(customerId) || (isSignedIn() && resource.data.storeOwnerId == request.auth.uid);
-      allow delete: if false;
     }
 
     match /users/{storeOwnerId}/donations/{donationId} {
-      allow get, list: if isOwner(storeOwnerId) || (isSignedIn() && hasRole('roles_ngo', request.auth.uid));
-      allow create: if isOwner(storeOwnerId) && request.resource.data.storeOwnerId == storeOwnerId;
-      allow update: if isOwner(storeOwnerId) || (isSignedIn() && hasRole('roles_ngo', request.auth.uid));
-      allow delete: if isOwner(storeOwnerId);
+      allow read: if isSignedIn();
+      allow write: if isOwner(storeOwnerId);
     }
 
     match /donations_public/{donationId} {
-      allow get, list: if true;
-      allow create: if isSignedIn() && request.resource.data.storeOwnerId == request.auth.uid;
-      allow update: if isSignedIn();
-      allow delete: if isSignedIn();
+      allow read: if true;
+      allow write: if isSignedIn();
     }
 
     match /users/{ngoId}/claimed_donations/{donationId} {
-      allow get, list: if isOwner(ngoId);
-      allow create: if isOwner(ngoId) && request.resource.data.ngoId == ngoId;
-      allow update: if isExistingOwner(ngoId) && isUnchanged('ngoId');
-      allow delete: if isExistingOwner(ngoId);
+      allow read, write: if isOwner(ngoId);
     }
   }
 }

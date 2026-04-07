@@ -138,6 +138,19 @@
         "updatedAt"
       ]
     },
+    "StockImage": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "StockImage",
+      "type": "object",
+      "description": "Represents a high-quality stock image uploaded by an Admin for use by store owners.",
+      "properties": {
+        "id": { "type": "string" },
+        "url": { "type": "string", "format": "uri" },
+        "name": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "url", "name", "createdAt"]
+    },
     "Order": {
       "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "Order",
@@ -315,12 +328,20 @@
           "schema": {
             "$ref": "#/backend/entities/User"
           },
-          "description": "Stores individual user profiles. The document ID `{userId}` matches `request.auth.uid`. Includes denormalized 'id' field for authorization independence and 'role' for application logic (role checks for rules use dedicated collections).",
+          "description": "Stores individual user profiles.",
           "params": [
-            {
-              "name": "userId",
-              "description": "The unique identifier of the user, matching Firebase Authentication UID."
-            }
+            { "name": "userId", "description": "The unique identifier of the user." }
+          ]
+        }
+      },
+      {
+        "path": "/stock_images/{imageId}",
+        "definition": {
+          "entityName": "StockImage",
+          "schema": { "$ref": "#/backend/entities/StockImage" },
+          "description": "Publicly accessible stock images uploaded by Admins.",
+          "params": [
+            { "name": "imageId", "description": "Unique identifier for the stock image record." }
           ]
         }
       },
@@ -331,12 +352,9 @@
           "schema": {
             "$ref": "#/backend/entities/User"
           },
-          "description": "Marker documents for users with the 'Admin' role, used for existence-based security rule checks (DBAC). The document ID `{adminId}` matches `request.auth.uid`.",
+          "description": "Marker documents for users with the 'Admin' role.",
           "params": [
-            {
-              "name": "adminId",
-              "description": "The unique identifier of the admin user, matching Firebase Authentication UID."
-            }
+            { "name": "adminId", "description": "The unique identifier of the admin user." }
           ]
         }
       },
@@ -347,12 +365,9 @@
           "schema": {
             "$ref": "#/backend/entities/User"
           },
-          "description": "Marker documents for users with the 'Store Owner' role, used for existence-based security rule checks (DBAC). The document ID `{storeOwnerId}` matches `request.auth.uid`.",
+          "description": "Marker documents for users with the 'Store Owner' role.",
           "params": [
-            {
-              "name": "storeOwnerId",
-              "description": "The unique identifier of the store owner user, matching Firebase Authentication UID."
-            }
+            { "name": "storeOwnerId", "description": "The unique identifier of the store owner user." }
           ]
         }
       },
@@ -363,12 +378,9 @@
           "schema": {
             "$ref": "#/backend/entities/User"
           },
-          "description": "Marker documents for users with the 'Customer' role, used for existence-based security rule checks (DBAC). The document ID `{customerId}` matches `request.auth.uid`.",
+          "description": "Marker documents for users with the 'Customer' role.",
           "params": [
-            {
-              "name": "customerId",
-              "description": "The unique identifier of the customer user, matching Firebase Authentication UID."
-            }
+            { "name": "customerId", "description": "The unique identifier of the customer user." }
           ]
         }
       },
@@ -379,12 +391,9 @@
           "schema": {
             "$ref": "#/backend/entities/User"
           },
-          "description": "Marker documents for users with the 'NGO' role, used for existence-based security rule checks (DBAC). The document ID `{ngoId}` matches `request.auth.uid`.",
+          "description": "Marker documents for users with the 'NGO' role.",
           "params": [
-            {
-              "name": "ngoId",
-              "description": "The unique identifier of the NGO user, matching Firebase Authentication UID."
-            }
+            { "name": "ngoId", "description": "The unique identifier of the NGO user." }
           ]
         }
       },
@@ -395,16 +404,10 @@
           "schema": {
             "$ref": "#/backend/entities/Product"
           },
-          "description": "Primary storage for a Store Owner's private product inventory. All CRUD operations are restricted to the `{storeOwnerId}` matching `request.auth.uid`. The document includes denormalized 'ownerId' (matching `{storeOwnerId}` in the path) for robust authorization independence.",
+          "description": "Primary storage for a Store Owner's private product inventory.",
           "params": [
-            {
-              "name": "storeOwnerId",
-              "description": "The unique identifier of the Store Owner who owns this product."
-            },
-            {
-              "name": "productId",
-              "description": "The unique identifier of the product."
-            }
+            { "name": "storeOwnerId", "description": "The unique identifier of the Store Owner." },
+            { "name": "productId", "description": "The unique identifier of the product." }
           ]
         }
       },
@@ -415,12 +418,9 @@
           "schema": {
             "$ref": "#/backend/entities/Product"
           },
-          "description": "Denormalized subset of product data for items available in the public marketplace (e.g., status is 'AVAILABLE_FOR_SALE' or 'ON_DISCOUNT'). This collection enables QAPs for customers to list and read products efficiently. Includes denormalized 'ownerId' for authorization independence, allowing the originating store owner to manage their products here without hierarchical `get()` calls.",
+          "description": "Denormalized subset of product data for items available in the public marketplace.",
           "params": [
-            {
-              "name": "productId",
-              "description": "The unique identifier of the product, corresponding to the primary product record."
-            }
+            { "name": "productId", "description": "The unique identifier of the product." }
           ]
         }
       },
@@ -431,12 +431,9 @@
           "schema": {
             "$ref": "#/backend/entities/Product"
           },
-          "description": "Denormalized subset of product data for items available for donation to NGOs (e.g., status is 'AVAILABLE_FOR_DONATION'). This collection enables QAPs for NGOs to list and read donation items efficiently. Includes denormalized 'ownerId' for authorization independence, allowing the originating store owner to manage their products here without hierarchical `get()` calls.",
+          "description": "Denormalized subset of product data for items available for donation.",
           "params": [
-            {
-              "name": "productId",
-              "description": "The unique identifier of the product, corresponding to the primary product record."
-            }
+            { "name": "productId", "description": "The unique identifier of the product." }
           ]
         }
       },
@@ -447,16 +444,10 @@
           "schema": {
             "$ref": "#/backend/entities/Order"
           },
-          "description": "Stores a customer's specific orders. Access is restricted to the `{customerId}` matching `request.auth.uid`. The document includes denormalized 'customerId' (matching the path) for authorization independence.",
+          "description": "Stores a customer's specific orders.",
           "params": [
-            {
-              "name": "customerId",
-              "description": "The unique identifier of the customer who placed the order."
-            },
-            {
-              "name": "orderId",
-              "description": "The unique identifier of the order."
-            }
+            { "name": "customerId", "description": "The unique identifier of the customer." },
+            { "name": "orderId", "description": "The unique identifier of the order." }
           ]
         }
       },
@@ -467,20 +458,11 @@
           "schema": {
             "$ref": "#/backend/entities/OrderItem"
           },
-          "description": "Details of individual products within a customer's order. Access is restricted to the `{customerId}` of the parent order. This document includes denormalized 'customerId' (from parent order) and 'storeOwnerId' (from the product) for authorization independence, enabling QAPs for store owners to query their related order items without `get()` calls.",
+          "description": "Details of individual products within a customer's order.",
           "params": [
-            {
-              "name": "customerId",
-              "description": "The unique identifier of the customer who placed the order."
-            },
-            {
-              "name": "orderId",
-              "description": "The unique identifier of the parent order."
-            },
-            {
-              "name": "orderItemId",
-              "description": "The unique identifier of the specific item within the order."
-            }
+            { "name": "customerId", "description": "The unique identifier of the customer." },
+            { "name": "orderId", "description": "The unique identifier of the parent order." },
+            { "name": "orderItemId", "description": "The unique identifier of the item." }
           ]
         }
       },
@@ -491,16 +473,10 @@
           "schema": {
             "$ref": "#/backend/entities/Donation"
           },
-          "description": "Primary storage for donations created by a Store Owner. Access is restricted to the `{storeOwnerId}` matching `request.auth.uid`. Includes denormalized 'storeOwnerId' (matching the path) and 'ngoId' (if claimed) for authorization independence and collaborative access.",
+          "description": "Primary storage for donations created by a Store Owner.",
           "params": [
-            {
-              "name": "storeOwnerId",
-              "description": "The unique identifier of the Store Owner who initiated the donation."
-            },
-            {
-              "name": "donationId",
-              "description": "The unique identifier of the donation record."
-            }
+            { "name": "storeOwnerId", "description": "The unique identifier of the Store Owner." },
+            { "name": "donationId", "description": "The unique identifier of the donation." }
           ]
         }
       },
@@ -511,12 +487,9 @@
           "schema": {
             "$ref": "#/backend/entities/Donation"
           },
-          "description": "Denormalized list of donations publicly available for NGOs to claim (e.g., status is 'PendingClaim'). This collection enables QAPs for NGOs to list and read available donations efficiently. Includes denormalized 'storeOwnerId' for authorization independence, allowing the originating store owner to manage their donations here without hierarchical `get()` calls.",
+          "description": "Denormalized list of donations publicly available for NGOs.",
           "params": [
-            {
-              "name": "donationId",
-              "description": "The unique identifier of the donation record, corresponding to the primary donation."
-            }
+            { "name": "donationId", "description": "The unique identifier of the donation." }
           ]
         }
       },
@@ -527,20 +500,13 @@
           "schema": {
             "$ref": "#/backend/entities/Donation"
           },
-          "description": "Denormalized view of donations that have been claimed by a specific NGO. Access is restricted to the `{ngoId}` matching `request.auth.uid`. Includes denormalized 'ngoId' (matching the path) and 'storeOwnerId' for authorization independence, enabling QAPs for NGOs to manage their claimed items without `get()` calls.",
+          "description": "Denormalized view of donations claimed by a specific NGO.",
           "params": [
-            {
-              "name": "ngoId",
-              "description": "The unique identifier of the NGO who claimed the donation."
-            },
-            {
-              "name": "donationId",
-              "description": "The unique identifier of the donation record."
-            }
+            { "name": "ngoId", "description": "The unique identifier of the NGO." },
+            { "name": "donationId", "description": "The unique identifier of the donation." }
           ]
         }
       }
-    ],
-    "reasoning": "The recommended Firestore structure for the SaveBite application is designed with a strong emphasis on Authorization Independence, Query as Authorization Predicates (QAPs), and Structural Segregation to ensure security, scalability, and debuggability. \n\n**Authorization Independence via Denormalization:**\nEach document that requires access control based on ownership or role (e.g., Product, Order, OrderItem, Donation) explicitly includes the relevant user ID (e.g., `ownerId`, `customerId`, `storeOwnerId`, `ngoId`) within its own fields. This critical denormalization strategy eliminates the need for `get()` calls in Firestore security rules to retrieve parent or related documents to check permissions. For instance, a rule can directly evaluate `resource.data.ownerId == request.auth.uid` without traversing up the hierarchy or fetching an associated User document. This ensures that operations are atomic, simpler to reason about, and less prone to performance issues or security vulnerabilities arising from complex rule dependencies. User roles are also segregated into dedicated 'roles_X' collections, allowing for efficient `exists()` checks rather than `get()` calls to user profiles.\n\n**Query as Authorization Predicates (QAPs) through Structural Segregation:**\nTo support efficient and secure `list` operations (QAPs), collections are segregated based on their security posture and intended audience. Rather than mixing public, private, and collaborative data in a single collection with complex filtering rules, specific collections are created for each access pattern:\n\n1.  **Private User Data:** User-specific entities (like a Store Owner's raw product inventory, a Customer's orders, or an NGO's claimed donations) are typically nested under `/users/{userId}/...`. This path-based ownership makes authorization extremely straightforward and performant for individual users managing their own data.\n2.  **Public Marketplace/Donations:** Products intended for public viewing by customers (`products_marketplace`) or NGOs (`products_donations`, `donations_public`) are denormalized into top-level collections. These collections share a homogeneous security posture (e.g., read-only for customers, read-only for NGOs who haven't claimed it). By including the `ownerId` (for products) or `storeOwnerId` (for donations) in these denormalized documents, Store Owners can still manage their specific items within these public lists, and rules can verify ownership without additional `get()` operations. This design ensures that client-side queries can fetch exactly what they are authorized to see, without requiring the server to filter unauthorized documents from a broader result set.\n3.  **Collaborative Data:** `OrderItem` documents denormalize both `customerId` (from the parent order) and `storeOwnerId` (from the associated product). This enables efficient collection group queries for Store Owners to list all `OrderItems` related to their products, and similarly for NGOs to list their `claimed_donations`.\n\nThis architecture prioritizes clear, explicit authorization intent, minimizes rule complexity, and optimizes for both individual document access and large-scale data querying, aligning perfectly with the core design principles."
+    ]
   }
 }
