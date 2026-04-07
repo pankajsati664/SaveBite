@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useState, useEffect } from "react"
@@ -16,7 +15,8 @@ import {
   User,
   ClipboardList,
   ShieldAlert,
-  Loader2
+  Loader2,
+  ChevronRight
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -25,6 +25,14 @@ import { cn } from "@/lib/utils"
 import { useUser, useFirestore, useAuth, useDoc, useMemoFirebase } from "@/firebase"
 import { doc } from "firebase/firestore"
 import { signOut } from "firebase/auth"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 
 interface NavItem {
   title: string
@@ -63,6 +71,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     }
   }, [user, isUserLoading, router])
 
+  const handleLogout = () => {
+    if (auth) {
+      signOut(auth).then(() => router.push("/"))
+    }
+  }
+
   if (isUserLoading || isProfileLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
@@ -77,7 +91,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   const filteredNavItems = navItems.filter(item => 
     !item.roles || item.roles.includes(userRole)
-  ).slice(0, 5) // Keep snackbar focused on primary actions
+  ).slice(0, 5)
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
@@ -96,13 +110,36 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             <span className="absolute top-2.5 right-2.5 h-2 w-2 bg-danger rounded-full ring-2 ring-card" />
           </Button>
           <Separator orientation="vertical" className="h-8 hidden sm:block" />
-          <Avatar 
-            className="h-10 w-10 ring-2 ring-primary/10 shadow-md cursor-pointer hover:scale-105 transition-transform" 
-            onClick={() => router.push('/settings')}
-          >
-            <AvatarImage src={user.photoURL || `https://picsum.photos/seed/${user.uid}/64/64`} />
-            <AvatarFallback className="bg-secondary text-primary font-black"><User className="h-5 w-5" /></AvatarFallback>
-          </Avatar>
+          
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Avatar className="h-10 w-10 ring-2 ring-primary/10 shadow-md cursor-pointer hover:scale-105 transition-transform">
+                <AvatarImage src={user.photoURL || `https://picsum.photos/seed/${user.uid}/64/64`} />
+                <AvatarFallback className="bg-secondary text-primary font-black"><User className="h-5 w-5" /></AvatarFallback>
+              </Avatar>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="w-56 rounded-2xl p-2 mt-2 shadow-2xl border-none" align="end">
+              <DropdownMenuLabel className="font-black uppercase tracking-widest text-[10px] text-muted-foreground px-4 py-3">
+                {userProfile?.name || "Account Hub"}
+              </DropdownMenuLabel>
+              <DropdownMenuSeparator className="bg-secondary/50" />
+              <DropdownMenuItem className="rounded-xl p-3 cursor-pointer" onClick={() => router.push('/settings')}>
+                <User className="mr-3 h-4 w-4" />
+                <span>Impact Profile</span>
+              </DropdownMenuItem>
+              {userRole === 'admin' && (
+                <DropdownMenuItem className="rounded-xl p-3 cursor-pointer font-bold text-primary" onClick={() => router.push('/admin')}>
+                  <ShieldAlert className="mr-3 h-4 w-4" />
+                  <span>Admin Control</span>
+                </DropdownMenuItem>
+              )}
+              <DropdownMenuSeparator className="bg-secondary/50" />
+              <DropdownMenuItem className="rounded-xl p-3 cursor-pointer text-danger hover:bg-danger/10" onClick={handleLogout}>
+                <LogOut className="mr-3 h-4 w-4" />
+                <span>Terminate Session</span>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </header>
 
@@ -127,7 +164,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                   : "text-zinc-400 hover:text-white hover:bg-white/5"
               )}
             >
-              <item.icon className={cn("h-5 w-5 sm:h-6 sm:w-6", pathname === item.href ? "animate-pulse" : "")} />
+              <item.icon className={cn("h-5 w-5 sm:h-6", pathname === item.href ? "animate-pulse" : "")} />
               <span className="text-[9px] sm:text-[10px] font-black uppercase tracking-[0.1em]">{item.title}</span>
             </Link>
           ))}
