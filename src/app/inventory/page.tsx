@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useState } from "react"
@@ -11,7 +10,7 @@ import {
   List,
   Loader2,
   TrendingDown,
-  ChevronRight
+  Sparkles
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -45,8 +44,7 @@ import {
   useMemoFirebase, 
   addDocumentNonBlocking, 
   deleteDocumentNonBlocking, 
-  setDocumentNonBlocking,
-  updateDocumentNonBlocking
+  setDocumentNonBlocking
 } from "@/firebase"
 import { collection, doc, serverTimestamp } from "firebase/firestore"
 
@@ -57,7 +55,7 @@ export default function InventoryPage() {
   
   const [isAddOpen, setIsAddOpen] = useState(false)
   const [isAiLoading, setIsAiLoading] = useState<string | null>(null)
-  const [viewMode, setViewMode] = useState<'table' | 'grid'>('table')
+  const [viewMode, setViewMode] = useState<'table' | 'grid'>('grid')
   const [search, setSearch] = useState("")
   
   const [formData, setFormData] = useState({
@@ -84,18 +82,15 @@ export default function InventoryPage() {
         originalPrice: product.currentPrice || product.initialPrice,
         expiryDate: product.expiryDate
       })
-      
       toast({
-        title: `AI Strategy for ${product.name}`,
-        description: `Suggested ${suggestion.suggestedDiscountPercentage}% discount. Reasoning: ${suggestion.reasoning}`,
+        title: "AI Analysis Complete",
+        description: `${suggestion.suggestedDiscountPercentage}% discount recommended. ${suggestion.reasoning}`,
         action: (
           <Button 
-            variant="default" 
-            size="sm" 
-            className="bg-primary text-white hover:bg-primary/90 rounded-lg"
+            className="bg-primary text-white" 
             onClick={() => handleApplyDiscount(product, suggestion.suggestedDiscountPercentage)}
           >
-            Apply Now
+            Apply
           </Button>
         )
       })
@@ -111,7 +106,6 @@ export default function InventoryPage() {
     const newPrice = (product.initialPrice * (100 - discount)) / 100
     const productRef = doc(firestore, "users", user.uid, "products", product.id)
     const marketplaceRef = doc(firestore, "products_marketplace", product.id)
-    
     const updateData = {
       currentPrice: newPrice,
       lastAIRecommendation: `Discount ${discount}%`,
@@ -119,19 +113,16 @@ export default function InventoryPage() {
       updatedAt: serverTimestamp(),
       status: discount >= 100 ? 'AVAILABLE_FOR_DONATION' : 'AVAILABLE_FOR_SALE'
     }
-
     setDocumentNonBlocking(productRef, updateData, { merge: true })
     if (updateData.status === 'AVAILABLE_FOR_SALE') {
       setDocumentNonBlocking(marketplaceRef, { ...product, ...updateData }, { merge: true })
     }
-
-    toast({ title: "Optimized Price Applied", description: `Updated ${product.name} to ₹${newPrice.toFixed(0)}` })
+    toast({ title: "Price Optimized", description: `Updated to ₹${newPrice.toFixed(0)}` })
   }
 
   const handleAddProduct = (e: React.FormEvent) => {
     e.preventDefault()
     if (!firestore || !user) return
-
     const productData = {
       name: formData.name,
       initialPrice: parseFloat(formData.price),
@@ -145,7 +136,6 @@ export default function InventoryPage() {
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp()
     }
-
     const colRef = collection(firestore, "users", user.uid, "products")
     addDocumentNonBlocking(colRef, productData).then((docRef) => {
       if (docRef) {
@@ -153,151 +143,114 @@ export default function InventoryPage() {
         setDocumentNonBlocking(marketplaceRef, { ...productData, id: docRef.id }, { merge: true })
       }
     })
-
-    toast({ title: "Inventory Updated", description: "Product is now live." })
+    toast({ title: "Product Added", description: "Inventory has been updated." })
     setIsAddOpen(false)
     setFormData({ name: "", price: "", quantity: "", expiryDate: "", category: "General", description: "" })
   }
 
-  const handleDelete = (productId: string) => {
-    if (!firestore || !user) return
-    const productRef = doc(firestore, "users", user.uid, "products", productId)
-    const marketplaceRef = doc(firestore, "products_marketplace", productId)
-    deleteDocumentNonBlocking(productRef)
-    deleteDocumentNonBlocking(marketplaceRef)
-    toast({ title: "Product Removed" })
-  }
-
-  const filteredProducts = products?.filter(p => 
-    p.name.toLowerCase().includes(search.toLowerCase())
-  ) || []
+  const filteredProducts = products?.filter(p => p.name.toLowerCase().includes(search.toLowerCase())) || []
 
   return (
     <DashboardLayout>
-      <div className="space-y-6 sm:space-y-10 animate-in fade-in slide-in-from-bottom-6 duration-700">
-        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
-          <div className="space-y-1">
-            <h1 className="text-2xl sm:text-4xl font-black font-headline tracking-tighter text-foreground">Inventory</h1>
-            <p className="text-muted-foreground text-xs sm:text-lg font-medium italic">"Intelligent tracking for zero waste."</p>
+      <div className="space-y-10 pb-20 animate-in fade-in duration-700">
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+          <div className="space-y-2">
+            <h1 className="text-5xl font-black tracking-tighter">Inventory</h1>
+            <p className="text-muted-foreground font-medium italic text-lg opacity-80">Track and manage your surplus efficiently.</p>
           </div>
           <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
             <DialogTrigger asChild>
-              <Button className="w-full sm:w-auto bg-primary hover:bg-primary/90 h-12 sm:h-14 px-6 sm:px-8 rounded-xl sm:rounded-2xl font-black uppercase tracking-widest text-[10px] sm:text-[11px] shadow-lg shadow-primary/20 active:scale-[0.98] transition-all">
-                <Plus className="mr-2 h-4 w-4 sm:h-5 sm:w-5" />
-                New Product
+              <Button className="h-16 px-10 rounded-2xl bg-primary text-white font-black uppercase tracking-widest text-[11px] shadow-2xl shadow-primary/30 hover:-translate-y-1 transition-all">
+                <Plus className="mr-3 h-5 w-5" />
+                Add Product
               </Button>
             </DialogTrigger>
-            <DialogContent className="w-[95vw] sm:max-w-[550px] rounded-2xl sm:rounded-[2.5rem] p-5 sm:p-10">
-              <DialogHeader className="space-y-2 sm:space-y-4">
-                <DialogTitle className="text-xl sm:text-3xl font-black tracking-tighter">Add to Inventory</DialogTitle>
-                <DialogDescription className="text-xs sm:text-base font-medium italic">
-                  SaveBite AI will suggest markdowns as the date approaches.
-                </DialogDescription>
+            <DialogContent className="rounded-[3rem] p-10 max-w-xl">
+              <DialogHeader className="mb-8">
+                <DialogTitle className="text-3xl font-black tracking-tighter">New Product Listing</DialogTitle>
+                <DialogDescription className="text-lg font-medium italic">Enter details to push to the marketplace.</DialogDescription>
               </DialogHeader>
-              <form onSubmit={handleAddProduct} className="grid gap-4 sm:gap-6 py-4">
+              <form onSubmit={handleAddProduct} className="space-y-6">
                 <div className="space-y-1.5">
-                  <Label htmlFor="name" className="text-[9px] sm:text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Product Name</Label>
-                  <Input id="name" required value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} placeholder="e.g. Organic Milk" className="h-11 sm:h-12 rounded-xl bg-secondary/30 border-none shadow-inner" />
+                  <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-2">Name</Label>
+                  <Input required value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} className="h-14 rounded-2xl bg-secondary/50 border-none shadow-inner text-lg" />
                 </div>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-2 gap-6">
                   <div className="space-y-1.5">
-                    <Label htmlFor="price" className="text-[9px] sm:text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Price (₹)</Label>
-                    <Input id="price" required type="number" value={formData.price} onChange={e => setFormData({...formData, price: e.target.value})} placeholder="150" className="h-11 sm:h-12 rounded-xl bg-secondary/30 border-none shadow-inner" />
+                    <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-2">Price (₹)</Label>
+                    <Input required type="number" value={formData.price} onChange={e => setFormData({...formData, price: e.target.value})} className="h-14 rounded-2xl bg-secondary/50 border-none shadow-inner text-lg" />
                   </div>
                   <div className="space-y-1.5">
-                    <Label htmlFor="qty" className="text-[9px] sm:text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Stock</Label>
-                    <Input id="qty" required type="number" value={formData.quantity} onChange={e => setFormData({...formData, quantity: e.target.value})} placeholder="24" className="h-11 sm:h-12 rounded-xl bg-secondary/30 border-none shadow-inner" />
+                    <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-2">Stock</Label>
+                    <Input required type="number" value={formData.quantity} onChange={e => setFormData({...formData, quantity: e.target.value})} className="h-14 rounded-2xl bg-secondary/50 border-none shadow-inner text-lg" />
                   </div>
                 </div>
                 <div className="space-y-1.5">
-                  <Label htmlFor="expiry" className="text-[9px] sm:text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Expiry Date</Label>
-                  <Input id="expiry" required type="date" value={formData.expiryDate} onChange={e => setFormData({...formData, expiryDate: e.target.value})} className="h-11 sm:h-12 rounded-xl bg-secondary/30 border-none shadow-inner" />
+                  <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-2">Expiry</Label>
+                  <Input required type="date" value={formData.expiryDate} onChange={e => setFormData({...formData, expiryDate: e.target.value})} className="h-14 rounded-2xl bg-secondary/50 border-none shadow-inner text-lg" />
                 </div>
+                <Button type="submit" className="w-full h-16 rounded-2xl bg-primary text-white font-black text-xl shadow-xl shadow-primary/20">Publish to Market</Button>
               </form>
-              <DialogFooter className="flex flex-row gap-2 mt-2 sm:mt-4">
-                <Button variant="ghost" onClick={() => setIsAddOpen(false)} className="flex-1 rounded-xl h-11 sm:h-12 font-black uppercase tracking-widest text-[9px] sm:text-[10px]">Dismiss</Button>
-                <Button type="submit" className="flex-1 bg-primary hover:bg-primary/90 rounded-xl h-11 sm:h-12 font-black uppercase tracking-widest text-[9px] sm:text-[10px] shadow-lg shadow-primary/20" onClick={handleAddProduct}>Publish</Button>
-              </DialogFooter>
             </DialogContent>
           </Dialog>
         </div>
 
-        <div className="flex flex-col sm:flex-row gap-4 items-center justify-between bg-card p-4 sm:p-6 rounded-2xl sm:rounded-[2rem] border border-secondary shadow-lg">
-          <div className="relative w-full sm:w-[300px] group">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        <div className="bg-white p-6 rounded-[2.5rem] shadow-xl border border-secondary flex flex-col md:flex-row gap-6 items-center">
+          <div className="relative flex-1 w-full">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
             <Input 
-              placeholder="Search items..." 
-              className="pl-11 h-11 border-transparent bg-secondary/40 rounded-xl text-sm" 
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Filter by product name..." 
+              value={search} onChange={e => setSearch(e.target.value)}
+              className="pl-12 h-14 rounded-2xl bg-secondary/30 border-none text-lg font-medium"
             />
           </div>
-          <div className="flex items-center gap-2 w-full sm:w-auto">
-            <div className="flex bg-secondary/50 p-1 rounded-xl flex-1 sm:flex-none">
-              <Button variant={viewMode === 'table' ? 'default' : 'ghost'} size="icon" className="flex-1 sm:h-9 sm:w-9 rounded-lg h-10" onClick={() => setViewMode('table')}>
-                <List className="h-4 w-4" />
-              </Button>
-              <Button variant={viewMode === 'grid' ? 'default' : 'ghost'} size="icon" className="flex-1 sm:h-9 sm:w-9 rounded-lg h-10" onClick={() => setViewMode('grid')}>
-                <LayoutGrid className="h-4 w-4" />
-              </Button>
-            </div>
-            <Badge variant="outline" className="hidden sm:flex px-3 py-2 font-black uppercase tracking-widest text-[9px] rounded-lg border-secondary bg-secondary/20">
-              {filteredProducts.length} Records
-            </Badge>
+          <div className="flex bg-secondary/50 p-1.5 rounded-2xl">
+            <Button variant={viewMode === 'table' ? 'default' : 'ghost'} className="rounded-xl h-11 px-6 font-black uppercase text-[10px] tracking-widest" onClick={() => setViewMode('table')}>Table</Button>
+            <Button variant={viewMode === 'grid' ? 'default' : 'ghost'} className="rounded-xl h-11 px-6 font-black uppercase text-[10px] tracking-widest" onClick={() => setViewMode('grid')}>Cards</Button>
           </div>
         </div>
 
-        {viewMode === 'table' ? (
-          <div className="bg-card rounded-xl sm:rounded-[2.5rem] border border-secondary shadow-xl overflow-hidden">
+        {isLoading ? (
+          <div className="py-20 flex flex-col items-center gap-4">
+            <Loader2 className="h-10 w-10 animate-spin text-primary" />
+            <p className="font-black uppercase tracking-[0.3em] text-[10px] text-muted-foreground">Initializing Vault...</p>
+          </div>
+        ) : viewMode === 'table' ? (
+          <Card className="border-none shadow-2xl rounded-[3rem] overflow-hidden bg-white">
             <div className="overflow-x-auto">
               <Table>
-                <TableHeader className="bg-secondary/20 h-12 sm:h-20">
-                  <TableRow className="hover:bg-transparent border-none">
-                    <TableHead className="w-[150px] sm:w-[300px] pl-4 sm:pl-10 font-black uppercase tracking-widest text-[8px] sm:text-[10px] text-muted-foreground whitespace-nowrap">Product</TableHead>
-                    <TableHead className="font-black uppercase tracking-widest text-[8px] sm:text-[10px] text-muted-foreground whitespace-nowrap text-center">Price</TableHead>
-                    <TableHead className="font-black uppercase tracking-widest text-[8px] sm:text-[10px] text-muted-foreground whitespace-nowrap text-center">Exp</TableHead>
-                    <TableHead className="text-right pr-4 sm:pr-10 font-black uppercase tracking-widest text-[8px] sm:text-[10px] text-muted-foreground whitespace-nowrap">Action</TableHead>
+                <TableHeader className="bg-secondary/20 h-20">
+                  <TableRow className="border-none">
+                    <TableHead className="pl-10 font-black uppercase tracking-widest text-[10px] text-muted-foreground">Product</TableHead>
+                    <TableHead className="text-center font-black uppercase tracking-widest text-[10px] text-muted-foreground">Price</TableHead>
+                    <TableHead className="text-center font-black uppercase tracking-widest text-[10px] text-muted-foreground">Expires In</TableHead>
+                    <TableHead className="text-right pr-10 font-black uppercase tracking-widest text-[10px] text-muted-foreground">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {isLoading ? (
-                    <TableRow>
-                      <TableCell colSpan={4} className="text-center py-10 sm:py-20">
-                        <Loader2 className="h-6 w-6 sm:h-8 sm:w-8 animate-spin text-primary mx-auto" />
-                      </TableCell>
-                    </TableRow>
-                  ) : filteredProducts.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={4} className="text-center py-10 text-muted-foreground italic text-xs sm:text-sm">
-                        No matches found.
-                      </TableCell>
-                    </TableRow>
-                  ) : filteredProducts.map((product) => {
-                    const status = getExpiryStatus(product.expiryDate)
-                    const daysLeft = getDaysRemaining(product.expiryDate)
+                  {filteredProducts.map((p) => {
+                    const status = getExpiryStatus(p.expiryDate)
                     return (
-                      <TableRow key={product.id} className="group border-b border-secondary/50">
-                        <TableCell className="pl-4 sm:pl-10">
-                          <div className="flex flex-col">
-                            <span className="font-black text-xs sm:text-lg truncate max-w-[100px] sm:max-w-none">{product.name}</span>
-                            <span className="text-[7px] sm:text-[10px] text-muted-foreground font-black uppercase tracking-widest">Qty: {product.quantity}</span>
-                          </div>
+                      <TableRow key={p.id} className="group hover:bg-secondary/20 transition-all border-b border-secondary/50">
+                        <TableCell className="pl-10">
+                          <p className="font-black text-xl tracking-tight leading-none mb-1">{p.name}</p>
+                          <p className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">Qty: {p.quantity}</p>
                         </TableCell>
                         <TableCell className="text-center">
-                          <span className="font-black text-xs sm:text-xl text-primary tracking-tighter">₹{(product.currentPrice || product.initialPrice).toFixed(0)}</span>
+                          <span className="text-2xl font-black text-primary tracking-tighter">₹{p.currentPrice?.toFixed(0)}</span>
                         </TableCell>
                         <TableCell className="text-center">
-                          <Badge className={cn("px-1.5 py-0.5 sm:px-4 sm:py-1 rounded-md sm:rounded-xl font-black text-[7px] sm:text-[9px] uppercase tracking-widest border-none shadow-sm", getExpiryColorClass(status))}>
-                            {status === 'expired' ? 'Exp' : `${daysLeft}d`}
+                          <Badge className={cn("px-4 py-1.5 rounded-xl font-black uppercase text-[9px] tracking-widest border-none shadow-sm", getExpiryColorClass(status))}>
+                            {getDaysRemaining(p.expiryDate)} Days
                           </Badge>
                         </TableCell>
-                        <TableCell className="text-right pr-4 sm:pr-10">
-                          <div className="flex items-center justify-end gap-1 sm:gap-2">
-                            <Button variant="ghost" size="icon" className="h-7 w-7 sm:h-10 sm:w-10 text-primary active:bg-secondary" onClick={() => handleAiSuggestion(product)} disabled={isAiLoading === product.id}>
-                              {isAiLoading === product.id ? <Loader2 className="h-3 w-3 sm:h-4 sm:w-4 animate-spin" /> : <TrendingDown className="h-3 w-3 sm:h-4 sm:w-4" />}
+                        <TableCell className="text-right pr-10">
+                          <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <Button size="icon" variant="ghost" className="h-12 w-12 rounded-xl text-primary hover:bg-primary/10" onClick={() => handleAiSuggestion(p)}>
+                              <TrendingDown className="h-6 w-6" />
                             </Button>
-                            <Button variant="ghost" size="icon" className="h-7 w-7 sm:h-10 sm:w-10 text-danger active:bg-danger/10" onClick={() => handleDelete(product.id)}>
-                              <Trash2 className="h-3 w-3 sm:h-4 sm:w-4" />
+                            <Button size="icon" variant="ghost" className="h-12 w-12 rounded-xl text-danger hover:bg-danger/10" onClick={() => deleteDocumentNonBlocking(doc(firestore!, "users", user!.uid, "products", p.id))}>
+                              <Trash2 className="h-6 w-6" />
                             </Button>
                           </div>
                         </TableCell>
@@ -307,50 +260,44 @@ export default function InventoryPage() {
                 </TableBody>
               </Table>
             </div>
-          </div>
+          </Card>
         ) : (
-          <div className="grid grid-cols-1 xs:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-8">
-            {isLoading ? (
-               Array.from({ length: 3 }).map((_, i) => (
-                  <div key={i} className="h-40 sm:h-60 rounded-2xl bg-secondary/30 animate-pulse" />
-               ))
-            ) : filteredProducts.length === 0 ? (
-              <div className="col-span-full py-10 text-center text-muted-foreground italic text-xs sm:text-sm">
-                No items found.
-              </div>
-            ) : filteredProducts.map((product) => {
-              const status = getExpiryStatus(product.expiryDate)
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {filteredProducts.map((p, i) => {
+              const status = getExpiryStatus(p.expiryDate)
               return (
-                <div key={product.id} className="bg-card border-none rounded-2xl sm:rounded-[2.5rem] p-5 sm:p-10 shadow-lg hover:shadow-xl transition-all duration-300 relative overflow-hidden animate-in zoom-in-95">
-                  <div className={cn("absolute top-0 right-0 w-1.5 sm:w-2 h-full opacity-50", getExpiryColorClass(status).split(' ')[1])} />
-                  <div className="space-y-4 sm:space-y-6">
+                <Card key={p.id} className={cn(
+                  "border-none card-3d rounded-[3rem] p-10 bg-white relative overflow-hidden",
+                  `animate-in fade-in slide-in-from-bottom-4 delay-[${i * 50}ms]`
+                )}>
+                  <div className={cn("absolute top-0 right-0 w-3 h-full opacity-50", getExpiryColorClass(status).split(' ')[1])} />
+                  <div className="flex justify-between items-start mb-10">
+                    <Badge variant="outline" className="px-4 py-1.5 rounded-xl border-secondary bg-secondary/20 font-black text-[9px] uppercase tracking-[0.2em]">{p.category || 'Surplus'}</Badge>
+                    <Badge className={cn("px-4 py-1.5 rounded-xl border-none shadow-sm font-black text-[9px] uppercase tracking-widest", getExpiryColorClass(status))}>
+                      {status === 'expired' ? 'EXPIRED' : `${getDaysRemaining(p.expiryDate)}D LEFT`}
+                    </Badge>
+                  </div>
+                  <h3 className="text-3xl font-black tracking-tighter mb-4 leading-tight">{p.name}</h3>
+                  <div className="grid grid-cols-2 gap-4 bg-secondary/20 p-6 rounded-3xl mb-8">
                     <div>
-                      <h3 className="font-black text-lg sm:text-2xl tracking-tighter mb-1 truncate">{product.name}</h3>
-                      <Badge className={cn("px-2.5 py-0.5 sm:px-3 sm:py-1 rounded-lg font-black text-[7px] sm:text-[8px] uppercase tracking-widest shadow-sm border-none", getExpiryColorClass(status))}>
-                        {status === 'expired' ? 'Expired' : `${getDaysRemaining(product.expiryDate)} Days Left`}
-                      </Badge>
+                      <p className="text-[9px] text-muted-foreground font-black uppercase tracking-widest mb-1">Stock</p>
+                      <p className="text-2xl font-black">{p.quantity} U</p>
                     </div>
-                    <div className="grid grid-cols-2 gap-2 sm:gap-3">
-                       <div className="bg-secondary/30 p-2 sm:p-3 rounded-lg sm:rounded-xl">
-                          <p className="text-[7px] sm:text-[8px] font-black uppercase tracking-widest text-muted-foreground mb-0.5">Stock</p>
-                          <p className="text-xs sm:text-base font-black">{product.quantity} U</p>
-                       </div>
-                       <div className="bg-secondary/30 p-2 sm:p-3 rounded-lg sm:rounded-xl">
-                          <p className="text-[7px] sm:text-[8px] font-black uppercase tracking-widest text-muted-foreground mb-0.5">Price</p>
-                          <p className="text-xs sm:text-base font-black truncate">₹{(product.currentPrice || product.initialPrice).toFixed(0)}</p>
-                       </div>
-                    </div>
-                    <div className="flex justify-end gap-2 pt-1 sm:pt-2">
-                        <Button size="icon" className="h-9 w-9 sm:h-10 sm:w-10 rounded-xl bg-primary shadow-lg shadow-primary/20 active:scale-95 transition-all" onClick={() => handleAiSuggestion(product)} disabled={isAiLoading === product.id}>
-                          <TrendingDown className={cn("h-4 w-4 sm:h-5 sm:w-5", isAiLoading === product.id && "animate-spin")} />
-                        </Button>
-                        <Button size="icon" variant="ghost" className="h-9 w-9 sm:h-10 sm:w-10 rounded-xl text-danger hover:bg-danger/10 active:scale-95 transition-all" onClick={() => handleDelete(product.id)}>
-                          <Trash2 className="h-4 w-4 sm:h-5 sm:w-5" />
-                        </Button>
+                    <div>
+                      <p className="text-[9px] text-muted-foreground font-black uppercase tracking-widest mb-1">Value</p>
+                      <p className="text-2xl font-black text-primary tracking-tighter">₹{p.currentPrice?.toFixed(0)}</p>
                     </div>
                   </div>
-                </div>
-              );
+                  <div className="flex gap-4">
+                    <Button onClick={() => handleAiSuggestion(p)} className="flex-1 h-14 rounded-2xl bg-zinc-900 text-white font-black uppercase text-[10px] tracking-widest shadow-xl hover:-translate-y-1 transition-all">
+                      <Sparkles className="mr-2 h-4 w-4 text-amber-400" /> AI Pricing
+                    </Button>
+                    <Button variant="ghost" size="icon" className="h-14 w-14 rounded-2xl text-danger bg-danger/5 hover:bg-danger/10" onClick={() => deleteDocumentNonBlocking(doc(firestore!, "users", user!.uid, "products", p.id))}>
+                      <Trash2 className="h-5 w-5" />
+                    </Button>
+                  </div>
+                </Card>
+              )
             })}
           </div>
         )}
