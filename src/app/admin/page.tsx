@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useState } from "react"
@@ -11,7 +12,9 @@ import {
   Loader2,
   Trash2,
   Search,
-  Store
+  UserCog,
+  ShieldCheck,
+  ShieldX
 } from "lucide-react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -26,8 +29,23 @@ import {
   TableHeader, 
   TableRow 
 } from "@/components/ui/table"
-import { useFirestore, useCollection, useMemoFirebase, deleteDocumentNonBlocking } from "@/firebase"
-import { collection, query, orderBy, doc } from "firebase/firestore"
+import { 
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import { 
+  useFirestore, 
+  useCollection, 
+  useMemoFirebase, 
+  deleteDocumentNonBlocking, 
+  updateDocumentNonBlocking,
+  setDocumentNonBlocking 
+} from "@/firebase"
+import { collection, query, orderBy, doc, serverTimestamp } from "firebase/firestore"
 import { cn } from "@/lib/utils"
 import { useToast } from "@/hooks/use-toast"
 import { getPlaceholderById } from "@/lib/placeholder-images"
@@ -62,6 +80,25 @@ export default function AdminPage() {
     if (!firestore) return
     deleteDocumentNonBlocking(doc(firestore, "users", userId))
     toast({ title: "User Revoked", description: "Profile removed from system." })
+  }
+
+  const handleUpdateRole = (userId: string, newRole: string) => {
+    if (!firestore) return
+    const userRef = doc(firestore, "users", userId)
+    updateDocumentNonBlocking(userRef, { role: newRole, updatedAt: serverTimestamp() })
+    
+    // Manage role markers (DBAC)
+    const roles = ['admin', 'store_owner', 'customer', 'ngo']
+    roles.forEach(roleName => {
+      const roleRef = doc(firestore, `roles_${roleName}`, userId)
+      if (roleName === newRole) {
+        setDocumentNonBlocking(roleRef, { id: userId }, { merge: true })
+      } else {
+        deleteDocumentNonBlocking(roleRef)
+      }
+    })
+    
+    toast({ title: "Role Updated", description: `User is now a ${newRole.replace('_', ' ')}.` })
   }
 
   const handleDeleteProduct = (productId: string) => {
@@ -157,8 +194,8 @@ export default function AdminPage() {
                   <TableHeader className="bg-zinc-50 h-16 sm:h-20">
                     <TableRow className="border-none">
                       <TableHead className="pl-6 sm:pl-10 font-black uppercase tracking-widest text-[8px] sm:text-[10px]">Identity</TableHead>
-                      <TableHead className="text-center font-black uppercase tracking-widest text-[8px] sm:text-[10px]">Role</TableHead>
-                      <TableHead className="text-right pr-6 sm:pr-10 font-black uppercase tracking-widest text-[8px] sm:text-[10px]">Delete</TableHead>
+                      <TableHead className="text-center font-black uppercase tracking-widest text-[8px] sm:text-[10px]">Role Control</TableHead>
+                      <TableHead className="text-right pr-6 sm:pr-10 font-black uppercase tracking-widest text-[8px] sm:text-[10px]">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -179,9 +216,32 @@ export default function AdminPage() {
                           <p className="text-[10px] text-muted-foreground truncate max-w-[150px] sm:max-w-none">{u.email}</p>
                         </TableCell>
                         <TableCell className="text-center">
-                          <Badge variant="outline" className="px-2 py-0.5 rounded-lg font-black uppercase text-[8px] bg-zinc-50">
-                            {u.role || 'customer'}
-                          </Badge>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="outline" className="h-8 rounded-xl px-4 gap-2 border-zinc-200">
+                                <Badge variant="outline" className="bg-zinc-50 border-none font-black text-[8px] uppercase">
+                                  {u.role || 'customer'}
+                                </Badge>
+                                <UserCog className="h-3 w-3" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent className="rounded-2xl border-none shadow-2xl p-2 w-48">
+                              <DropdownMenuLabel className="text-[10px] uppercase font-black tracking-widest text-muted-foreground p-3">Change Authority</DropdownMenuLabel>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem className="rounded-xl p-3 cursor-pointer gap-3 font-bold text-primary" onClick={() => handleUpdateRole(u.id, 'admin')}>
+                                <ShieldCheck className="h-4 w-4" /> Admin
+                              </DropdownMenuItem>
+                              <DropdownMenuItem className="rounded-xl p-3 cursor-pointer gap-3 font-bold" onClick={() => handleUpdateRole(u.id, 'store_owner')}>
+                                <ShoppingBag className="h-4 w-4" /> Store Owner
+                              </DropdownMenuItem>
+                              <DropdownMenuItem className="rounded-xl p-3 cursor-pointer gap-3 font-bold" onClick={() => handleUpdateRole(u.id, 'ngo')}>
+                                <Heart className="h-4 w-4" /> NGO
+                              </DropdownMenuItem>
+                              <DropdownMenuItem className="rounded-xl p-3 cursor-pointer gap-3 font-bold" onClick={() => handleUpdateRole(u.id, 'customer')}>
+                                <Users className="h-4 w-4" /> Customer
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
                         </TableCell>
                         <TableCell className="text-right pr-6 sm:pr-10">
                            <Button variant="ghost" size="icon" className="h-8 w-8 sm:h-10 sm:w-10 text-danger" onClick={() => handleDeleteUser(u.id)}>
