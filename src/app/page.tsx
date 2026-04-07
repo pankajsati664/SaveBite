@@ -140,101 +140,101 @@ export default function LandingLoginPage() {
   if (isUserLoading) return null
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-background p-4 relative overflow-hidden">
+    <div className="min-h-screen flex flex-col items-center justify-start sm:justify-center bg-background p-4 relative overflow-y-auto">
       {/* Decorative Background Elements */}
       <div className="absolute top-0 left-0 w-full h-full pointer-events-none opacity-20 overflow-hidden -z-10">
         <div className="absolute top-[-10%] right-[-10%] w-[50%] h-[50%] bg-primary/20 blur-[120px] rounded-full animate-pulse" />
         <div className="absolute bottom-[-10%] left-[-10%] w-[50%] h-[50%] bg-accent/20 blur-[120px] rounded-full" />
       </div>
 
-      <div className="flex items-center gap-3 mb-10 animate-in fade-in slide-in-from-top-4 duration-1000">
-        <div className="bg-primary p-3 rounded-2xl shadow-2xl shadow-primary/30">
-          <Leaf className="h-10 w-10 text-primary-foreground" />
+      <div className="flex items-center gap-3 mb-8 sm:mb-10 mt-8 sm:mt-0 animate-in fade-in slide-in-from-top-4 duration-1000">
+        <div className="bg-primary p-2.5 sm:p-3 rounded-2xl shadow-2xl shadow-primary/30">
+          <Leaf className="h-8 w-8 sm:h-10 sm:h-10 text-primary-foreground" />
         </div>
-        <h1 className="text-4xl font-headline font-black text-primary tracking-tighter">SaveBite</h1>
+        <h1 className="text-3xl sm:text-4xl font-headline font-black text-primary tracking-tighter">SaveBite</h1>
       </div>
 
-      <Card className="w-full max-w-md shadow-[0_32px_64px_-12px_rgba(0,0,0,0.14)] border-none rounded-[2.5rem] overflow-hidden animate-in fade-in zoom-in-95 duration-700">
+      <Card className="w-full max-w-md shadow-[0_32px_64px_-12px_rgba(0,0,0,0.14)] border-none rounded-[2rem] sm:rounded-[2.5rem] overflow-hidden animate-in fade-in zoom-in-95 duration-700">
         <Tabs defaultValue="login" className="w-full">
-          <CardHeader className="text-center p-8 pb-4">
-            <TabsList className="grid w-full grid-cols-2 mb-8 bg-secondary/50 p-1 rounded-2xl h-14">
-              <TabsTrigger value="login" className="rounded-xl font-black uppercase tracking-widest text-[10px] data-[state=active]:bg-white data-[state=active]:shadow-md">Login</TabsTrigger>
-              <TabsTrigger value="register" className="rounded-xl font-black uppercase tracking-widest text-[10px] data-[state=active]:bg-white data-[state=active]:shadow-md">Register</TabsTrigger>
+          <CardHeader className="text-center p-6 sm:p-8 pb-4">
+            <TabsList className="grid w-full grid-cols-2 mb-6 sm:mb-8 bg-secondary/50 p-1 rounded-2xl h-12 sm:h-14">
+              <TabsTrigger value="login" className="rounded-xl font-black uppercase tracking-widest text-[9px] sm:text-[10px] data-[state=active]:bg-white data-[state=active]:shadow-md transition-all">Login</TabsTrigger>
+              <TabsTrigger value="register" className="rounded-xl font-black uppercase tracking-widest text-[9px] sm:text-[10px] data-[state=active]:bg-white data-[state=active]:shadow-md transition-all">Register</TabsTrigger>
             </TabsList>
-            <CardTitle className="text-3xl font-headline font-black tracking-tighter mb-2">Reduce Food Waste</CardTitle>
-            <CardDescription className="text-muted-foreground font-medium italic">
+            <CardTitle className="text-2xl sm:text-3xl font-headline font-black tracking-tighter mb-2">Reduce Food Waste</CardTitle>
+            <CardDescription className="text-muted-foreground font-medium italic text-sm">
               Join the SaveBite community today.
             </CardDescription>
           </CardHeader>
 
-          <CardContent className="p-8 pt-4">
+          <CardContent className="p-6 sm:p-8 pt-4">
             <TabsContent value="login" className="mt-0">
-              <form onSubmit={handleLogin} className="space-y-6">
-                <div className="space-y-2">
-                  <Label htmlFor="email" className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Email</Label>
+              <form onSubmit={handleLogin} className="space-y-4 sm:space-y-6">
+                <div className="space-y-1.5 sm:space-y-2">
+                  <Label htmlFor="email" className="text-[9px] sm:text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Email</Label>
                   <div className="relative">
-                    <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                    <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground" />
                     <Input 
                       id="email" 
                       type="email" 
                       placeholder="name@example.com" 
-                      className="pl-12 h-14 rounded-2xl bg-secondary/30 border-none shadow-inner text-base" 
+                      className="pl-11 sm:pl-12 h-12 sm:h-14 rounded-2xl bg-secondary/30 border-none shadow-inner text-sm sm:text-base" 
                       required 
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                     />
                   </div>
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="password" className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Password</Label>
+                <div className="space-y-1.5 sm:space-y-2">
+                  <Label htmlFor="password" className="text-[9px] sm:text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Password</Label>
                   <div className="relative">
-                    <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                    <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground" />
                     <Input 
                       id="password" 
                       type="password" 
-                      className="pl-12 h-14 rounded-2xl bg-secondary/30 border-none shadow-inner text-base" 
+                      className="pl-11 sm:pl-12 h-12 sm:h-14 rounded-2xl bg-secondary/30 border-none shadow-inner text-sm sm:text-base" 
                       required 
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                     />
                   </div>
                 </div>
-                <Button type="submit" className="w-full h-14 rounded-2xl bg-primary hover:bg-primary/90 text-white font-black uppercase tracking-widest text-[11px] shadow-xl shadow-primary/20 transition-all hover:-translate-y-1" disabled={loading}>
+                <Button type="submit" className="w-full h-12 sm:h-14 rounded-2xl bg-primary hover:bg-primary/90 text-white font-black uppercase tracking-widest text-[10px] sm:text-[11px] shadow-xl shadow-primary/20 transition-all active:scale-[0.98]" disabled={loading}>
                   {loading ? "Authenticating..." : "Sign In"}
-                  {!loading && <LogIn className="ml-2 h-5 w-5" />}
+                  {!loading && <LogIn className="ml-2 h-4 w-4 sm:h-5 sm:w-5" />}
                 </Button>
               </form>
             </TabsContent>
 
             <TabsContent value="register" className="mt-0">
-              <form onSubmit={handleRegister} className="space-y-5">
+              <form onSubmit={handleRegister} className="space-y-4 sm:space-y-5">
                 <div className="space-y-1">
-                  <Label htmlFor="reg-name" className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Full Name</Label>
+                  <Label htmlFor="reg-name" className="text-[9px] sm:text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Full Name</Label>
                   <Input 
                     id="reg-name" 
                     placeholder="John Doe" 
                     required 
-                    className="h-14 rounded-2xl bg-secondary/30 border-none shadow-inner"
+                    className="h-12 sm:h-14 rounded-2xl bg-secondary/30 border-none shadow-inner text-sm sm:text-base"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                   />
                 </div>
                 <div className="space-y-1">
-                  <Label htmlFor="reg-email" className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Email</Label>
+                  <Label htmlFor="reg-email" className="text-[9px] sm:text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Email</Label>
                   <Input 
                     id="reg-email" 
                     type="email" 
                     placeholder="name@example.com" 
                     required 
-                    className="h-14 rounded-2xl bg-secondary/30 border-none shadow-inner"
+                    className="h-12 sm:h-14 rounded-2xl bg-secondary/30 border-none shadow-inner text-sm sm:text-base"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                   />
                 </div>
                 <div className="space-y-1">
-                  <Label htmlFor="role" className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Account Type</Label>
+                  <Label htmlFor="role" className="text-[9px] sm:text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Account Type</Label>
                   <Select onValueChange={setRole} required>
-                    <SelectTrigger className="h-14 rounded-2xl bg-secondary/30 border-none shadow-inner">
+                    <SelectTrigger className="h-12 sm:h-14 rounded-2xl bg-secondary/30 border-none shadow-inner text-sm sm:text-base">
                       <SelectValue placeholder="Select your role" />
                     </SelectTrigger>
                     <SelectContent className="rounded-2xl border-none shadow-2xl">
@@ -245,36 +245,36 @@ export default function LandingLoginPage() {
                   </Select>
                 </div>
                 <div className="space-y-1">
-                  <Label htmlFor="reg-password" className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Password</Label>
+                  <Label htmlFor="reg-password" className="text-[9px] sm:text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Password</Label>
                   <Input 
                     id="reg-password" 
                     type="password" 
                     required 
-                    className="h-14 rounded-2xl bg-secondary/30 border-none shadow-inner"
+                    className="h-12 sm:h-14 rounded-2xl bg-secondary/30 border-none shadow-inner text-sm sm:text-base"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                   />
                 </div>
-                <Button type="submit" className="w-full h-14 rounded-2xl bg-primary hover:bg-primary/90 text-white font-black uppercase tracking-widest text-[11px] shadow-xl shadow-primary/20 mt-4" disabled={loading}>
+                <Button type="submit" className="w-full h-12 sm:h-14 rounded-2xl bg-primary hover:bg-primary/90 text-white font-black uppercase tracking-widest text-[10px] sm:text-[11px] shadow-xl shadow-primary/20 mt-4 active:scale-[0.98]" disabled={loading}>
                   {loading ? "Creating account..." : "Create Account"}
-                  {!loading && <UserPlus className="ml-2 h-5 w-5" />}
+                  {!loading && <UserPlus className="ml-2 h-4 w-4 sm:h-5 sm:w-5" />}
                 </Button>
               </form>
             </TabsContent>
           </CardContent>
 
-          <CardFooter className="flex flex-col gap-6 p-8 pt-0">
+          <CardFooter className="flex flex-col gap-5 sm:gap-6 p-6 sm:p-8 pt-0">
             <div className="relative w-full">
               <div className="absolute inset-0 flex items-center">
                 <span className="w-full border-t border-secondary" />
               </div>
-              <div className="relative flex justify-center text-[10px] uppercase font-black tracking-widest">
-                <span className="bg-card px-4 text-muted-foreground">Or continue with</span>
+              <div className="relative flex justify-center text-[9px] sm:text-[10px] uppercase font-black tracking-widest">
+                <span className="bg-card px-3 sm:px-4 text-muted-foreground">Or continue with</span>
               </div>
             </div>
             
-            <Button variant="outline" className="w-full h-14 rounded-2xl border-secondary hover:bg-secondary/20 transition-all font-bold" onClick={handleGoogleSignIn} disabled={loading}>
-              <svg className="mr-3 h-5 w-5" viewBox="0 0 24 24">
+            <Button variant="outline" className="w-full h-12 sm:h-14 rounded-2xl border-secondary hover:bg-secondary/20 transition-all font-bold text-sm" onClick={handleGoogleSignIn} disabled={loading}>
+              <svg className="mr-3 h-4 w-4 sm:h-5 sm:w-5" viewBox="0 0 24 24">
                 <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
                 <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
                 <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05" />
@@ -282,7 +282,7 @@ export default function LandingLoginPage() {
               </svg>
               Sign In with Google
             </Button>
-            <p className="text-[10px] text-center text-muted-foreground font-medium italic opacity-70">
+            <p className="text-[9px] sm:text-[10px] text-center text-muted-foreground font-medium italic opacity-70 mb-4">
               By continuing, you agree to SaveBite's Terms & Conditions.
             </p>
           </CardFooter>
