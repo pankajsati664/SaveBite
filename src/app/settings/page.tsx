@@ -71,24 +71,23 @@ export default function SettingsPage() {
       updatedAt: serverTimestamp()
     })
     
-    // Simulate a brief delay for UI feedback
     setTimeout(() => {
       setIsSaving(false)
-      toast({ title: "Profile updated", description: "Your changes have been saved successfully." })
-    }, 500)
+      toast({ title: "Profile Secured", description: "Your profile information has been successfully updated." })
+    }, 800)
   }
 
   const handleLogout = () => {
     if (user?.auth) {
-      signOut(user.auth).then(() => router.push("/login"))
+      signOut(user.auth).then(() => router.push("/"))
     }
   }
 
   if (isAuthLoading || isProfileLoading) {
     return (
       <DashboardLayout>
-        <div className="flex items-center justify-center h-full">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <div className="flex items-center justify-center py-32">
+          <Loader2 className="h-12 w-12 animate-spin text-primary" />
         </div>
       </DashboardLayout>
     )
@@ -98,171 +97,170 @@ export default function SettingsPage() {
     ? new Date(userProfile.createdAt.seconds * 1000).toLocaleDateString() 
     : userProfile?.createdAt 
     ? new Date(userProfile.createdAt).toLocaleDateString() 
-    : 'N/A'
+    : 'New Impact Member'
 
   return (
     <DashboardLayout>
-      <div className="max-w-4xl mx-auto space-y-8 animate-in fade-in duration-700">
-        <div>
-          <h1 className="text-4xl font-headline font-black text-foreground">Settings</h1>
-          <p className="text-muted-foreground text-lg italic">"Customize your SaveBite experience."</p>
+      <div className="max-w-5xl mx-auto space-y-12 animate-in fade-in slide-in-from-bottom-6 duration-1000">
+        <div className="space-y-2">
+          <h1 className="text-4xl md:text-5xl font-headline font-black text-foreground tracking-tighter">Impact Center</h1>
+          <p className="text-muted-foreground text-lg md:text-xl font-medium italic opacity-80">"Personalize your sustainability journey."</p>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Account Profile Summary */}
-          <div className="lg:col-span-1 space-y-6">
-            <Card className="border-none shadow-md rounded-3xl overflow-hidden">
-              <CardHeader className="bg-primary/5 pb-8 pt-10 text-center">
-                <Avatar className="h-24 w-24 mx-auto border-4 border-background shadow-xl mb-4">
-                  <AvatarImage src={user?.photoURL || `https://picsum.photos/seed/${user?.uid}/100/100`} />
-                  <AvatarFallback className="text-2xl"><User /></AvatarFallback>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
+          <div className="lg:col-span-1 space-y-8">
+            <Card className="border-none shadow-2xl rounded-[2.5rem] overflow-hidden bg-card">
+              <CardHeader className="bg-primary/5 pb-12 pt-16 text-center relative">
+                <div className="absolute top-0 left-0 w-full h-24 bg-gradient-to-b from-primary/10 to-transparent" />
+                <Avatar className="h-32 w-32 mx-auto border-8 border-white shadow-2xl mb-6 relative z-10 transition-transform hover:scale-105">
+                  <AvatarImage src={user?.photoURL || `https://picsum.photos/seed/${user?.uid}/128/128`} />
+                  <AvatarFallback className="text-4xl bg-secondary text-primary font-black"><User /></AvatarFallback>
                 </Avatar>
-                <CardTitle className="text-xl truncate px-4">{userProfile?.name || user?.email}</CardTitle>
-                <Badge className="mt-2 capitalize" variant="secondary">{userProfile?.role?.replace('_', ' ') || 'User'}</Badge>
+                <CardTitle className="text-2xl font-black truncate px-6 leading-tight">{userProfile?.name || user?.email?.split('@')[0]}</CardTitle>
+                <Badge className="mt-4 bg-primary text-white border-none font-black uppercase tracking-widest text-[10px] px-5 py-1.5 rounded-full shadow-lg shadow-primary/20">
+                  {userProfile?.role?.replace('_', ' ') || 'Eco Member'}
+                </Badge>
               </CardHeader>
-              <CardContent className="pt-6">
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-muted-foreground">Joined</span>
-                    <span className="font-bold">{joinDate}</span>
+              <CardContent className="pt-10 px-8">
+                <div className="space-y-6">
+                  <div className="flex items-center justify-between text-sm font-bold">
+                    <span className="text-muted-foreground uppercase tracking-widest text-[10px]">Since</span>
+                    <span className="text-foreground">{joinDate}</span>
                   </div>
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-muted-foreground">Status</span>
-                    <Badge variant="outline" className="text-success border-success/20 bg-success/5 font-bold">Active</Badge>
+                  <div className="flex items-center justify-between text-sm font-bold">
+                    <span className="text-muted-foreground uppercase tracking-widest text-[10px]">Status</span>
+                    <Badge variant="outline" className="text-success border-success/20 bg-success/5 font-black uppercase tracking-widest text-[9px] px-3">Active Impact</Badge>
                   </div>
                 </div>
               </CardContent>
-              <CardFooter className="border-t pt-4">
-                <Button variant="ghost" className="w-full text-danger hover:text-danger hover:bg-danger/5" onClick={handleLogout}>
-                  <LogOut className="mr-2 h-4 w-4" />
-                  Sign Out
+              <CardFooter className="border-t border-secondary p-8 bg-secondary/10">
+                <Button variant="ghost" className="w-full h-14 rounded-2xl text-danger hover:text-danger hover:bg-danger/10 font-black uppercase tracking-widest text-[11px] transition-all" onClick={handleLogout}>
+                  <LogOut className="mr-3 h-5 w-5" />
+                  Terminate Session
                 </Button>
               </CardFooter>
             </Card>
 
-            <Card className="border-none shadow-md rounded-3xl p-6">
-              <h3 className="font-bold mb-4">Quick Links</h3>
-              <div className="space-y-2">
-                <Button variant="ghost" className="w-full justify-between rounded-xl">
-                  <span>Privacy Policy</span>
-                  <ChevronRight className="h-4 w-4" />
-                </Button>
-                <Button variant="ghost" className="w-full justify-between rounded-xl">
-                  <span>Help Center</span>
-                  <ChevronRight className="h-4 w-4" />
-                </Button>
-                <Button variant="ghost" className="w-full justify-between rounded-xl">
-                  <span>Legal Terms</span>
-                  <ChevronRight className="h-4 w-4" />
-                </Button>
+            <Card className="border-none shadow-xl rounded-[2.5rem] p-10 bg-card space-y-6">
+              <h3 className="font-black uppercase tracking-widest text-xs text-primary/70">Resources</h3>
+              <div className="space-y-3">
+                {["Privacy Standards", "Sustainability Guide", "Legal Framework", "Support Hub"].map(item => (
+                  <Button key={item} variant="ghost" className="w-full justify-between rounded-2xl h-14 font-bold text-sm hover:bg-secondary group px-6">
+                    <span className="group-hover:translate-x-1 transition-transform">{item}</span>
+                    <ChevronRight className="h-5 w-5 opacity-30 group-hover:opacity-100 group-hover:text-primary transition-all" />
+                  </Button>
+                ))}
               </div>
             </Card>
           </div>
 
-          {/* Settings Tabs/Forms */}
-          <div className="lg:col-span-2 space-y-8">
-            <Card className="border-none shadow-md rounded-3xl">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Shield className="h-5 w-5 text-primary" />
-                  Profile Information
+          <div className="lg:col-span-2 space-y-10">
+            <Card className="border-none shadow-2xl rounded-[3rem] bg-card overflow-hidden">
+              <CardHeader className="p-10 pb-4">
+                <CardTitle className="flex items-center gap-4 text-3xl font-black tracking-tighter leading-tight">
+                  <div className="p-3 bg-primary/10 rounded-2xl">
+                    <Shield className="h-7 w-7 text-primary" />
+                  </div>
+                  Profile Mastery
                 </CardTitle>
-                <CardDescription>Update your personal or business details.</CardDescription>
+                <CardDescription className="text-base font-medium italic">Your coordinates in the zero-waste ecosystem.</CardDescription>
               </CardHeader>
-              <CardContent>
-                <form onSubmit={handleSave} className="space-y-6">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <CardContent className="p-10 pt-6">
+                <form onSubmit={handleSave} className="space-y-8">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
                     <div className="space-y-2">
-                      <Label htmlFor="name">Full Name / Organization</Label>
+                      <Label htmlFor="name" className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Identity Name</Label>
                       <div className="relative">
-                        <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                        <User className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                         <Input 
                           id="name" 
                           value={formData.name} 
                           onChange={e => setFormData({...formData, name: e.target.value})}
-                          className="pl-10 h-11 rounded-xl"
+                          className="pl-12 h-14 rounded-[1.25rem] bg-secondary/30 border-none shadow-inner text-base font-medium"
                         />
                       </div>
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="email">Email Address</Label>
+                      <Label htmlFor="email" className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Secure Email</Label>
                       <div className="relative">
-                        <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                        <Input id="email" value={user?.email || ""} disabled className="pl-10 h-11 rounded-xl bg-secondary/30" />
+                        <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                        <Input id="email" value={user?.email || ""} disabled className="pl-12 h-14 rounded-[1.25rem] bg-secondary/10 border-none opacity-60 text-base font-medium" />
                       </div>
                     </div>
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="phone">Phone Number</Label>
+                    <Label htmlFor="phone" className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Communication Line</Label>
                     <div className="relative">
-                      <Phone className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                      <Phone className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                       <Input 
                         id="phone" 
                         value={formData.phoneNumber} 
                         onChange={e => setFormData({...formData, phoneNumber: e.target.value})}
-                        className="pl-10 h-11 rounded-xl"
+                        className="pl-12 h-14 rounded-[1.25rem] bg-secondary/30 border-none shadow-inner text-base font-medium"
                         placeholder="+91 00000 00000"
                       />
                     </div>
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="address">Default Address (for stores/NGOs)</Label>
+                    <Label htmlFor="address" className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Base Coordinates</Label>
                     <div className="relative">
-                      <MapPin className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                      <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                       <Input 
                         id="address" 
                         value={formData.address} 
                         onChange={e => setFormData({...formData, address: e.target.value})}
-                        className="pl-10 h-11 rounded-xl"
-                        placeholder="123 Eco Street, Green City"
+                        className="pl-12 h-14 rounded-[1.25rem] bg-secondary/30 border-none shadow-inner text-base font-medium"
+                        placeholder="Verified Pickup/Drop Address"
                       />
                     </div>
                   </div>
 
-                  <Button type="submit" className="w-full h-12 rounded-xl bg-primary hover:bg-primary/90 shadow-lg shadow-primary/20 font-bold" disabled={isSaving}>
-                    {isSaving ? <Loader2 className="h-5 w-5 animate-spin mr-2" /> : <Save className="mr-2 h-5 w-5" />}
-                    Save Profile Changes
+                  <Button type="submit" className="w-full h-16 rounded-2xl bg-primary hover:bg-primary/90 shadow-2xl shadow-primary/20 font-black uppercase tracking-widest text-sm transition-all hover:-translate-y-1" disabled={isSaving}>
+                    {isSaving ? <Loader2 className="h-6 w-6 animate-spin mr-3" /> : <Save className="mr-3 h-6 w-6" />}
+                    Lock Profile Updates
                   </Button>
                 </form>
               </CardContent>
             </Card>
 
-            <Card className="border-none shadow-md rounded-3xl">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Bell className="h-5 w-5 text-primary" />
-                  Notifications
+            <Card className="border-none shadow-2xl rounded-[3rem] bg-card overflow-hidden">
+              <CardHeader className="p-10 pb-4">
+                <CardTitle className="flex items-center gap-4 text-3xl font-black tracking-tighter leading-tight">
+                  <div className="p-3 bg-primary/10 rounded-2xl">
+                    <Bell className="h-7 w-7 text-primary" />
+                  </div>
+                  Alert Protocol
                 </CardTitle>
-                <CardDescription>Manage how and when you receive alerts.</CardDescription>
+                <CardDescription className="text-base font-medium italic">Manage how we broadcast impact opportunities.</CardDescription>
               </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <Label className="text-base">Expiry Alerts</Label>
-                    <p className="text-sm text-muted-foreground">Receive push alerts for items expiring in 24h.</p>
+              <CardContent className="p-10 pt-6 space-y-10">
+                <div className="flex items-center justify-between group">
+                  <div className="space-y-1">
+                    <Label className="text-lg font-black tracking-tight">Proximity Expiry Alerts</Label>
+                    <p className="text-sm text-muted-foreground font-medium italic">Receive instant pings for items expiring in 24h.</p>
                   </div>
-                  <Switch defaultChecked />
+                  <Switch defaultChecked className="data-[state=checked]:bg-primary scale-110" />
                 </div>
-                <Separator />
-                <div className="flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <Label className="text-base">Marketplace Deals</Label>
-                    <p className="text-sm text-muted-foreground">Get notified about 70%+ off deals near you.</p>
+                <Separator className="bg-secondary" />
+                <div className="flex items-center justify-between group">
+                  <div className="space-y-1">
+                    <Label className="text-lg font-black tracking-tight">Marketplace Mega-Deals</Label>
+                    <p className="text-sm text-muted-foreground font-medium italic">Priority alerts for 80%+ discount surges.</p>
                   </div>
-                  <Switch defaultChecked />
+                  <Switch defaultChecked className="data-[state=checked]:bg-primary scale-110" />
                 </div>
-                <Separator />
-                <div className="flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <Label className="text-base">SMS Notifications</Label>
-                    <div className="flex items-center gap-2 mt-1">
-                      <Smartphone className="h-3 w-3 text-primary" />
-                      <p className="text-xs font-medium text-primary">Requires phone verification</p>
+                <Separator className="bg-secondary" />
+                <div className="flex items-center justify-between group">
+                  <div className="space-y-1">
+                    <Label className="text-lg font-black tracking-tight">SMS Direct Broadcast</Label>
+                    <div className="flex items-center gap-2 mt-2">
+                      <Smartphone className="h-4 w-4 text-primary" />
+                      <p className="text-xs font-black text-primary uppercase tracking-widest">Phone Verification Required</p>
                     </div>
                   </div>
-                  <Switch />
+                  <Switch className="scale-110" />
                 </div>
               </CardContent>
             </Card>

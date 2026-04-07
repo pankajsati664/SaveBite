@@ -61,14 +61,14 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   useEffect(() => {
     if (!isUserLoading && !user) {
-      router.push("/login")
+      router.push("/")
     }
   }, [user, isUserLoading, router])
 
   if (isUserLoading || isProfileLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <Loader2 className="h-12 w-12 animate-spin text-primary" />
       </div>
     )
   }
@@ -84,7 +84,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const handleLogout = () => {
     if (auth) {
       signOut(auth).then(() => {
-        router.push("/login")
+        router.push("/")
       })
     }
   }
@@ -101,15 +101,15 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
       {/* Sidebar */}
       <aside className={cn(
-        "fixed inset-y-0 left-0 z-50 w-72 md:w-64 bg-card border-r transition-transform duration-300 transform lg:translate-x-0 lg:static lg:inset-0 shadow-2xl lg:shadow-none",
+        "fixed inset-y-0 left-0 z-50 w-72 md:w-80 bg-card border-r transition-transform duration-300 transform lg:translate-x-0 lg:static lg:inset-0 shadow-2xl lg:shadow-none",
         isSidebarOpen ? "translate-x-0" : "-translate-x-full"
       )}>
-        <div className="h-full flex flex-col p-6">
-          <div className="flex items-center gap-3 px-2 mb-10">
-            <div className="bg-primary p-2 rounded-xl shadow-lg shadow-primary/20">
-              <Leaf className="h-6 w-6 text-primary-foreground" />
+        <div className="h-full flex flex-col p-8">
+          <div className="flex items-center gap-4 px-2 mb-12">
+            <div className="bg-primary p-3 rounded-[1.25rem] shadow-xl shadow-primary/20">
+              <Leaf className="h-7 w-7 text-primary-foreground" />
             </div>
-            <span className="text-2xl font-headline font-black text-primary tracking-tighter">SaveBite</span>
+            <span className="text-3xl font-headline font-black text-primary tracking-tighter">SaveBite</span>
             <Button 
               variant="ghost" 
               size="icon" 
@@ -120,15 +120,15 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             </Button>
           </div>
 
-          <nav className="flex-1 space-y-2">
+          <nav className="flex-1 space-y-3">
             {filteredNavItems.map((item) => (
               <Link 
                 key={item.href} 
                 href={item.href}
                 className={cn(
-                  "flex items-center gap-4 px-4 py-3 rounded-xl transition-all duration-300 font-bold text-sm",
+                  "flex items-center gap-4 px-5 py-4 rounded-2xl transition-all duration-300 font-black uppercase tracking-widest text-[11px]",
                   pathname === item.href 
-                    ? "bg-primary text-white shadow-lg shadow-primary/20 scale-105" 
+                    ? "bg-primary text-white shadow-2xl shadow-primary/30 scale-105" 
                     : "text-muted-foreground hover:bg-secondary hover:text-primary"
                 )}
                 onClick={() => setIsSidebarOpen(false)}
@@ -139,10 +139,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             ))}
           </nav>
 
-          <div className="mt-auto pt-6 border-t border-secondary/50">
+          <div className="mt-auto pt-8 border-t border-secondary">
             <button 
               onClick={handleLogout}
-              className="w-full flex items-center gap-4 px-4 py-3 text-muted-foreground hover:text-danger hover:bg-danger/10 rounded-xl transition-all font-bold text-sm"
+              className="w-full flex items-center gap-4 px-5 py-4 text-muted-foreground hover:text-danger hover:bg-danger/10 rounded-2xl transition-all font-black uppercase tracking-widest text-[11px]"
             >
               <LogOut className="h-5 w-5" />
               Sign Out
@@ -154,47 +154,47 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         {/* Header */}
-        <header className="h-16 md:h-20 flex items-center justify-between px-4 md:px-8 border-b bg-card sticky top-0 z-30 shadow-sm">
-          <div className="flex items-center gap-2 md:gap-4">
+        <header className="h-20 md:h-24 flex items-center justify-between px-6 md:px-12 border-b bg-card/80 backdrop-blur-xl sticky top-0 z-30 shadow-sm">
+          <div className="flex items-center gap-4">
             <Button 
               variant="ghost" 
               size="icon" 
-              className="lg:hidden rounded-xl hover:bg-secondary"
+              className="lg:hidden rounded-2xl hover:bg-secondary h-12 w-12"
               onClick={() => setIsSidebarOpen(true)}
             >
-              <Menu className="h-6 w-6" />
+              <Menu className="h-7 w-7" />
             </Button>
-            <div className="relative hidden lg:block">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <div className="relative hidden lg:block group">
+              <Search className="absolute left-5 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground group-focus-within:text-primary transition-colors" />
               <input 
                 type="text" 
-                placeholder="Search deals..." 
-                className="pl-11 pr-4 py-2.5 bg-secondary/40 rounded-full border-transparent focus:bg-white focus:ring-4 focus:ring-primary/5 text-sm w-72 transition-all outline-none border border-transparent focus:border-primary/20"
+                placeholder="Search resources..." 
+                className="pl-14 pr-6 py-3.5 bg-secondary/40 rounded-full border-transparent focus:bg-white focus:ring-4 focus:ring-primary/5 text-sm w-96 transition-all outline-none border border-transparent focus:border-primary/20 font-medium"
               />
             </div>
           </div>
 
-          <div className="flex items-center gap-2 md:gap-4">
-            <Button variant="ghost" size="icon" className="relative rounded-xl hover:bg-secondary">
-              <Bell className="h-5 w-5" />
-              <span className="absolute top-2 right-2 h-2 w-2 bg-danger rounded-full ring-2 ring-card" />
+          <div className="flex items-center gap-4 md:gap-8">
+            <Button variant="ghost" size="icon" className="relative rounded-2xl hover:bg-secondary h-12 w-12">
+              <Bell className="h-6 w-6" />
+              <span className="absolute top-3 right-3 h-2.5 w-2.5 bg-danger rounded-full ring-4 ring-card" />
             </Button>
-            <Separator orientation="vertical" className="h-10 mx-1 hidden md:block" />
-            <div className="flex items-center gap-2 md:gap-4">
+            <Separator orientation="vertical" className="h-12 hidden md:block" />
+            <div className="flex items-center gap-4">
               <div className="text-right hidden sm:block">
-                <p className="text-sm font-black tracking-tight leading-none mb-1">{userProfile?.name?.split(' ')[0] || "User"}</p>
-                <p className="text-[10px] font-black text-primary uppercase tracking-widest">{userRole.replace('_', ' ')}</p>
+                <p className="text-base font-black tracking-tighter leading-none mb-1">{userProfile?.name?.split(' ')[0] || "User"}</p>
+                <p className="text-[10px] font-black text-primary uppercase tracking-[0.2em]">{userRole.replace('_', ' ')}</p>
               </div>
-              <Avatar className="h-9 w-9 md:h-11 md:w-11 ring-2 ring-primary/5 shadow-md">
-                <AvatarImage src={user.photoURL || `https://picsum.photos/seed/${user.uid}/48/48`} />
-                <AvatarFallback className="bg-secondary text-primary font-black"><User className="h-5 w-5" /></AvatarFallback>
+              <Avatar className="h-12 w-12 md:h-14 md:w-14 ring-4 ring-primary/5 shadow-2xl transition-transform hover:scale-105">
+                <AvatarImage src={user.photoURL || `https://picsum.photos/seed/${user.uid}/64/64`} />
+                <AvatarFallback className="bg-secondary text-primary font-black text-xl"><User /></AvatarFallback>
               </Avatar>
             </div>
           </div>
         </header>
 
         {/* Page Content */}
-        <main className="flex-1 overflow-y-auto p-4 md:p-8 bg-background scrollbar-hide">
+        <main className="flex-1 overflow-y-auto p-6 md:p-12 bg-background scrollbar-hide">
           <div className="max-w-7xl mx-auto">
             {children}
           </div>

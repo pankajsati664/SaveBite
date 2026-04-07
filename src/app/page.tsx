@@ -1,153 +1,293 @@
 
 "use client"
 
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
-import { Leaf, ArrowRight, ShieldCheck, Heart, Zap, ShoppingCart, Users, Recycle } from "lucide-react"
+import { Leaf, LogIn, Mail, Lock, UserPlus } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { getPlaceholderById } from "@/lib/placeholder-images"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { useToast } from "@/hooks/use-toast"
+import { useAuth, useUser, useFirestore } from "@/firebase"
+import { signInWithEmailAndPassword, createUserWithEmailAndPassword, GoogleAuthProvider, signInWithPopup } from "firebase/auth"
+import { doc, setDoc, serverTimestamp } from "firebase/firestore"
+import { errorEmitter } from "@/firebase/error-emitter"
+import { FirestorePermissionError } from "@/firebase/errors"
 
-export default function LandingPage() {
+export default function LandingLoginPage() {
+  const [loading, setLoading] = useState(false)
+  const [email, setEmail] = useState("")
+  const [password, setPassword] = useState("")
+  const [name, setName] = useState("")
+  const [role, setRole] = useState<string>("")
+  
   const router = useRouter()
+  const { toast } = useToast()
+  const auth = useAuth()
+  const db = useFirestore()
+  const { user, isUserLoading } = useUser()
 
-  const heroImage = getPlaceholderById('hero-bg')
-  const storeImage = getPlaceholderById('landing-store')
-  const customerImage = getPlaceholderById('landing-customer')
-  const ngoImage = getPlaceholderById('landing-ngo')
-
-  const features = [
-    {
-      title: "Store Owners",
-      description: "Manage inventory and list surplus effortlessly.",
-      icon: Zap,
-      color: "bg-blue-500",
-      image: storeImage.imageUrl,
-      hint: storeImage.imageHint
-    },
-    {
-      title: "Consumers",
-      description: "Find amazing deals on quality local food.",
-      icon: ShoppingCart,
-      color: "bg-primary",
-      image: customerImage.imageUrl,
-      hint: customerImage.imageHint
-    },
-    {
-      title: "NGOs",
-      description: "Access verified food donations in real-time.",
-      icon: Heart,
-      color: "bg-danger",
-      image: ngoImage.imageUrl,
-      hint: ngoImage.imageHint
+  useEffect(() => {
+    if (user && !loading) {
+      router.push("/dashboard")
     }
-  ]
+  }, [user, loading, router])
+
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!auth) return
+    setLoading(true)
+    
+    signInWithEmailAndPassword(auth, email, password)
+      .then(() => {
+        toast({ title: "Welcome back!", description: "Successfully logged in to SaveBite." })
+      })
+      .catch((error: any) => {
+        setLoading(false)
+        toast({ 
+          variant: "destructive", 
+          title: "Login Failed", 
+          description: error.message 
+        })
+      })
+  }
+
+  const handleRegister = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!auth || !db || !role) {
+      toast({ variant: "destructive", title: "Role Required", description: "Please select your role to continue." })
+      return
+    }
+    setLoading(true)
+    
+    createUserWithEmailAndPassword(auth, email, password)
+      .then(async (userCredential) => {
+        const userId = userCredential.user.uid
+        
+        // Create user profile
+        const userRef = doc(db, "users", userId)
+        setDoc(userRef, {
+          id: userId,
+          email,
+          name,
+          role,
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp()
+        }).catch(err => {
+          errorEmitter.emit('permission-error', new FirestorePermissionError({
+            path: userRef.path,
+            operation: 'create',
+            requestResourceData: { id: userId, email, name, role }
+          }))
+        })
+
+        // Create role marker
+        const roleRef = doc(db, `roles_${role}`, userId)
+        setDoc(roleRef, { id: userId }).catch(err => {
+          errorEmitter.emit('permission-error', new FirestorePermissionError({
+            path: roleRef.path,
+            operation: 'create',
+            requestResourceData: { id: userId }
+          }))
+        })
+
+        toast({ title: "Welcome to SaveBite!", description: "Your account has been created successfully." })
+      })
+      .catch((error: any) => {
+        setLoading(false)
+        toast({ 
+          variant: "destructive", 
+          title: "Registration Failed", 
+          description: error.message 
+        })
+      })
+  }
+
+  const handleGoogleSignIn = () => {
+    if (!auth) return
+    const provider = new GoogleAuthProvider()
+    signInWithPopup(auth, provider)
+      .then(async (result) => {
+        if (db && result.user) {
+          const userRef = doc(db, "users", result.user.uid);
+          setDoc(userRef, {
+            id: result.user.uid,
+            email: result.user.email,
+            name: result.user.displayName || "Google User",
+            role: "customer",
+            updatedAt: serverTimestamp(),
+            createdAt: serverTimestamp() 
+          }, { merge: true });
+
+          const roleRef = doc(db, "roles_customer", result.user.uid);
+          setDoc(roleRef, { id: result.user.uid }, { merge: true });
+          
+          toast({ title: "Authenticated", description: "Signed in successfully with Google." });
+        }
+      })
+      .catch((error: any) => {
+        toast({ 
+          variant: "destructive", 
+          title: "Google Sign-In Failed", 
+          description: error.message 
+        })
+      })
+  }
+
+  if (isUserLoading) return null
 
   return (
-    <div className="min-h-screen bg-background selection:bg-primary/30 font-body text-foreground">
-      {/* Navbar */}
-      <nav className="max-w-7xl mx-auto px-4 md:px-6 h-16 md:h-24 flex items-center justify-between sticky top-0 z-50 bg-background/80 backdrop-blur-xl border-b border-primary/5">
-        <div className="flex items-center gap-2 md:gap-3">
-          <div className="bg-primary p-2 md:p-2.5 rounded-lg md:rounded-2xl shadow-xl shadow-primary/20">
-            <Leaf className="h-5 w-5 md:h-7 md:w-7 text-white" />
-          </div>
-          <span className="text-xl md:text-2xl font-headline font-black tracking-tighter text-primary">SaveBite</span>
-        </div>
-        <div className="flex items-center gap-2 md:gap-4">
-          <Button variant="ghost" onClick={() => router.push("/login")} className="text-xs md:text-sm font-bold hover:text-primary h-9 md:h-12 px-3 md:px-5">Login</Button>
-          <Button onClick={() => router.push("/login")} className="bg-primary hover:bg-primary/90 text-white rounded-lg md:rounded-2xl px-4 md:px-8 h-9 md:h-12 text-xs md:text-sm font-bold shadow-lg transition-all">Start Now</Button>
-        </div>
-      </nav>
+    <div className="min-h-screen flex flex-col items-center justify-center bg-background p-4 relative overflow-hidden">
+      {/* Decorative Background Elements */}
+      <div className="absolute top-0 left-0 w-full h-full pointer-events-none opacity-20 overflow-hidden -z-10">
+        <div className="absolute top-[-10%] right-[-10%] w-[50%] h-[50%] bg-primary/20 blur-[120px] rounded-full animate-pulse" />
+        <div className="absolute bottom-[-10%] left-[-10%] w-[50%] h-[50%] bg-accent/20 blur-[120px] rounded-full" />
+      </div>
 
-      {/* Hero Section */}
-      <section className="max-w-7xl mx-auto px-4 md:px-6 py-12 md:py-24 lg:py-40 grid grid-cols-1 lg:grid-cols-2 gap-12 md:gap-16 items-center">
-        <div className="space-y-6 md:space-y-10 text-center lg:text-left animate-in fade-in slide-in-from-left-12 duration-1000">
-          <div className="inline-flex items-center gap-2 md:gap-3 bg-primary/10 text-primary px-4 py-1.5 md:px-5 md:py-2 rounded-full text-[10px] md:text-sm font-black uppercase tracking-widest border border-primary/20">
-            <Recycle className="h-3 w-3 md:h-4 md:w-4" />
-            Zero Waste Ecosystem
-          </div>
-          <h1 className="text-4xl md:text-6xl lg:text-8xl font-headline font-black leading-[1] md:leading-[0.9] tracking-tighter">
-            Save Food. <br />
-            <span className="text-primary italic">Feed People.</span>
-          </h1>
-          <p className="text-base md:text-xl text-muted-foreground max-w-lg mx-auto lg:mx-0 leading-relaxed font-medium">
-            Bridging the gap between surplus food and those who need it through AI-powered tracking.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-3 md:gap-5 justify-center lg:justify-start">
-            <Button onClick={() => router.push("/login")} size="lg" className="w-full sm:w-auto h-14 md:h-16 px-8 md:px-10 text-lg md:text-xl font-black rounded-2xl md:rounded-3xl bg-primary shadow-xl shadow-primary/20">
-              Get Started
-              <ArrowRight className="ml-2 h-5 w-5 md:h-6 md:w-6" />
-            </Button>
-            <Button variant="outline" size="lg" className="w-full sm:w-auto h-14 md:h-16 px-8 md:px-10 text-lg md:text-xl font-bold rounded-2xl md:rounded-3xl border-2 border-primary/20 transition-all">
-              Learn More
-            </Button>
-          </div>
+      <div className="flex items-center gap-3 mb-10 animate-in fade-in slide-in-from-top-4 duration-1000">
+        <div className="bg-primary p-3 rounded-2xl shadow-2xl shadow-primary/30">
+          <Leaf className="h-10 w-10 text-primary-foreground" />
         </div>
+        <h1 className="text-4xl font-headline font-black text-primary tracking-tighter">SaveBite</h1>
+      </div>
 
-        <div className="relative animate-in fade-in zoom-in duration-1000 delay-300">
-          <div className="absolute -inset-4 md:-inset-8 bg-primary/20 rounded-[2rem] md:rounded-[3rem] blur-[60px] md:blur-[100px] opacity-40" />
-          <div className="relative rounded-[2rem] md:rounded-[3rem] p-2 md:p-4 bg-white/50 backdrop-blur-sm border border-primary/5 shadow-2xl overflow-hidden group">
-            <img 
-              src={heroImage.imageUrl} 
-              alt={heroImage.description} 
-              className="rounded-[1.5rem] md:rounded-[2.5rem] shadow-inner object-cover aspect-[4/3] w-full"
-              data-ai-hint={heroImage.imageHint}
-            />
-          </div>
-        </div>
-      </section>
+      <Card className="w-full max-w-md shadow-[0_32px_64px_-12px_rgba(0,0,0,0.14)] border-none rounded-[2.5rem] overflow-hidden animate-in fade-in zoom-in-95 duration-700">
+        <Tabs defaultValue="login" className="w-full">
+          <CardHeader className="text-center p-8 pb-4">
+            <TabsList className="grid w-full grid-cols-2 mb-8 bg-secondary/50 p-1 rounded-2xl h-14">
+              <TabsTrigger value="login" className="rounded-xl font-black uppercase tracking-widest text-[10px] data-[state=active]:bg-white data-[state=active]:shadow-md">Login</TabsTrigger>
+              <TabsTrigger value="register" className="rounded-xl font-black uppercase tracking-widest text-[10px] data-[state=active]:bg-white data-[state=active]:shadow-md">Register</TabsTrigger>
+            </TabsList>
+            <CardTitle className="text-3xl font-headline font-black tracking-tighter mb-2">Reduce Food Waste</CardTitle>
+            <CardDescription className="text-muted-foreground font-medium italic">
+              Join the SaveBite community today.
+            </CardDescription>
+          </CardHeader>
 
-      {/* Stats Section */}
-      <section className="bg-secondary/30 py-12 md:py-24 border-y border-primary/5">
-        <div className="max-w-7xl mx-auto px-4 md:px-6 grid grid-cols-2 lg:grid-cols-4 gap-8 md:gap-12 text-center">
-          {[
-            { label: "Food Saved", val: "1.2M+" },
-            { label: "Active Users", val: "50k+" },
-            { label: "NGO Partners", val: "850+" },
-            { label: "Impact", val: "Eco+" }
-          ].map(stat => (
-            <div key={stat.label}>
-              <p className="text-3xl md:text-5xl font-black text-primary mb-1 md:mb-2 tracking-tighter">{stat.val}</p>
-              <p className="text-[10px] md:text-sm font-bold text-muted-foreground uppercase tracking-widest">{stat.label}</p>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* Features Grid */}
-      <section className="py-20 md:py-32">
-        <div className="max-w-7xl mx-auto px-4 md:px-6">
-          <div className="text-center mb-12 md:mb-24 space-y-4 md:space-y-6">
-            <h2 className="text-3xl md:text-6xl font-headline font-black tracking-tight">One Platform. <br /><span className="text-primary">Triple Impact.</span></h2>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-12">
-            {features.map((f, i) => (
-              <div key={i} className="group relative bg-white p-6 md:p-10 rounded-[2rem] md:rounded-[3rem] border border-primary/5 shadow-lg hover:shadow-xl transition-all">
-                <div className={`h-12 w-12 md:h-16 md:w-16 ${f.color}/20 rounded-xl md:rounded-2xl flex items-center justify-center text-foreground mb-6 md:mb-8`}>
-                  <f.icon className="h-6 w-6 md:h-8 md:w-8" />
+          <CardContent className="p-8 pt-4">
+            <TabsContent value="login" className="mt-0">
+              <form onSubmit={handleLogin} className="space-y-6">
+                <div className="space-y-2">
+                  <Label htmlFor="email" className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Email</Label>
+                  <div className="relative">
+                    <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                    <Input 
+                      id="email" 
+                      type="email" 
+                      placeholder="name@example.com" 
+                      className="pl-12 h-14 rounded-2xl bg-secondary/30 border-none shadow-inner text-base" 
+                      required 
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                    />
+                  </div>
                 </div>
-                <h3 className="text-2xl md:text-3xl font-black mb-2 md:mb-4 tracking-tight">{f.title}</h3>
-                <p className="text-muted-foreground text-sm md:text-lg leading-relaxed mb-6 md:mb-8 font-medium">{f.description}</p>
-                <div className="aspect-video rounded-xl md:rounded-2xl overflow-hidden mb-6">
-                  <img src={f.image} alt={f.title} className="object-cover h-full w-full" data-ai-hint={f.hint} />
+                <div className="space-y-2">
+                  <Label htmlFor="password" className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Password</Label>
+                  <div className="relative">
+                    <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                    <Input 
+                      id="password" 
+                      type="password" 
+                      className="pl-12 h-14 rounded-2xl bg-secondary/30 border-none shadow-inner text-base" 
+                      required 
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                    />
+                  </div>
                 </div>
+                <Button type="submit" className="w-full h-14 rounded-2xl bg-primary hover:bg-primary/90 text-white font-black uppercase tracking-widest text-[11px] shadow-xl shadow-primary/20 transition-all hover:-translate-y-1" disabled={loading}>
+                  {loading ? "Authenticating..." : "Sign In"}
+                  {!loading && <LogIn className="ml-2 h-5 w-5" />}
+                </Button>
+              </form>
+            </TabsContent>
+
+            <TabsContent value="register" className="mt-0">
+              <form onSubmit={handleRegister} className="space-y-5">
+                <div className="space-y-1">
+                  <Label htmlFor="reg-name" className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Full Name</Label>
+                  <Input 
+                    id="reg-name" 
+                    placeholder="John Doe" 
+                    required 
+                    className="h-14 rounded-2xl bg-secondary/30 border-none shadow-inner"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                  />
+                </div>
+                <div className="space-y-1">
+                  <Label htmlFor="reg-email" className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Email</Label>
+                  <Input 
+                    id="reg-email" 
+                    type="email" 
+                    placeholder="name@example.com" 
+                    required 
+                    className="h-14 rounded-2xl bg-secondary/30 border-none shadow-inner"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                  />
+                </div>
+                <div className="space-y-1">
+                  <Label htmlFor="role" className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Account Type</Label>
+                  <Select onValueChange={setRole} required>
+                    <SelectTrigger className="h-14 rounded-2xl bg-secondary/30 border-none shadow-inner">
+                      <SelectValue placeholder="Select your role" />
+                    </SelectTrigger>
+                    <SelectContent className="rounded-2xl border-none shadow-2xl">
+                      <SelectItem value="customer" className="rounded-xl p-3">Customer</SelectItem>
+                      <SelectItem value="store_owner" className="rounded-xl p-3">Store Owner</SelectItem>
+                      <SelectItem value="ngo" className="rounded-xl p-3">NGO Representative</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-1">
+                  <Label htmlFor="reg-password" className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Password</Label>
+                  <Input 
+                    id="reg-password" 
+                    type="password" 
+                    required 
+                    className="h-14 rounded-2xl bg-secondary/30 border-none shadow-inner"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                  />
+                </div>
+                <Button type="submit" className="w-full h-14 rounded-2xl bg-primary hover:bg-primary/90 text-white font-black uppercase tracking-widest text-[11px] shadow-xl shadow-primary/20 mt-4" disabled={loading}>
+                  {loading ? "Creating account..." : "Create Account"}
+                  {!loading && <UserPlus className="ml-2 h-5 w-5" />}
+                </Button>
+              </form>
+            </TabsContent>
+          </CardContent>
+
+          <CardFooter className="flex flex-col gap-6 p-8 pt-0">
+            <div className="relative w-full">
+              <div className="absolute inset-0 flex items-center">
+                <span className="w-full border-t border-secondary" />
               </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Footer */}
-      <footer className="bg-background py-12 md:py-20 border-t border-primary/5 text-center">
-        <div className="max-w-7xl mx-auto px-4 md:px-6 flex flex-col md:flex-row justify-between items-center gap-8 md:gap-12">
-          <div className="flex items-center gap-2">
-            <div className="bg-primary p-1.5 rounded-lg">
-              <Leaf className="h-5 w-5 text-white" />
+              <div className="relative flex justify-center text-[10px] uppercase font-black tracking-widest">
+                <span className="bg-card px-4 text-muted-foreground">Or continue with</span>
+              </div>
             </div>
-            <span className="text-xl font-headline font-black text-primary">SaveBite</span>
-          </div>
-          <p className="text-xs md:text-sm font-medium text-muted-foreground italic">© 2024 SaveBite. Built for a better planet.</p>
-        </div>
-      </footer>
+            
+            <Button variant="outline" className="w-full h-14 rounded-2xl border-secondary hover:bg-secondary/20 transition-all font-bold" onClick={handleGoogleSignIn} disabled={loading}>
+              <svg className="mr-3 h-5 w-5" viewBox="0 0 24 24">
+                <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
+                <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
+                <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05" />
+                <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
+              </svg>
+              Sign In with Google
+            </Button>
+            <p className="text-[10px] text-center text-muted-foreground font-medium italic opacity-70">
+              By continuing, you agree to SaveBite's Terms & Conditions.
+            </p>
+          </CardFooter>
+        </Tabs>
+      </Card>
     </div>
   )
 }
