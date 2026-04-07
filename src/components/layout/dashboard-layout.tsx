@@ -17,7 +17,8 @@ import {
   Bell,
   Settings,
   LogOut,
-  ChevronRight
+  ChevronRight,
+  Barcode
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -43,6 +44,7 @@ interface NavItem {
 
 const navItems: NavItem[] = [
   { title: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
+  { title: "POS", href: "/pos", icon: Barcode, roles: ['store_owner', 'admin'] },
   { title: "Market", href: "/marketplace", icon: ShoppingBag },
   { title: "Vault", href: "/inventory", icon: Package, roles: ['store_owner', 'admin'] },
   { title: "NGO Hub", href: "/donations", icon: HandHelping, roles: ['ngo', 'admin'] },
@@ -85,8 +87,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const filteredNavItems = navItems.filter(item => !item.roles || item.roles.includes(role))
 
   return (
-    <div className="min-h-screen flex flex-col bg-background pb-32">
-      <header className="h-16 sm:h-24 flex items-center justify-between px-6 sm:px-12 bg-white/80 backdrop-blur-2xl sticky top-0 z-40 border-b border-zinc-100">
+    <div className="min-h-screen flex flex-col bg-background pb-32 print:pb-0">
+      <header className="h-16 sm:h-24 flex items-center justify-between px-6 sm:px-12 bg-white/80 backdrop-blur-2xl sticky top-0 z-40 border-b border-zinc-100 print:hidden">
         <Link href="/dashboard" className="flex items-center gap-3 group">
           <div className="bg-primary p-2.5 rounded-2xl shadow-xl group-hover:scale-110 transition-transform shadow-primary/20">
             <Leaf className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
@@ -122,9 +124,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               <DropdownMenuItem className="rounded-2xl p-4 cursor-pointer gap-4 font-black text-xs uppercase tracking-widest" onClick={() => router.push('/settings')}>
                 <Settings className="h-5 w-5 text-zinc-400" /> Profile Settings
               </DropdownMenuItem>
-              {role === 'admin' && (
-                <DropdownMenuItem className="rounded-2xl p-4 cursor-pointer gap-4 font-black text-xs uppercase tracking-widest text-primary bg-primary/5" onClick={() => router.push('/admin')}>
-                  <ShieldAlert className="h-5 w-5" /> Global Command
+              {(role === 'admin' || role === 'store_owner') && (
+                <DropdownMenuItem className="rounded-2xl p-4 cursor-pointer gap-4 font-black text-xs uppercase tracking-widest text-primary bg-primary/5" onClick={() => router.push('/pos')}>
+                  <Barcode className="h-5 w-5" /> POS Terminal
                 </DropdownMenuItem>
               )}
               <DropdownMenuSeparator className="my-4" />
@@ -136,11 +138,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </div>
       </header>
 
-      <main className="flex-1 px-4 sm:px-12 pt-8 max-w-7xl mx-auto w-full">
+      <main className="flex-1 px-4 sm:px-12 pt-8 max-w-7xl mx-auto w-full print:p-0 print:max-w-none">
         {children}
       </main>
 
-      <div className="fixed bottom-8 left-0 right-0 z-50 flex justify-center px-4">
+      <div className="fixed bottom-8 left-0 right-0 z-50 flex justify-center px-4 print:hidden">
         <nav className="bg-zinc-950/95 backdrop-blur-3xl border border-white/10 rounded-[3rem] p-3 flex items-center gap-2 shadow-[0_32px_64px_-12px_rgba(0,0,0,0.5)] w-full max-w-2xl overflow-x-auto scrollbar-hide">
           {filteredNavItems.map((item) => (
             <Link 
