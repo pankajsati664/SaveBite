@@ -23,7 +23,7 @@
     --border: 240 5.9% 90%;
     --input: 240 5.9% 90%;
     --ring: 142 76% 36%;
-    --radius: 1.5rem;
+    --radius: 2rem;
 
     --chart-1: 142 76% 36%;
     --chart-2: 173 58% 39%;
@@ -64,7 +64,7 @@
     @apply border-border;
   }
   body {
-    @apply bg-background text-foreground font-body;
+    @apply bg-[#F9FAFB] text-foreground font-body;
   }
   h1, h2, h3, h4, h5, h6 {
     @apply font-headline font-black tracking-tight;
@@ -72,5 +72,21 @@
 }
 
 .card-3d {
-  @apply transition-all duration-500 hover:scale-[1.02] hover:-translate-y-2 hover:shadow-[0_30px_60px_-15px_rgba(0,0,0,0.15)];
+  @apply transition-all duration-500 hover:scale-[1.02] hover:-translate-y-3 hover:shadow-[0_40px_80px_-15px_rgba(0,0,0,0.12),0_10px_20px_-5px_rgba(0,0,0,0.04)];
+}
+
+.glass-morphism {
+  @apply bg-white/70 backdrop-blur-2xl border border-white/20 shadow-xl;
+}
+
+.hero-gradient {
+  @apply bg-gradient-to-br from-zinc-950 via-zinc-900 to-zinc-800;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }

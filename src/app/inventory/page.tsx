@@ -12,7 +12,9 @@ import {
   Upload,
   Leaf,
   ChevronRight,
-  ImageIcon
+  ImageIcon,
+  LayoutGrid,
+  Filter
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -41,7 +43,7 @@ import {
   setDocumentNonBlocking
 } from "@/firebase"
 import { collection, doc, serverTimestamp, query, orderBy } from "firebase/firestore"
-import { getPlaceholderByCategory } from "@/lib/placeholder-images"
+import { getPlaceholderByCategory, getPlaceholderById } from "@/lib/placeholder-images"
 
 export default function InventoryPage() {
   const { user } = useUser()
@@ -68,7 +70,7 @@ export default function InventoryPage() {
 
   const stockImagesQuery = useMemoFirebase(() => {
     if (!firestore) return null
-    return collection(firestore, "stock_images")
+    return query(collection(firestore, "stock_images"), orderBy("createdAt", "desc"))
   }, [firestore])
 
   const { data: products, isLoading } = useCollection(productsQuery)
@@ -86,7 +88,7 @@ export default function InventoryPage() {
         title: "AI Analysis: SUCCESS",
         description: `Recommendation: ${suggestion.suggestedDiscountPercentage}% discount. ${suggestion.reasoning}`,
         action: (
-          <Button size="sm" onClick={() => applyDiscount(product, suggestion.suggestedDiscountPercentage)}>Apply</Button>
+          <Button size="sm" className="rounded-xl font-black text-[10px]" onClick={() => applyDiscount(product, suggestion.suggestedDiscountPercentage)}>Apply</Button>
         )
       })
     } finally {
@@ -107,9 +109,8 @@ export default function InventoryPage() {
     }
     
     updateDocumentNonBlocking(productRef, updateData)
-    // Use setDocument with merge to handle cases where it might not exist in marketplace yet
     setDocumentNonBlocking(marketplaceRef, updateData, { merge: true })
-    toast({ title: "Pricing Applied", description: `Product is now listed at ₹${newPrice.toFixed(0)}` })
+    toast({ title: "Surplus Pricing Applied", description: `Product is now listed at ₹${newPrice.toFixed(0)}` })
   }
 
   const handleAddProduct = (e: React.FormEvent) => {
@@ -131,7 +132,6 @@ export default function InventoryPage() {
     addDocumentNonBlocking(collection(firestore, "users", user.uid, "products"), productData)
       .then(docRef => {
         if (docRef) {
-          // Initialize in marketplace using setDocument for a non-duplicate path
           setDocumentNonBlocking(doc(firestore, "products_marketplace", docRef.id), { ...productData, id: docRef.id }, { merge: true })
         }
       })
@@ -141,133 +141,156 @@ export default function InventoryPage() {
     setSelectedStockImage(null)
   }
 
+  const heroImage = getPlaceholderById('landing-store')
+
   return (
     <DashboardLayout>
-      <div className="space-y-6 sm:space-y-10 pb-24 animate-in fade-in duration-700">
-        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-6">
-          <div className="space-y-1 text-center sm:text-left">
-            <h1 className="text-4xl sm:text-5xl font-black tracking-tighter">Inventory Vault</h1>
-            <p className="text-muted-foreground font-medium italic opacity-80">Managing (इन्वेंट्री) • {products?.length || 0} Nodes Active</p>
-          </div>
-          <div className="flex gap-3">
-             <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
-              <DialogTrigger asChild>
-                <Button className="h-14 sm:h-16 px-10 rounded-2xl bg-primary text-white font-black uppercase tracking-widest text-[10px] shadow-lg">
-                  <Plus className="mr-2 h-5 w-5" /> Add Node (नया जोड़ें)
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="rounded-[2.5rem] p-8 max-w-2xl max-h-[90vh] overflow-y-auto">
-                <DialogHeader>
-                  <DialogTitle className="text-3xl font-black tracking-tighter">Inventory Ingress</DialogTitle>
-                  <DialogDescription className="italic">Register fresh stock into the SaveBite network.</DialogDescription>
-                </DialogHeader>
-                <form onSubmit={handleAddProduct} className="space-y-6 mt-4">
-                  <div className="space-y-1.5">
-                    <p className="text-[10px] font-black uppercase text-muted-foreground ml-1">Identity</p>
-                    <Input placeholder="Product Name (e.g., Organic Milk)" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} className="h-14 rounded-2xl bg-secondary/30 border-none" required />
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-1.5">
-                      <p className="text-[10px] font-black uppercase text-muted-foreground ml-1">Price (₹)</p>
-                      <Input type="number" placeholder="Price" value={formData.price} onChange={e => setFormData({...formData, price: e.target.value})} className="h-14 rounded-2xl bg-secondary/30 border-none" required />
+      <div className="space-y-10 pb-32 animate-in fade-in duration-1000">
+        {/* Header Hero */}
+        <div className="relative overflow-hidden rounded-[3rem] bg-zinc-950 px-10 py-16 sm:px-16 sm:py-20 text-white shadow-3xl">
+          <img 
+            src={heroImage.imageUrl} 
+            className="absolute inset-0 object-cover w-full h-full opacity-40 mix-blend-overlay" 
+            alt="Vault"
+          />
+          <div className="absolute inset-0 bg-gradient-to-br from-zinc-950 via-zinc-950/60 to-transparent" />
+          <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-8">
+            <div className="space-y-4 text-center md:text-left">
+              <Badge className="bg-primary/20 text-primary border-none px-6 py-2 font-black uppercase tracking-widest text-[10px]">Stock Management</Badge>
+              <h1 className="text-5xl sm:text-7xl font-black tracking-tighter leading-none">The <span className="text-primary italic">Vault.</span></h1>
+              <p className="text-zinc-400 font-medium italic text-lg sm:text-xl max-w-xl opacity-90">Audit your inventory, track expiry, and optimize surplus redistribution.</p>
+            </div>
+            <div className="flex gap-4">
+               <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
+                <DialogTrigger asChild>
+                  <Button className="h-20 px-12 rounded-[1.75rem] bg-primary text-white font-black uppercase tracking-widest text-[11px] shadow-2xl shadow-primary/20 hover:scale-105 active:scale-95 transition-all">
+                    <Plus className="mr-3 h-6 w-6" /> Add Node (नया जोड़ें)
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="rounded-[3rem] p-10 max-w-2xl bg-white border-none shadow-3xl max-h-[90vh] overflow-y-auto">
+                  <DialogHeader>
+                    <DialogTitle className="text-4xl font-black tracking-tighter">Inventory Ingress</DialogTitle>
+                    <DialogDescription className="italic text-lg">Register fresh stock into the SaveBite network.</DialogDescription>
+                  </DialogHeader>
+                  <form onSubmit={handleAddProduct} className="space-y-8 mt-6">
+                    <div className="space-y-2">
+                      <p className="text-[10px] font-black uppercase text-muted-foreground ml-2 tracking-widest">Product Identity</p>
+                      <Input placeholder="Organic Milk, Artisan Bread..." value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} className="h-16 rounded-2xl bg-secondary/30 border-none px-6 font-bold" required />
                     </div>
-                    <div className="space-y-1.5">
-                      <p className="text-[10px] font-black uppercase text-muted-foreground ml-1">Quantity</p>
-                      <Input type="number" placeholder="Volume" value={formData.quantity} onChange={e => setFormData({...formData, quantity: e.target.value})} className="h-14 rounded-2xl bg-secondary/30 border-none" required />
+                    <div className="grid grid-cols-2 gap-6">
+                      <div className="space-y-2">
+                        <p className="text-[10px] font-black uppercase text-muted-foreground ml-2 tracking-widest">Base Price (₹)</p>
+                        <Input type="number" value={formData.price} onChange={e => setFormData({...formData, price: e.target.value})} className="h-16 rounded-2xl bg-secondary/30 border-none px-6 font-bold" required />
+                      </div>
+                      <div className="space-y-2">
+                        <p className="text-[10px] font-black uppercase text-muted-foreground ml-2 tracking-widest">Initial Volume</p>
+                        <Input type="number" value={formData.quantity} onChange={e => setFormData({...formData, quantity: e.target.value})} className="h-16 rounded-2xl bg-secondary/30 border-none px-6 font-bold" required />
+                      </div>
                     </div>
-                  </div>
-                  <div className="space-y-1.5">
-                    <p className="text-[10px] font-black uppercase text-muted-foreground ml-1">Expiry Date</p>
-                    <Input type="date" value={formData.expiryDate} onChange={e => setFormData({...formData, expiryDate: e.target.value})} className="h-14 rounded-2xl bg-secondary/30 border-none" required />
-                  </div>
-                  
-                  <div className="space-y-3">
-                    <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Stock Assets (स्टॉक इमेज)</p>
-                    <div className="grid grid-cols-4 sm:grid-cols-5 gap-3 max-h-[150px] overflow-y-auto p-2 bg-secondary/20 rounded-2xl">
-                      {stockImages?.map((img) => (
-                        <div 
-                          key={img.id}
-                          onClick={() => setSelectedStockImage(img.url)}
-                          className={cn(
-                            "aspect-square rounded-xl overflow-hidden cursor-pointer border-4 transition-all relative",
-                            selectedStockImage === img.url ? "border-primary scale-95" : "border-transparent opacity-60 hover:opacity-100"
-                          )}
-                        >
-                          <img src={img.url} className="object-cover w-full h-full" alt="Stock" />
-                          {selectedStockImage === img.url && (
-                             <div className="absolute inset-0 bg-primary/20 flex items-center justify-center">
-                               <Plus className="text-white h-6 w-6" />
-                             </div>
-                          )}
-                        </div>
-                      ))}
+                    <div className="space-y-2">
+                      <p className="text-[10px] font-black uppercase text-muted-foreground ml-2 tracking-widest">Expiry Deadline</p>
+                      <Input type="date" value={formData.expiryDate} onChange={e => setFormData({...formData, expiryDate: e.target.value})} className="h-16 rounded-2xl bg-secondary/30 border-none px-6 font-bold" required />
                     </div>
-                  </div>
+                    
+                    <div className="space-y-4">
+                      <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground ml-2">Stock Assets (स्टॉक इमेज)</p>
+                      <div className="grid grid-cols-5 gap-3 max-h-[180px] overflow-y-auto p-3 bg-secondary/20 rounded-3xl border border-secondary/50">
+                        {stockImages?.map((img) => (
+                          <div 
+                            key={img.id}
+                            onClick={() => setSelectedStockImage(img.url)}
+                            className={cn(
+                              "aspect-square rounded-2xl overflow-hidden cursor-pointer border-4 transition-all relative group",
+                              selectedStockImage === img.url ? "border-primary scale-95 shadow-xl shadow-primary/20" : "border-transparent opacity-60 hover:opacity-100"
+                            )}
+                          >
+                            <img src={img.url} className="object-cover w-full h-full" alt="Stock" />
+                            {selectedStockImage === img.url && (
+                               <div className="absolute inset-0 bg-primary/20 flex items-center justify-center">
+                                 <Plus className="text-white h-8 w-8 animate-in zoom-in" />
+                               </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
 
-                  <Button type="submit" className="w-full h-16 rounded-2xl bg-primary text-white font-black text-lg shadow-xl shadow-primary/20">Commit to Vault</Button>
-                </form>
-              </DialogContent>
-            </Dialog>
+                    <Button type="submit" className="w-full h-20 rounded-[1.75rem] bg-primary text-white font-black text-xl shadow-2xl shadow-primary/30 active:scale-95 transition-all">Commit to Vault</Button>
+                  </form>
+                </DialogContent>
+              </Dialog>
+            </div>
           </div>
         </div>
 
-        <div className="bg-white p-4 rounded-[2.5rem] shadow-xl flex items-center gap-4">
+        {/* Filter Bar */}
+        <div className="bg-white p-6 rounded-[2.5rem] shadow-2xl flex items-center gap-6 border border-zinc-50">
           <div className="relative flex-1">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+            <Search className="absolute left-6 top-1/2 -translate-y-1/2 h-6 w-6 text-muted-foreground" />
             <Input 
               placeholder="Search vault (इन्वेंट्री खोजें)..." 
               value={search} onChange={e => setSearch(e.target.value)}
-              className="pl-11 h-14 rounded-2xl bg-secondary/20 border-none font-medium" 
+              className="pl-16 h-16 rounded-2xl bg-secondary/30 border-none font-bold text-lg placeholder:text-muted-foreground/50" 
             />
           </div>
+          <Button variant="outline" className="h-16 w-16 rounded-2xl border-secondary bg-secondary/10">
+            <Filter className="h-6 w-6" />
+          </Button>
         </div>
 
         {isLoading ? (
-          <div className="py-24 flex flex-col items-center gap-4">
-            <Loader2 className="h-12 w-12 animate-spin text-primary" />
-            <p className="text-xs font-black uppercase tracking-widest opacity-30">Accessing Data Vault...</p>
+          <div className="py-40 flex flex-col items-center gap-6">
+            <Loader2 className="h-20 w-20 animate-spin text-primary opacity-20" />
+            <p className="text-[10px] font-black uppercase tracking-[0.4em] opacity-30">Synchronizing Vault Data...</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {products?.filter(p => p.name.toLowerCase().includes(search.toLowerCase())).map((p) => {
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
+            {products?.filter(p => p.name.toLowerCase().includes(search.toLowerCase())).map((p, idx) => {
               const status = getExpiryStatus(p.expiryDate)
               const days = getDaysRemaining(p.expiryDate)
               const placeholder = getPlaceholderByCategory(p.category)
               return (
-                <Card key={p.id} className="border-none shadow-xl rounded-[2.5rem] overflow-hidden bg-white card-3d flex flex-col">
+                <Card key={p.id} className="border-none shadow-2xl rounded-[3rem] overflow-hidden bg-white card-3d flex flex-col animate-in fade-in slide-in-from-bottom-6" style={{ animationDelay: `${idx * 50}ms` }}>
                   <div className="aspect-[4/5] relative bg-secondary/10 overflow-hidden group">
-                    <img src={p.imageUrl || placeholder.imageUrl} className="object-cover w-full h-full transition-transform duration-1000 group-hover:scale-110" alt={p.name} />
-                    <Badge className={cn("absolute top-6 left-6 border-none font-black uppercase text-[8px] px-3 py-1.5 rounded-xl shadow-lg", getExpiryColorClass(status))}>
-                      {status === 'expired' ? 'EXPIRED' : `${days} Days Left`}
-                    </Badge>
+                    <img src={p.imageUrl || placeholder.imageUrl} className="object-cover w-full h-full transition-transform duration-[2000ms] group-hover:scale-110 group-hover:rotate-1" alt={p.name} />
+                    <div className="absolute top-8 left-8">
+                       <Badge className={cn("border-none font-black uppercase text-[9px] px-4 py-2 rounded-xl shadow-xl", getExpiryColorClass(status))}>
+                        {status === 'expired' ? 'CRITICAL: EXPIRED' : `${days} DAYS UNTIL DEADLINE`}
+                      </Badge>
+                    </div>
                   </div>
-                  <CardContent className="p-8 space-y-6 flex-1 flex flex-col">
+                  <CardContent className="p-10 space-y-8 flex-1 flex flex-col">
                     <div className="flex justify-between items-start">
-                      <div className="space-y-1">
-                        <h3 className="text-2xl font-black tracking-tighter leading-tight">{p.name}</h3>
-                        <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">{p.category} • {p.quantity} Units Available</p>
+                      <div className="space-y-2">
+                        <h3 className="text-3xl font-black tracking-tighter leading-none group-hover:text-primary transition-colors">{p.name}</h3>
+                        <p className="text-[11px] font-black uppercase tracking-[0.2em] text-muted-foreground">{p.category} • {p.quantity} Units in stock</p>
                       </div>
-                      <p className="text-3xl font-black text-primary tracking-tighter">₹{p.currentPrice?.toFixed(0)}</p>
+                      <p className="text-4xl font-black text-primary tracking-tighter">₹{p.currentPrice?.toFixed(0)}</p>
                     </div>
 
-                    <div className="bg-emerald-50 p-4 rounded-2xl flex items-center justify-between border border-emerald-100">
-                       <div className="flex items-center gap-3">
-                         <Leaf className="text-primary h-5 w-5" />
-                         <p className="text-[9px] font-black uppercase tracking-widest text-emerald-800">Carbon Saved: {((p.quantity || 1) * 0.4).toFixed(1)}kg</p>
+                    <div className="bg-emerald-50/50 p-6 rounded-[2rem] flex items-center justify-between border border-emerald-100 shadow-inner">
+                       <div className="flex items-center gap-4">
+                         <div className="p-2 bg-primary/10 rounded-xl">
+                            <Leaf className="text-primary h-6 w-6" />
+                         </div>
+                         <div className="space-y-0.5">
+                            <p className="text-[10px] font-black uppercase tracking-widest text-emerald-800 opacity-60">Impact Weight</p>
+                            <p className="text-xl font-black text-emerald-950 tracking-tighter">Save {(p.quantity * 0.4).toFixed(1)}kg CO2</p>
+                         </div>
                        </div>
-                       <Badge variant="outline" className="border-emerald-200 text-[8px] bg-white text-emerald-700">Premium Node</Badge>
+                       <Badge variant="outline" className="border-emerald-200 text-[8px] bg-white text-emerald-700 font-black px-3 py-1">PREMIUM NODE</Badge>
                     </div>
 
-                    <div className="mt-auto pt-4 flex gap-2">
-                       <Button onClick={() => handleAiAnalysis(p)} className="flex-1 h-14 rounded-2xl bg-zinc-950 text-white font-black uppercase text-[10px] gap-2 shadow-lg hover:shadow-primary/20 transition-all">
-                          {isAiLoading === p.id ? <Loader2 className="animate-spin h-4 w-4" /> : <Sparkles className="h-4 w-4 text-amber-400" />}
-                          AI Suggestions
+                    <div className="mt-auto pt-6 flex gap-3">
+                       <Button onClick={() => handleAiAnalysis(p)} className="flex-1 h-16 rounded-2xl bg-zinc-950 text-white font-black uppercase text-[10px] gap-3 shadow-2xl hover:shadow-primary/30 transition-all group/ai">
+                          {isAiLoading === p.id ? <Loader2 className="animate-spin h-5 w-5" /> : <Sparkles className="h-5 w-5 text-amber-400 group-hover/ai:animate-pulse" />}
+                          AI Insight Suggestions
                        </Button>
-                       <Button variant="ghost" size="icon" className="h-14 w-14 rounded-2xl text-danger bg-danger/5 hover:bg-danger/10" onClick={() => {
+                       <Button variant="ghost" size="icon" className="h-16 w-16 rounded-2xl text-danger bg-danger/5 hover:bg-danger/10 hover:scale-105 transition-all" onClick={() => {
                           deleteDocumentNonBlocking(doc(firestore!, "users", user!.uid, "products", p.id))
                           deleteDocumentNonBlocking(doc(firestore!, "products_marketplace", p.id))
                        }}>
-                          <Trash2 className="h-6 w-6" />
+                          <Trash2 className="h-7 w-7" />
                        </Button>
                     </div>
                   </CardContent>
