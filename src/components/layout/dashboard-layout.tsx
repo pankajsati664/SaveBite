@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useState, useEffect } from "react"
@@ -17,8 +16,8 @@ import {
   Bell,
   Settings,
   LogOut,
-  ChevronRight,
-  Barcode
+  Barcode,
+  History
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -42,13 +41,16 @@ interface NavItem {
   roles?: string[]
 }
 
+/**
+ * Omnipotent Admin Navigation: Admins can see and access everything.
+ */
 const navItems: NavItem[] = [
   { title: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
-  { title: "POS", href: "/pos", icon: Barcode, roles: ['store_owner', 'admin'] },
-  { title: "Market", href: "/marketplace", icon: ShoppingBag },
   { title: "Vault", href: "/inventory", icon: Package, roles: ['store_owner', 'admin'] },
+  { title: "Market", href: "/marketplace", icon: ShoppingBag },
+  { title: "POS", href: "/pos", icon: Barcode, roles: ['store_owner', 'admin'] },
   { title: "NGO Hub", href: "/donations", icon: HandHelping, roles: ['ngo', 'admin'] },
-  { title: "Journal", href: "/orders", icon: TrendingUp, roles: ['customer', 'admin'] },
+  { title: "Journal", href: "/orders", icon: History, roles: ['customer', 'admin'] },
   { title: "Admin", href: "/admin", icon: ShieldAlert, roles: ['admin'] },
 ]
 
@@ -93,7 +95,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           <div className="bg-primary p-2.5 rounded-2xl shadow-xl group-hover:scale-110 transition-transform shadow-primary/20">
             <Leaf className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
           </div>
-          <span className="text-xl sm:text-3xl font-black text-primary tracking-tighter leading-none">SaveBite</span>
+          <div className="flex flex-col">
+            <span className="text-xl sm:text-2xl font-black text-primary tracking-tighter leading-none">SaveBite</span>
+            <span className="text-[8px] font-black uppercase text-zinc-400 tracking-widest leading-none mt-1">Surplus Intelligence</span>
+          </div>
         </Link>
 
         <div className="flex items-center gap-2 sm:gap-6">
@@ -106,7 +111,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             <DropdownMenuTrigger asChild>
               <div className="flex items-center gap-4 cursor-pointer group">
                 <div className="hidden sm:block text-right">
-                   <p className="font-black text-sm tracking-tighter">{profile?.name || "Member"}</p>
+                   <p className="font-black text-sm tracking-tighter">{profile?.name || "Impact Hero"}</p>
                    <p className="text-[9px] font-black uppercase text-primary tracking-widest opacity-60">{role.replace('_', ' ')}</p>
                 </div>
                 <Avatar className="h-10 w-10 sm:h-14 sm:w-14 ring-4 ring-zinc-50 shadow-2xl transition-all group-hover:ring-primary/10">
@@ -122,16 +127,16 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               </DropdownMenuLabel>
               <DropdownMenuSeparator className="my-4" />
               <DropdownMenuItem className="rounded-2xl p-4 cursor-pointer gap-4 font-black text-xs uppercase tracking-widest" onClick={() => router.push('/settings')}>
-                <Settings className="h-5 w-5 text-zinc-400" /> Profile Settings
+                <Settings className="h-5 w-5 text-zinc-400" /> Account Settings
               </DropdownMenuItem>
               {(role === 'admin' || role === 'store_owner') && (
                 <DropdownMenuItem className="rounded-2xl p-4 cursor-pointer gap-4 font-black text-xs uppercase tracking-widest text-primary bg-primary/5" onClick={() => router.push('/pos')}>
-                  <Barcode className="h-5 w-5" /> POS Terminal
+                  <Barcode className="h-5 w-5" /> POS Terminal (POS टर्मिनल)
                 </DropdownMenuItem>
               )}
               <DropdownMenuSeparator className="my-4" />
               <DropdownMenuItem className="rounded-2xl p-4 cursor-pointer text-rose-600 font-black text-xs uppercase tracking-widest gap-4 hover:bg-rose-50" onClick={handleLogout}>
-                <LogOut className="h-5 w-5" /> Terminate Session
+                <LogOut className="h-5 w-5" /> Sign Out (साइन आउट)
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -142,6 +147,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         {children}
       </main>
 
+      {/* Floating Snackbar Navigation */}
       <div className="fixed bottom-8 left-0 right-0 z-50 flex justify-center px-4 print:hidden">
         <nav className="bg-zinc-950/95 backdrop-blur-3xl border border-white/10 rounded-[3rem] p-3 flex items-center gap-2 shadow-[0_32px_64px_-12px_rgba(0,0,0,0.5)] w-full max-w-2xl overflow-x-auto scrollbar-hide">
           {filteredNavItems.map((item) => (

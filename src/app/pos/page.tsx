@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useState, useRef, useEffect } from "react"
@@ -30,6 +29,7 @@ import {
   useCollection, 
   useMemoFirebase, 
   addDocumentNonBlocking, 
+  deleteDocumentNonBlocking, 
   updateDocumentNonBlocking,
   setDocumentNonBlocking
 } from "@/firebase"
@@ -44,6 +44,10 @@ interface CartItem {
   stockId: string
 }
 
+/**
+ * Advanced Point of Sale (POS) Terminal.
+ * Optimized for hardware scanners and high-speed grocery transactions.
+ */
 export default function POSPage() {
   const { user } = useUser()
   const firestore = useFirestore()
@@ -79,25 +83,24 @@ export default function POSPage() {
     if (mode === "sell") {
       if (product) {
         if ((product.quantity || 0) <= 0) {
-          toast({ variant: "destructive", title: "Out of Stock", description: `${product.name} is unavailable.` })
+          toast({ variant: "destructive", title: "Out of Stock (आउट ऑफ स्टॉक)", description: `${product.name} is currently unavailable.` })
         } else {
           addToCart(product)
         }
       } else {
-        toast({ variant: "destructive", title: "Unknown Item", description: "Product code not found in vault." })
+        toast({ variant: "destructive", title: "Item Not Found (वस्तु नहीं मिली)", description: "Scan unsuccessful. Ensure item is listed in Vault." })
       }
     } else {
-      // Ingress Mode - Simple increment or open dialog
       if (product) {
         const newQty = (product.quantity || 0) + 1
-        updateDocumentNonBlocking(doc(firestore, "users", user.uid, "products", product.id), { quantity: newQty, updatedAt: serverTimestamp() })
-        updateDocumentNonBlocking(doc(firestore, "products_marketplace", product.id), { quantity: newQty, updatedAt: serverTimestamp() })
-        toast({ title: "Inventory Updated", description: `${product.name} quantity increased to ${newQty}.` })
+        const updateData = { quantity: newQty, updatedAt: serverTimestamp() }
+        updateDocumentNonBlocking(doc(firestore, "users", user.uid, "products", product.id), updateData)
+        updateDocumentNonBlocking(doc(firestore, "products_marketplace", product.id), updateData)
+        toast({ title: "Stock Refilled", description: `${product.name} increased to ${newQty}.` })
       } else {
-        toast({ title: "New Item Detected", description: "Use the Ingress form in the Vault to add new items." })
+        toast({ title: "New Asset (नई वस्तु)", description: "Register new nodes through the Inventory Vault." })
       }
     }
-
     setScanValue("")
   }
 
@@ -134,20 +137,20 @@ export default function POSPage() {
     setIsProcessing(true)
 
     try {
-      // Create Order
       const orderData = {
-        customerId: "walk-in-customer",
+        customerId: "POS_WALK_IN",
         shopId: user.uid,
         totalAmount: total,
         status: "Completed",
         items: cart,
         createdAt: serverTimestamp(),
-        type: "POS_OFFLINE"
+        type: "OFFLINE_SALE"
       }
 
-      const orderRef = await addDocumentNonBlocking(collection(firestore, "users", user.uid, "orders"), orderData)
+      // Add Document and get ref
+      addDocumentNonBlocking(collection(firestore, "users", user.uid, "orders"), orderData)
       
-      // Update Stock
+      // Update Stock Logic
       for (const item of cart) {
         const product = inventory?.find(p => p.id === item.stockId)
         if (product) {
@@ -162,28 +165,25 @@ export default function POSPage() {
         }
       }
 
-      setLastReceipt({ ...orderData, id: orderRef?.id, date: new Date().toLocaleString() })
-      toast({ title: "Sale Complete", description: `Transaction recorded. Receipt ready.` })
+      setLastReceipt({ ...orderData, id: "POS-" + Math.random().toString(36).toUpperCase().slice(2, 8), date: new Date().toLocaleString() })
+      toast({ title: "Transaction Successful (लेनदेन सफल)", description: `Sale recorded. Thermal receipt prepared.` })
       setCart([])
     } finally {
       setIsProcessing(false)
     }
   }
 
-  const handlePrint = () => {
-    if (!lastReceipt) return
-    window.print()
-  }
-
   return (
     <DashboardLayout>
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 pb-24 animate-in fade-in duration-700 print:block">
-        {/* Receipt View (Hidden unless printing) */}
-        <div className="hidden print:block text-black p-8 font-mono text-sm">
-          <div className="text-center mb-6">
-            <h1 className="text-2xl font-bold uppercase tracking-tighter">SaveBite Terminal</h1>
-            <p>Verification ID: {user?.uid.slice(0, 8)}</p>
-            <p>Date: {lastReceipt?.date}</p>
+        
+        {/* Print Receipt (Hidden on Screen) */}
+        <div className="hidden print:block text-black p-8 font-mono text-[12px] leading-tight">
+          <div className="text-center mb-6 space-y-1">
+            <h1 className="text-lg font-black uppercase">SaveBite Terminal</h1>
+            <p>Verification: {user?.uid.slice(0, 10)}</p>
+            <p>Receipt ID: {lastReceipt?.id}</p>
+            <p>Time: {lastReceipt?.date}</p>
           </div>
           <div className="border-t border-b border-black py-4 mb-4">
             {lastReceipt?.items.map((it: any) => (
@@ -193,27 +193,30 @@ export default function POSPage() {
               </div>
             ))}
           </div>
-          <div className="flex justify-between font-bold text-lg">
-            <span>Total Amount</span>
+          <div className="flex justify-between font-black text-sm">
+            <span>TOTAL AMOUNT (कुल राशि)</span>
             <span>₹{lastReceipt?.totalAmount.toFixed(2)}</span>
           </div>
-          <p className="text-center mt-8 italic">*** Thank You for Rescuing Food ***</p>
+          <div className="text-center mt-10 italic">
+            <p>Thank you for Rescuing Food!</p>
+            <p>(भोजन बचाने के लिए धन्यवाद!)</p>
+          </div>
         </div>
 
-        {/* POS Interface */}
+        {/* Interaction Interface */}
         <div className="lg:col-span-2 space-y-8 print:hidden">
           <div className="flex flex-col sm:flex-row items-center justify-between gap-6">
             <div className="space-y-1 text-center sm:text-left">
               <h1 className="text-4xl sm:text-5xl font-black tracking-tighter">POS Terminal</h1>
-              <p className="text-muted-foreground font-medium italic">High-speed ingress and walk-in sales.</p>
+              <p className="text-muted-foreground font-medium italic">Egress (Sales) & Ingress (Refill) Management.</p>
             </div>
             <Tabs value={mode} onValueChange={(v: any) => setMode(v)} className="w-full sm:w-auto">
-              <TabsList className="bg-secondary/40 p-1.5 rounded-2xl h-14 w-full">
+              <TabsList className="bg-secondary/40 p-1.5 rounded-2xl h-14 w-full border border-secondary">
                 <TabsTrigger value="sell" className="rounded-xl px-8 h-11 font-black uppercase text-[10px] tracking-widest data-[state=active]:bg-primary data-[state=active]:text-white">
-                  <ShoppingCart className="mr-2 h-4 w-4" /> Egress (Sell)
+                  Sell (बिक्री)
                 </TabsTrigger>
                 <TabsTrigger value="ingress" className="rounded-xl px-8 h-11 font-black uppercase text-[10px] tracking-widest data-[state=active]:bg-zinc-900 data-[state=active]:text-white">
-                  <PackagePlus className="mr-2 h-4 w-4" /> Ingress (Stock)
+                  Refill (पुनः भरें)
                 </TabsTrigger>
               </TabsList>
             </Tabs>
@@ -233,7 +236,7 @@ export default function POSPage() {
                   <Barcode className="h-8 w-8" />
                 </div>
                 <h2 className="text-2xl font-black text-white tracking-tighter">
-                  {mode === 'sell' ? "Ready to Checkout" : "Awaiting Inventory Scan"}
+                  {mode === 'sell' ? "Ready to Scan Checkout" : "Awaiting Inventory Scan"}
                 </h2>
               </div>
               <div className="relative">
@@ -241,35 +244,35 @@ export default function POSPage() {
                   ref={scanInputRef}
                   value={scanValue}
                   onChange={e => setScanValue(e.target.value)}
-                  placeholder="Scan product barcode or type name..."
-                  className="h-20 sm:h-24 rounded-[2rem] bg-white/10 border-none text-white text-2xl sm:text-3xl font-black px-10 placeholder:text-white/20 focus:ring-4 focus:ring-primary/20"
+                  placeholder="Scan barcode or type item ID..."
+                  className="h-20 sm:h-24 rounded-[2.5rem] bg-white/10 border-none text-white text-2xl sm:text-3xl font-black px-12 placeholder:text-white/20 focus:ring-4 focus:ring-primary/20"
                 />
                 <Button 
                   type="submit"
                   size="icon" 
-                  className="absolute right-4 top-1/2 -translate-y-1/2 h-14 w-14 sm:h-16 sm:w-16 rounded-2xl bg-primary hover:bg-primary/90 shadow-xl"
+                  className="absolute right-5 top-1/2 -translate-y-1/2 h-12 w-12 sm:h-16 sm:w-16 rounded-full bg-primary hover:bg-primary/90 shadow-2xl"
                 >
                   <ArrowRight className="h-8 w-8" />
                 </Button>
               </div>
-              <div className="flex items-center gap-3 text-white/40 font-black uppercase tracking-[0.2em] text-[10px]">
-                <Zap className="h-4 w-4 text-amber-400" /> Auto-focus enabled • Scan hardware compatible
+              <div className="flex items-center gap-3 text-white/40 font-black uppercase tracking-[0.2em] text-[9px]">
+                <Zap className="h-4 w-4 text-amber-400" /> Focus Locked • Hardware Scanner Compatible
               </div>
             </form>
           </Card>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-             <Card className="border-none shadow-xl rounded-[2rem] bg-white p-8">
+             <Card className="border-none shadow-xl rounded-[2rem] bg-white p-8 border border-zinc-100">
                 <div className="flex items-center gap-3 mb-6">
                    <div className="h-10 w-10 bg-secondary rounded-xl flex items-center justify-center"><PackagePlus className="h-5 w-5" /></div>
-                   <h3 className="font-black text-lg">Active Inventory</h3>
+                   <h3 className="font-black text-lg">Local Inventory Snapshot</h3>
                 </div>
                 <div className="space-y-4 max-h-[300px] overflow-y-auto pr-2 scrollbar-hide">
-                   {inventory?.slice(0, 5).map(p => (
-                      <div key={p.id} className="flex items-center justify-between p-4 bg-secondary/30 rounded-2xl group hover:bg-secondary/50 transition-colors">
+                   {inventory?.slice(0, 8).map(p => (
+                      <div key={p.id} className="flex items-center justify-between p-4 bg-secondary/30 rounded-2xl group hover:bg-secondary/50 transition-colors border border-transparent hover:border-primary/20">
                          <div>
                             <p className="font-black text-sm">{p.name}</p>
-                            <p className="text-[10px] text-muted-foreground uppercase font-black tracking-widest">Qty: {p.quantity}</p>
+                            <p className="text-[10px] text-muted-foreground uppercase font-black tracking-widest">Qty Left: {p.quantity}</p>
                          </div>
                          <Button size="icon" variant="ghost" className="h-8 w-8 opacity-0 group-hover:opacity-100" onClick={() => addToCart(p)}>
                             <Plus className="h-4 w-4 text-primary" />
@@ -280,54 +283,54 @@ export default function POSPage() {
              </Card>
 
              {lastReceipt && (
-               <Card className="border-none shadow-xl rounded-[2rem] bg-emerald-50 border-emerald-100 p-8 flex flex-col items-center justify-center text-center space-y-4 animate-in zoom-in-95">
-                  <div className="h-16 w-16 bg-primary rounded-full flex items-center justify-center shadow-lg shadow-primary/20">
-                     <CheckCircle2 className="h-8 w-8 text-white" />
+               <Card className="border-none shadow-xl rounded-[2rem] bg-emerald-50 border border-emerald-100 p-8 flex flex-col items-center justify-center text-center space-y-6 animate-in zoom-in-95">
+                  <div className="h-20 w-20 bg-primary rounded-full flex items-center justify-center shadow-2xl shadow-primary/30">
+                     <CheckCircle2 className="h-10 w-10 text-white" />
                   </div>
                   <div>
-                    <h3 className="text-xl font-black tracking-tighter">Last Sale: ₹{lastReceipt.totalAmount.toFixed(0)}</h3>
-                    <p className="text-sm text-emerald-800 italic opacity-70">Transaction {lastReceipt.id.slice(0, 6)} successfully synced.</p>
+                    <h3 className="text-2xl font-black tracking-tighter">Sale Total: ₹{lastReceipt.totalAmount.toFixed(0)}</h3>
+                    <p className="text-[10px] text-emerald-800 uppercase font-black tracking-widest opacity-60">ID: {lastReceipt.id}</p>
                   </div>
-                  <Button onClick={handlePrint} className="h-14 w-full rounded-2xl bg-zinc-900 text-white font-black uppercase text-[10px] tracking-widest gap-2">
-                     <Printer className="h-5 w-5" /> Print Last Bill
+                  <Button onClick={() => window.print()} className="h-16 w-full rounded-2xl bg-zinc-950 text-white font-black uppercase text-[10px] tracking-widest gap-3 shadow-xl hover:scale-105 transition-transform">
+                     <Printer className="h-6 w-6" /> Print Current Receipt
                   </Button>
                </Card>
              )}
           </div>
         </div>
 
-        {/* Cart Panel */}
+        {/* Transaction Panel */}
         <div className="lg:col-span-1 print:hidden">
-          <Card className="border-none shadow-2xl rounded-[2.5rem] bg-white h-full flex flex-col min-h-[600px] overflow-hidden">
-            <CardHeader className="p-8 border-b border-secondary">
+          <Card className="border-none shadow-2xl rounded-[3rem] bg-white h-full flex flex-col min-h-[600px] overflow-hidden border border-zinc-100">
+            <CardHeader className="p-8 border-b border-zinc-50 bg-zinc-50/50">
               <CardTitle className="text-2xl font-black tracking-tighter flex items-center gap-3">
                 <ShoppingCart className="text-primary h-6 w-6" />
-                Checkout Queue
+                Checkout Queue (कुल सूची)
               </CardTitle>
             </CardHeader>
             <CardContent className="flex-1 p-0 overflow-y-auto">
               {cart.length === 0 ? (
-                <div className="h-full flex flex-col items-center justify-center p-12 text-center opacity-30">
-                  <div className="h-20 w-20 bg-secondary rounded-full flex items-center justify-center mb-4">
-                    <Barcode className="h-10 w-10" />
+                <div className="h-full flex flex-col items-center justify-center p-12 text-center opacity-30 grayscale">
+                  <div className="h-24 w-24 bg-secondary rounded-[2rem] flex items-center justify-center mb-6">
+                    <Barcode className="h-12 w-12" />
                   </div>
-                  <p className="font-black uppercase text-[10px] tracking-[0.2em]">Queue is empty</p>
+                  <p className="font-black uppercase text-[10px] tracking-[0.2em]">Queue is currently empty</p>
                 </div>
               ) : (
-                <div className="divide-y divide-secondary">
+                <div className="divide-y divide-zinc-50">
                   {cart.map(item => (
-                    <div key={item.id} className="p-6 flex items-center justify-between group animate-in slide-in-from-right-4">
+                    <div key={item.id} className="p-8 flex items-center justify-between group animate-in slide-in-from-right-4 bg-white hover:bg-zinc-50/50 transition-colors">
                       <div className="space-y-1 flex-1">
-                        <p className="font-black text-lg leading-tight">{item.name}</p>
-                        <p className="text-primary font-black">₹{item.price}</p>
+                        <p className="font-black text-lg leading-tight truncate pr-4">{item.name}</p>
+                        <p className="text-primary font-black text-sm">₹{item.price} x {item.quantity}</p>
                       </div>
                       <div className="flex items-center gap-4">
-                        <div className="flex items-center bg-secondary/50 rounded-xl p-1">
-                          <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => updateCartQty(item.id, -1)}><Minus className="h-3 w-3" /></Button>
-                          <span className="w-8 text-center font-black">{item.quantity}</span>
-                          <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => updateCartQty(item.id, 1)}><Plus className="h-3 w-3" /></Button>
+                        <div className="flex items-center bg-zinc-100 rounded-xl p-1">
+                          <Button size="icon" variant="ghost" className="h-8 w-8 hover:bg-white" onClick={() => updateCartQty(item.id, -1)}><Minus className="h-3 w-3" /></Button>
+                          <span className="w-10 text-center font-black text-sm">{item.quantity}</span>
+                          <Button size="icon" variant="ghost" className="h-8 w-8 hover:bg-white" onClick={() => updateCartQty(item.id, 1)}><Plus className="h-3 w-3" /></Button>
                         </div>
-                        <Button size="icon" variant="ghost" className="h-10 w-10 text-rose-500 hover:bg-rose-50" onClick={() => updateCartQty(item.id, -999)}>
+                        <Button size="icon" variant="ghost" className="h-10 w-10 text-rose-500 hover:bg-rose-50 rounded-xl" onClick={() => updateCartQty(item.id, -999)}>
                           <Trash2 className="h-5 w-5" />
                         </Button>
                       </div>
@@ -336,21 +339,24 @@ export default function POSPage() {
                 </div>
               )}
             </CardContent>
-            <div className="p-8 bg-zinc-950 text-white rounded-t-[3rem] space-y-6">
+            <div className="p-10 bg-zinc-950 text-white rounded-t-[3.5rem] space-y-8 shadow-[0_-20px_50px_-12px_rgba(0,0,0,0.5)]">
               <div className="flex justify-between items-end">
-                <p className="text-[10px] font-black uppercase tracking-widest opacity-50">Total Payable</p>
-                <p className="text-5xl font-black tracking-tighter">₹{total.toFixed(0)}</p>
+                <p className="text-[10px] font-black uppercase tracking-widest opacity-50">Grand Total (कुल राशि)</p>
+                <div className="text-right">
+                   <p className="text-5xl font-black tracking-tighter">₹{total.toFixed(0)}</p>
+                   <p className="text-[9px] font-bold text-emerald-400 uppercase tracking-widest">Inclusive of Impact Points</p>
+                </div>
               </div>
               <Button 
                 onClick={handleCheckout}
                 disabled={cart.length === 0 || isProcessing}
-                className="w-full h-20 rounded-[1.5rem] bg-primary hover:bg-primary/90 text-white font-black text-xl shadow-2xl shadow-primary/20 transition-all active:scale-[0.98]"
+                className="w-full h-20 rounded-[1.75rem] bg-primary hover:bg-primary/90 text-white font-black text-xl shadow-2xl shadow-primary/30 transition-all active:scale-[0.98] disabled:bg-zinc-800"
               >
-                {isProcessing ? <Loader2 className="h-8 w-8 animate-spin" /> : "Complete Sale"}
+                {isProcessing ? <Loader2 className="h-8 w-8 animate-spin" /> : "Finalize Sale (बिक्री पूर्ण करें)"}
               </Button>
               {cart.length > 0 && (
-                 <Button variant="ghost" className="w-full text-white/40 hover:text-white" onClick={() => setCart([])}>
-                    Clear Queue
+                 <Button variant="ghost" className="w-full text-white/30 hover:text-white transition-colors" onClick={() => setCart([])}>
+                    Clear Current Session
                  </Button>
               )}
             </div>
