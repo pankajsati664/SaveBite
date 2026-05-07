@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useState } from "react"
@@ -65,7 +66,7 @@ export default function InventoryPage() {
 
   const productsQuery = useMemoFirebase(() => {
     if (!firestore || !user) return null
-    return collection(firestore, "users", user.uid, "products")
+    return query(collection(firestore, "users", user.uid, "products"), orderBy("createdAt", "desc"))
   }, [firestore, user])
 
   const stockImagesQuery = useMemoFirebase(() => {
@@ -132,6 +133,7 @@ export default function InventoryPage() {
     addDocumentNonBlocking(collection(firestore, "users", user.uid, "products"), productData)
       .then(docRef => {
         if (docRef) {
+          // Sync to marketplace using setDocumentNonBlocking to avoid errors if doc doesn't exist yet
           setDocumentNonBlocking(doc(firestore, "products_marketplace", docRef.id), { ...productData, id: docRef.id }, { merge: true })
         }
       })
@@ -164,7 +166,7 @@ export default function InventoryPage() {
                <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
                 <DialogTrigger asChild>
                   <Button className="h-20 px-12 rounded-[1.75rem] bg-primary text-white font-black uppercase tracking-widest text-[11px] shadow-2xl shadow-primary/20 hover:scale-105 active:scale-95 transition-all">
-                    <Plus className="mr-3 h-6 w-6" /> Add Node (नया जोड़ें)
+                    <Plus className="mr-3 h-6 w-6" /> Add Item Node (नया जोड़ें)
                   </Button>
                 </DialogTrigger>
                 <DialogContent className="rounded-[3rem] p-10 max-w-2xl bg-white border-none shadow-3xl max-h-[90vh] overflow-y-auto">
@@ -228,7 +230,7 @@ export default function InventoryPage() {
           <div className="relative flex-1">
             <Search className="absolute left-6 top-1/2 -translate-y-1/2 h-6 w-6 text-muted-foreground" />
             <Input 
-              placeholder="Search vault (इन्वेंट्री खोजें)..." 
+              placeholder="Search your vault nodes (इन्वेंट्री खोजें)..." 
               value={search} onChange={e => setSearch(e.target.value)}
               className="pl-16 h-16 rounded-2xl bg-secondary/30 border-none font-bold text-lg placeholder:text-muted-foreground/50" 
             />
@@ -245,7 +247,7 @@ export default function InventoryPage() {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
-            {products?.filter(p => p.name.toLowerCase().includes(search.toLowerCase())).map((p, idx) => {
+            {products?.filter(p => p.name?.toLowerCase().includes(search.toLowerCase())).map((p, idx) => {
               const status = getExpiryStatus(p.expiryDate)
               const days = getDaysRemaining(p.expiryDate)
               const placeholder = getPlaceholderByCategory(p.category)

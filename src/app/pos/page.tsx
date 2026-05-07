@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useState, useRef, useEffect } from "react"
@@ -33,7 +34,7 @@ import {
   updateDocumentNonBlocking,
   setDocumentNonBlocking
 } from "@/firebase"
-import { collection, doc, serverTimestamp, query, where, getDocs } from "firebase/firestore"
+import { collection, doc, serverTimestamp, query, where, getDocs, orderBy } from "firebase/firestore"
 import { cn } from "@/lib/utils"
 
 interface CartItem {
@@ -62,7 +63,7 @@ export default function POSPage() {
 
   const productsQuery = useMemoFirebase(() => {
     if (!firestore || !user) return null
-    return collection(firestore, "users", user.uid, "products")
+    return query(collection(firestore, "users", user.uid, "products"), orderBy("createdAt", "desc"))
   }, [firestore, user])
 
   const { data: inventory } = useCollection(productsQuery)
@@ -94,8 +95,9 @@ export default function POSPage() {
       if (product) {
         const newQty = (product.quantity || 0) + 1
         const updateData = { quantity: newQty, updatedAt: serverTimestamp() }
+        // Update in both locations to ensure marketplace stays in sync
         updateDocumentNonBlocking(doc(firestore, "users", user.uid, "products", product.id), updateData)
-        updateDocumentNonBlocking(doc(firestore, "products_marketplace", product.id), updateData)
+        setDocumentNonBlocking(doc(firestore, "products_marketplace", product.id), updateData, { merge: true })
         toast({ title: "Stock Refilled", description: `${product.name} increased to ${newQty}.` })
       } else {
         toast({ title: "New Asset (नई वस्तु)", description: "Register new nodes through the Inventory Vault." })
@@ -147,10 +149,8 @@ export default function POSPage() {
         type: "OFFLINE_SALE"
       }
 
-      // Add Document and get ref
       addDocumentNonBlocking(collection(firestore, "users", user.uid, "orders"), orderData)
       
-      // Update Stock Logic
       for (const item of cart) {
         const product = inventory?.find(p => p.id === item.stockId)
         if (product) {
@@ -161,7 +161,8 @@ export default function POSPage() {
             updatedAt: serverTimestamp() 
           }
           updateDocumentNonBlocking(doc(firestore, "users", user.uid, "products", item.stockId), updateData)
-          updateDocumentNonBlocking(doc(firestore, "products_marketplace", item.stockId), updateData)
+          // Always use set merge for sync to public marketplace
+          setDocumentNonBlocking(doc(firestore, "products_marketplace", item.stockId), updateData, { merge: true })
         }
       }
 
@@ -177,7 +178,7 @@ export default function POSPage() {
     <DashboardLayout>
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 pb-24 animate-in fade-in duration-700 print:block">
         
-        {/* Print Receipt (Hidden on Screen) */}
+        {/* Print Receipt */}
         <div className="hidden print:block text-black p-8 font-mono text-[12px] leading-tight">
           <div className="text-center mb-6 space-y-1">
             <h1 className="text-lg font-black uppercase">SaveBite Terminal</h1>
@@ -265,14 +266,14 @@ export default function POSPage() {
              <Card className="border-none shadow-xl rounded-[2rem] bg-white p-8 border border-zinc-100">
                 <div className="flex items-center gap-3 mb-6">
                    <div className="h-10 w-10 bg-secondary rounded-xl flex items-center justify-center"><PackagePlus className="h-5 w-5" /></div>
-                   <h3 className="font-black text-lg">Local Inventory Snapshot</h3>
+                   <h3 className="font-black text-lg">Inventory Snap</h3>
                 </div>
                 <div className="space-y-4 max-h-[300px] overflow-y-auto pr-2 scrollbar-hide">
                    {inventory?.slice(0, 8).map(p => (
                       <div key={p.id} className="flex items-center justify-between p-4 bg-secondary/30 rounded-2xl group hover:bg-secondary/50 transition-colors border border-transparent hover:border-primary/20">
                          <div>
                             <p className="font-black text-sm">{p.name}</p>
-                            <p className="text-[10px] text-muted-foreground uppercase font-black tracking-widest">Qty Left: {p.quantity}</p>
+                            <p className="text-[10px] text-muted-foreground uppercase font-black tracking-widest">Qty: {p.quantity}</p>
                          </div>
                          <Button size="icon" variant="ghost" className="h-8 w-8 opacity-0 group-hover:opacity-100" onClick={() => addToCart(p)}>
                             <Plus className="h-4 w-4 text-primary" />
@@ -288,24 +289,24 @@ export default function POSPage() {
                      <CheckCircle2 className="h-10 w-10 text-white" />
                   </div>
                   <div>
-                    <h3 className="text-2xl font-black tracking-tighter">Sale Total: ₹{lastReceipt.totalAmount.toFixed(0)}</h3>
+                    <h3 className="text-2xl font-black tracking-tighter">Total: ₹{lastReceipt.totalAmount.toFixed(0)}</h3>
                     <p className="text-[10px] text-emerald-800 uppercase font-black tracking-widest opacity-60">ID: {lastReceipt.id}</p>
                   </div>
                   <Button onClick={() => window.print()} className="h-16 w-full rounded-2xl bg-zinc-950 text-white font-black uppercase text-[10px] tracking-widest gap-3 shadow-xl hover:scale-105 transition-transform">
-                     <Printer className="h-6 w-6" /> Print Current Receipt
+                     <Printer className="h-6 w-6" /> Print Bill
                   </Button>
                </Card>
              )}
           </div>
         </div>
 
-        {/* Transaction Panel */}
+        {/* Transaction Queue */}
         <div className="lg:col-span-1 print:hidden">
           <Card className="border-none shadow-2xl rounded-[3rem] bg-white h-full flex flex-col min-h-[600px] overflow-hidden border border-zinc-100">
             <CardHeader className="p-8 border-b border-zinc-50 bg-zinc-50/50">
               <CardTitle className="text-2xl font-black tracking-tighter flex items-center gap-3">
                 <ShoppingCart className="text-primary h-6 w-6" />
-                Checkout Queue (कुल सूची)
+                Checkout Queue
               </CardTitle>
             </CardHeader>
             <CardContent className="flex-1 p-0 overflow-y-auto">
@@ -352,7 +353,7 @@ export default function POSPage() {
                 disabled={cart.length === 0 || isProcessing}
                 className="w-full h-20 rounded-[1.75rem] bg-primary hover:bg-primary/90 text-white font-black text-xl shadow-2xl shadow-primary/30 transition-all active:scale-[0.98] disabled:bg-zinc-800"
               >
-                {isProcessing ? <Loader2 className="h-8 w-8 animate-spin" /> : "Finalize Sale (बिक्री पूर्ण करें)"}
+                {isProcessing ? <Loader2 className="h-8 w-8 animate-spin" /> : "Complete Transaction (बिक्री पूर्ण करें)"}
               </Button>
               {cart.length > 0 && (
                  <Button variant="ghost" className="w-full text-white/30 hover:text-white transition-colors" onClick={() => setCart([])}>
