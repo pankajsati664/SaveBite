@@ -12,7 +12,6 @@ import {
   User, 
   ShieldAlert, 
   Loader2,
-  TrendingUp,
   Bell,
   Settings,
   LogOut,
@@ -41,16 +40,13 @@ interface NavItem {
   roles?: string[]
 }
 
-/**
- * Omnipotent Admin Navigation: Admins can see and access everything.
- */
 const navItems: NavItem[] = [
-  { title: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
-  { title: "Vault", href: "/inventory", icon: Package, roles: ['store_owner', 'admin'] },
+  { title: "Home", href: "/dashboard", icon: LayoutDashboard },
+  { title: "Inventory", href: "/inventory", icon: Package, roles: ['store_owner', 'admin'] },
   { title: "Market", href: "/marketplace", icon: ShoppingBag },
   { title: "POS", href: "/pos", icon: Barcode, roles: ['store_owner', 'admin'] },
   { title: "NGO Hub", href: "/donations", icon: HandHelping, roles: ['ngo', 'admin'] },
-  { title: "Journal", href: "/orders", icon: History, roles: ['customer', 'admin'] },
+  { title: "Orders", href: "/orders", icon: History, roles: ['customer', 'admin'] },
   { title: "Admin", href: "/admin", icon: ShieldAlert, roles: ['admin'] },
 ]
 
@@ -79,7 +75,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   if (isUserLoading || isProfileLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
-        <Loader2 className="h-12 w-12 animate-spin text-primary" />
+        <Loader2 className="h-8 w-8 animate-spin text-primary/40" />
       </div>
     )
   }
@@ -89,80 +85,70 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const filteredNavItems = navItems.filter(item => !item.roles || item.roles.includes(role))
 
   return (
-    <div className="min-h-screen flex flex-col bg-background pb-32 print:pb-0">
-      <header className="h-16 sm:h-24 flex items-center justify-between px-6 sm:px-12 bg-white/80 backdrop-blur-2xl sticky top-0 z-40 border-b border-zinc-100 print:hidden">
-        <Link href="/dashboard" className="flex items-center gap-3 group">
-          <div className="bg-primary p-2.5 rounded-2xl shadow-xl group-hover:scale-110 transition-transform shadow-primary/20">
-            <Leaf className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
+    <div className="min-h-screen flex flex-col bg-background pb-20 print:pb-0">
+      <header className="h-16 flex items-center justify-between px-6 bg-white border-b sticky top-0 z-40 print:hidden">
+        <Link href="/dashboard" className="flex items-center gap-2">
+          <div className="bg-primary p-1.5 rounded-lg">
+            <Leaf className="h-5 w-5 text-white" />
           </div>
-          <div className="flex flex-col">
-            <span className="text-xl sm:text-2xl font-black text-primary tracking-tighter leading-none">SaveBite</span>
-            <span className="text-[8px] font-black uppercase text-zinc-400 tracking-widest leading-none mt-1">Surplus Intelligence</span>
-          </div>
+          <span className="text-xl font-bold text-primary tracking-tight">SaveBite</span>
         </Link>
 
-        <div className="flex items-center gap-2 sm:gap-6">
-          <Button variant="ghost" size="icon" className="relative rounded-2xl h-10 w-10 sm:h-14 sm:w-14 bg-zinc-50 border border-zinc-100">
-            <Bell className="h-5 w-5 sm:h-6 sm:w-6 text-zinc-400" />
-            <span className="absolute top-4 right-4 h-2.5 w-2.5 bg-rose-500 rounded-full ring-4 ring-white" />
+        <div className="flex items-center gap-4">
+          <Button variant="ghost" size="icon" className="relative h-9 w-9">
+            <Bell className="h-5 w-5 text-muted-foreground" />
+            <span className="absolute top-2 right-2 h-2 w-2 bg-rose-500 rounded-full ring-2 ring-white" />
           </Button>
           
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <div className="flex items-center gap-4 cursor-pointer group">
-                <div className="hidden sm:block text-right">
-                   <p className="font-black text-sm tracking-tighter">{profile?.name || "Impact Hero"}</p>
-                   <p className="text-[9px] font-black uppercase text-primary tracking-widest opacity-60">{role.replace('_', ' ')}</p>
-                </div>
-                <Avatar className="h-10 w-10 sm:h-14 sm:w-14 ring-4 ring-zinc-50 shadow-2xl transition-all group-hover:ring-primary/10">
+              <div className="flex items-center gap-3 cursor-pointer group">
+                <Avatar className="h-9 w-9 transition-all group-hover:ring-2 ring-primary/20">
                   <AvatarImage src={user.photoURL || `https://picsum.photos/seed/${user.uid}/64/64`} />
-                  <AvatarFallback className="bg-primary text-white font-black"><User className="h-6 w-6" /></AvatarFallback>
+                  <AvatarFallback className="bg-primary text-white text-xs font-bold uppercase">{profile?.name?.charAt(0) || 'U'}</AvatarFallback>
                 </Avatar>
               </div>
             </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-72 rounded-[2.5rem] p-6 mt-4 shadow-3xl border-none animate-in slide-in-from-top-2 duration-300" align="end">
-              <DropdownMenuLabel className="space-y-1 p-0 mb-4">
-                <p className="font-black text-2xl tracking-tighter leading-none">{profile?.name || "Member"}</p>
-                <p className="text-[10px] text-muted-foreground uppercase font-black tracking-widest">{role}</p>
-              </DropdownMenuLabel>
-              <DropdownMenuSeparator className="my-4" />
-              <DropdownMenuItem className="rounded-2xl p-4 cursor-pointer gap-4 font-black text-xs uppercase tracking-widest" onClick={() => router.push('/settings')}>
-                <Settings className="h-5 w-5 text-zinc-400" /> Account Settings
+            <DropdownMenuContent className="w-56 rounded-xl mt-2 mr-2 shadow-lg" align="end">
+              <DropdownMenuLabel className="font-bold">{profile?.name || "Member"}</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => router.push('/settings')} className="cursor-pointer gap-2">
+                <Settings className="h-4 w-4" /> Settings
               </DropdownMenuItem>
               {(role === 'admin' || role === 'store_owner') && (
-                <DropdownMenuItem className="rounded-2xl p-4 cursor-pointer gap-4 font-black text-xs uppercase tracking-widest text-primary bg-primary/5" onClick={() => router.push('/pos')}>
-                  <Barcode className="h-5 w-5" /> POS Terminal (POS टर्मिनल)
+                <DropdownMenuItem onClick={() => router.push('/pos')} className="cursor-pointer gap-2 text-primary font-bold">
+                  <Barcode className="h-4 w-4" /> POS Terminal
                 </DropdownMenuItem>
               )}
-              <DropdownMenuSeparator className="my-4" />
-              <DropdownMenuItem className="rounded-2xl p-4 cursor-pointer text-rose-600 font-black text-xs uppercase tracking-widest gap-4 hover:bg-rose-50" onClick={handleLogout}>
-                <LogOut className="h-5 w-5" /> Sign Out (साइन आउट)
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={handleLogout} className="cursor-pointer gap-2 text-destructive">
+                <LogOut className="h-4 w-4" /> Sign Out
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
       </header>
 
-      <main className="flex-1 px-4 sm:px-12 pt-8 max-w-7xl mx-auto w-full print:p-0 print:max-w-none">
+      <main className="flex-1 px-4 sm:px-6 pt-6 max-w-7xl mx-auto w-full print:p-0">
         {children}
       </main>
 
-      {/* Floating Snackbar Navigation */}
-      <div className="fixed bottom-8 left-0 right-0 z-50 flex justify-center px-4 print:hidden">
-        <nav className="bg-zinc-950/95 backdrop-blur-3xl border border-white/10 rounded-[3rem] p-3 flex items-center gap-2 shadow-[0_32px_64px_-12px_rgba(0,0,0,0.5)] w-full max-w-2xl overflow-x-auto scrollbar-hide">
+      {/* Simplified Bottom Navigation */}
+      <div className="fixed bottom-4 left-4 right-4 z-50 flex justify-center print:hidden">
+        <nav className="bg-white/95 backdrop-blur-md border rounded-2xl p-1.5 flex items-center gap-1 shadow-lg w-fit max-w-full overflow-x-auto scrollbar-hide">
           {filteredNavItems.map((item) => (
             <Link 
               key={item.href} 
               href={item.href}
               className={cn(
-                "flex-1 min-w-[70px] flex flex-col items-center justify-center gap-1.5 py-4 rounded-[2.5rem] transition-all duration-500",
+                "flex flex-col items-center justify-center gap-1 px-4 py-2.5 rounded-xl transition-all",
                 pathname === item.href 
-                  ? "bg-primary text-white shadow-2xl scale-105" 
-                  : "text-zinc-500 hover:text-white hover:bg-white/5"
+                  ? "bg-primary text-white shadow-md" 
+                  : "text-muted-foreground hover:text-foreground hover:bg-secondary"
               )}
             >
-              <item.icon className={cn("h-5 w-5 sm:h-6 sm:w-6", pathname === item.href ? "animate-pulse" : "")} />
-              <span className="text-[8px] sm:text-[10px] font-black uppercase tracking-widest">{item.title}</span>
+              <item.icon className="h-4 w-4" />
+              <span className="text-[10px] font-bold uppercase tracking-wider">{item.title}</span>
             </Link>
           ))}
         </nav>

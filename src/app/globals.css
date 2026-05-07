@@ -23,39 +23,11 @@
     --border: 240 5.9% 90%;
     --input: 240 5.9% 90%;
     --ring: 142 76% 36%;
-    --radius: 2rem;
-
-    --chart-1: 142 76% 36%;
-    --chart-2: 173 58% 39%;
-    --chart-3: 197 37% 24%;
-    --chart-4: 43 74% 66%;
-    --chart-5: 27 87% 67%;
+    --radius: 1rem;
 
     --success: 142 76% 36%;
     --warning: 38 92% 50%;
     --danger: 0 84% 60%;
-  }
-
-  .dark {
-    --background: 240 10% 3.9%;
-    --foreground: 0 0% 98%;
-    --card: 240 10% 3.9%;
-    --card-foreground: 0 0% 98%;
-    --popover: 240 10% 3.9%;
-    --popover-foreground: 0 0% 98%;
-    --primary: 142 76% 36%;
-    --primary-foreground: 355.7 100% 97.3%;
-    --secondary: 240 3.7% 15.9%;
-    --secondary-foreground: 0 0% 98%;
-    --muted: 240 3.7% 15.9%;
-    --muted-foreground: 240 5% 64.9%;
-    --accent: 240 3.7% 15.9%;
-    --accent-foreground: 0 0% 98%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 240 3.7% 15.9%;
-    --input: 240 3.7% 15.9%;
-    --ring: 142 76% 36%;
   }
 }
 
@@ -66,21 +38,14 @@
   body {
     @apply bg-[#F9FAFB] text-foreground font-body;
   }
-  h1, h2, h3, h4, h5, h6 {
-    @apply font-headline font-black tracking-tight;
-  }
 }
 
-.card-3d {
-  @apply transition-all duration-500 hover:scale-[1.02] hover:-translate-y-3 hover:shadow-[0_40px_80px_-15px_rgba(0,0,0,0.12),0_10px_20px_-5px_rgba(0,0,0,0.04)];
+.card-hover {
+  @apply transition-all duration-200 hover:shadow-md hover:border-primary/20;
 }
 
-.glass-morphism {
-  @apply bg-white/70 backdrop-blur-2xl border border-white/20 shadow-xl;
-}
-
-.hero-gradient {
-  @apply bg-gradient-to-br from-zinc-950 via-zinc-900 to-zinc-800;
+.glass {
+  @apply bg-white/80 backdrop-blur-md border border-white/20;
 }
 
 .scrollbar-hide::-webkit-scrollbar {
