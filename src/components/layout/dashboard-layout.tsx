@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useState, useEffect } from "react"
@@ -50,6 +51,8 @@ const navItems: NavItem[] = [
   { title: "Admin", href: "/admin", icon: ShieldAlert, roles: ['admin'] },
 ]
 
+const ADMIN_UID = "7zPezqeNFEPbYVsCM8NxO4fknhn1"
+
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
   const router = useRouter()
@@ -81,7 +84,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   }
 
   if (!user) return null
-  const role = profile?.role || 'customer'
+  
+  // Force admin role for special UID
+  const role = user.uid === ADMIN_UID ? 'admin' : (profile?.role || 'customer')
   const filteredNavItems = navItems.filter(item => !item.roles || item.roles.includes(role))
 
   return (
@@ -110,7 +115,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               </div>
             </DropdownMenuTrigger>
             <DropdownMenuContent className="w-56 rounded-xl mt-2 mr-2 shadow-lg" align="end">
-              <DropdownMenuLabel className="font-bold">{profile?.name || "Member"}</DropdownMenuLabel>
+              <DropdownMenuLabel className="font-bold">{profile?.name || (user.uid === ADMIN_UID ? "System Admin" : "Member")}</DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={() => router.push('/settings')} className="cursor-pointer gap-2">
                 <Settings className="h-4 w-4" /> Settings

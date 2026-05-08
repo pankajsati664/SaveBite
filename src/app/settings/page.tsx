@@ -30,6 +30,8 @@ import { useToast } from "@/hooks/use-toast"
 import { signOut } from "firebase/auth"
 import { useRouter } from "next/navigation"
 
+const ADMIN_UID = "7zPezqeNFEPbYVsCM8NxO4fknhn1"
+
 export default function SettingsPage() {
   const { user, isUserLoading: isAuthLoading } = useUser()
   const firestore = useFirestore()
@@ -99,6 +101,8 @@ export default function SettingsPage() {
     ? new Date(userProfile.createdAt).toLocaleDateString() 
     : 'New Impact Member'
 
+  const role = user?.uid === ADMIN_UID ? 'admin' : (userProfile?.role || 'customer')
+
   return (
     <DashboardLayout>
       <div className="max-w-5xl mx-auto space-y-8 sm:space-y-12 animate-in fade-in slide-in-from-bottom-6 duration-1000">
@@ -116,9 +120,9 @@ export default function SettingsPage() {
                   <AvatarImage src={user?.photoURL || `https://picsum.photos/seed/${user?.uid}/128/128`} />
                   <AvatarFallback className="text-2xl sm:text-4xl bg-secondary text-primary font-black"><User className="h-10 w-10 sm:h-16 sm:w-16" /></AvatarFallback>
                 </Avatar>
-                <CardTitle className="text-xl sm:text-2xl font-black truncate px-4 leading-tight">{userProfile?.name || user?.email?.split('@')[0]}</CardTitle>
+                <CardTitle className="text-xl sm:text-2xl font-black truncate px-4 leading-tight">{userProfile?.name || user?.email?.split('@')[0] || (user?.uid === ADMIN_UID ? "System Admin" : "Member")}</CardTitle>
                 <Badge className="mt-3 sm:mt-4 bg-primary text-white border-none font-black uppercase tracking-widest text-[8px] sm:text-[10px] px-3 sm:px-5 py-1 sm:py-1.5 rounded-full shadow-lg shadow-primary/20">
-                  {userProfile?.role?.replace('_', ' ') || 'Eco Member'}
+                  {role?.replace('_', ' ')}
                 </Badge>
               </CardHeader>
               <CardContent className="pt-6 sm:pt-10 px-6 sm:px-8">

