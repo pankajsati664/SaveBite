@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useState } from "react"
@@ -87,10 +86,10 @@ export default function AdminPage() {
     setIsUploading(true)
     const formData = new FormData()
     formData.append("file", file)
-    formData.append("upload_preset", "freshtrack")
+    formData.append("upload_preset", "images")
 
     try {
-      const response = await fetch(`https://api.cloudinary.com/v1_1/dian1nfyk/image/upload`, {
+      const response = await fetch(`https://api.cloudinary.com/v1_1/dqmhidejk/image/upload`, {
         method: "POST",
         body: formData
       })

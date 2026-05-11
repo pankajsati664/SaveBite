@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useState } from "react"
@@ -14,7 +13,8 @@ import {
   Calendar,
   Tag,
   Percent,
-  Heart
+  Heart,
+  Upload
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -63,6 +63,7 @@ export default function InventoryPage() {
   const [isDiscountOpen, setIsDiscountOpen] = useState(false)
   const [selectedProduct, setSelectedProduct] = useState<any>(null)
   const [isAiLoading, setIsAiLoading] = useState<string | null>(null)
+  const [isUploading, setIsUploading] = useState(false)
   const [search, setSearch] = useState("")
   const [selectedStockImage, setSelectedStockImage] = useState<string | null>(null)
   const [manualDiscount, setManualDiscount] = useState<string>("")
@@ -110,6 +111,33 @@ export default function InventoryPage() {
       toast({ variant: "destructive", title: "AI Error", description: "Could not generate suggestion." })
     } finally {
       setIsAiLoading(null)
+    }
+  }
+
+  const handleDirectUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    setIsUploading(true)
+    const formData = new FormData()
+    formData.append("file", file)
+    formData.append("upload_preset", "images")
+
+    try {
+      const response = await fetch(`https://api.cloudinary.com/v1_1/dqmhidejk/image/upload`, {
+        method: "POST",
+        body: formData
+      })
+      const data = await response.json()
+      
+      if (data.secure_url) {
+        setSelectedStockImage(data.secure_url)
+        toast({ title: "Image Uploaded", description: "Custom product image is ready." })
+      }
+    } catch (error) {
+      toast({ variant: "destructive", title: "Upload Failed", description: "Error during Cloudinary transfer." })
+    } finally {
+      setIsUploading(false)
     }
   }
 
@@ -263,7 +291,22 @@ export default function InventoryPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Stock Asset</label>
+                  <div className="flex items-center justify-between">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Product Image</label>
+                    <div className="relative">
+                      <input 
+                        type="file" 
+                        accept="image/*" 
+                        onChange={handleDirectUpload}
+                        className="absolute inset-0 opacity-0 cursor-pointer w-full"
+                        disabled={isUploading}
+                      />
+                      <Button variant="ghost" size="sm" className="h-8 text-[9px] font-black uppercase tracking-widest gap-2">
+                        {isUploading ? <Loader2 className="h-3 w-3 animate-spin" /> : <Upload className="h-3 w-3" />}
+                        Upload Custom
+                      </Button>
+                    </div>
+                  </div>
                   <div className="grid grid-cols-4 gap-2 max-h-[140px] overflow-y-auto p-3 bg-secondary/30 rounded-2xl border border-secondary">
                     {stockImages?.map((img) => (
                       <div 
@@ -280,7 +323,7 @@ export default function InventoryPage() {
                   </div>
                 </div>
 
-                <Button type="submit" className="w-full h-14 rounded-2xl font-black uppercase tracking-widest text-[11px] shadow-lg shadow-primary/20">
+                <Button type="submit" className="w-full h-14 rounded-2xl font-black uppercase tracking-widest text-[11px] shadow-lg shadow-primary/20" disabled={isUploading}>
                   Save Product
                 </Button>
               </form>
