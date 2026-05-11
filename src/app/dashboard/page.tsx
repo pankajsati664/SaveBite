@@ -12,7 +12,8 @@ import {
   Award,
   Globe,
   ChevronRight,
-  Zap
+  Zap,
+  Users
 } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -42,8 +43,8 @@ export default function DashboardPage() {
   const stats = {
     admin: [
       { label: "Global Savings", value: "2.4T", icon: Globe, color: "text-blue-600" },
-      { label: "System Health", value: "99.9%", icon: ShieldCheck, color: "text-emerald-600" },
-      { label: "Active Nodes", value: "1,240", icon: Zap, color: "text-amber-500" },
+      { label: "Total Partners", value: "1,240", icon: Users, color: "text-emerald-600" },
+      { label: "Active Rescues", value: "342", icon: Zap, color: "text-amber-500" },
       { label: "Revenue Share", value: "₹45.2k", icon: TrendingUp, color: "text-zinc-900" },
     ],
     store_owner: [
@@ -126,24 +127,21 @@ export default function DashboardPage() {
               <CardTitle className="text-lg">Quick Actions</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3 flex-1">
-              {role === 'customer' && (
-                <>
-                  <Link href="/marketplace">
-                    <Button className="w-full h-12 rounded-xl text-sm font-bold shadow-sm">
-                      Browse Marketplace <ChevronRight className="ml-1 h-4 w-4" />
-                    </Button>
-                  </Link>
-                  <p className="text-xs text-center text-muted-foreground italic px-4">Find fresh food at huge discounts near you.</p>
-                </>
+              {(role === 'customer' || role === 'admin') && (
+                <Link href="/marketplace">
+                  <Button className="w-full h-12 rounded-xl text-sm font-bold shadow-sm">
+                    Browse Marketplace <ChevronRight className="ml-1 h-4 w-4" />
+                  </Button>
+                </Link>
               )}
-              {role === 'store_owner' && (
+              {(role === 'store_owner' || role === 'admin') && (
                 <Link href="/inventory">
                   <Button className="w-full h-12 rounded-xl text-sm font-bold shadow-sm" variant="outline">
                     Update Inventory <Package className="ml-1 h-4 w-4" />
                   </Button>
                 </Link>
               )}
-              {role === 'ngo' && (
+              {(role === 'ngo' || role === 'admin') && (
                 <Link href="/donations">
                   <Button className="w-full h-12 rounded-xl text-sm font-bold shadow-sm" variant="outline">
                     View Donations <Heart className="ml-1 h-4 w-4" />
@@ -151,15 +149,10 @@ export default function DashboardPage() {
                 </Link>
               )}
               {role === 'admin' && (
-                <div className="space-y-2">
+                <div className="space-y-2 pt-2 border-t">
                   <Link href="/admin">
                     <Button className="w-full h-12 rounded-xl text-sm font-bold shadow-sm" variant="secondary">
-                      Manage Platform <ShieldCheck className="ml-1 h-4 w-4" />
-                    </Button>
-                  </Link>
-                  <Link href="/pos">
-                    <Button className="w-full h-12 rounded-xl text-sm font-bold shadow-sm" variant="outline">
-                      Dev POS Access <Zap className="ml-1 h-4 w-4 text-amber-500" />
+                      Manage Users <Users className="ml-1 h-4 w-4" />
                     </Button>
                   </Link>
                 </div>
